@@ -4,6 +4,11 @@
 
 ### 개발 환경
 * **프론트 엔드 작업:** lms_front\app 아래에 작업 폴더 생성 후 page.tsx 작성해서 진행
+```
+cd .\lms_front\
+npm install
+```
+해서 nextjs에서 필요한 모듈 설치 후 npm run dev로 실행
 * **백 엔드 작업:** 솔직히 저도 잘은 모릅니다 지원님한테 문의해주시면 감사하겠습니다(프론트랑 연동하는 부분)
 # 🎓 EduSys: Learning Management System
 
