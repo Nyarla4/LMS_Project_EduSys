@@ -26,7 +26,7 @@ export default function Sidebar() {
             overflow: 'hidden',
         }}>
             <a href="/mypage">
-                {user && user.name}
+                {user && user.user.name} {user && user.user.type === 'STUDENT' && user.grade + "학년"}
             </a>
             <button
                 onClick={toggleSidebar}

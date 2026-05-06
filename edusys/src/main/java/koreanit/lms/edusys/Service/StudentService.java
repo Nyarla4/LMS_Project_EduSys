@@ -4,25 +4,21 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import koreanit.lms.edusys.Entity.Teacher;
-import koreanit.lms.edusys.Repository.TeacherRepository;
+import koreanit.lms.edusys.Entity.Student;
+import koreanit.lms.edusys.Repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class TeacherService {
-    private final TeacherRepository teacherRepository;
+public class StudentService {
+    private final StudentRepository studentRepository;
     private final UserService userService;
 
-    public List<Teacher> findAllTeachers() {
-        return teacherRepository.findAll();
-    }
-
-    public Teacher findbyUserId(Long uid) {
+    public Student findbyUserId(Long uid) {
         var user = userService.findUserById(uid); // 유저
         if(user == null) {
             return null; // 유저가 없으면 null 반환
         }
-        return teacherRepository.findByUser(user).orElse(null);
+        return studentRepository.findByUser(user).orElse(null);
     }
 }
