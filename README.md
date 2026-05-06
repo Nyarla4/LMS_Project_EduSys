@@ -50,4 +50,3 @@ CREATE USER 'edusys_user'@'localhost' IDENTIFIED BY 'edusys_pw';
 GRANT ALL PRIVILEGES ON edusys_db.* TO 'edusys_user'@'localhost';
 FLUSH PRIVILEGES;
 ```
-일단 전 이렇게 해서 처리하고 있습니다
