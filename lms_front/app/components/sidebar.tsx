@@ -52,11 +52,11 @@ export default function Sidebar() {
                         </li>
                         <li>
                             {user.user.type === 'TEACHER' ?
-                                <Link href="/classRequest">
-                                    {isCollapsed && <span>등록</span> || <span>강의 등록</span>}
+                                <Link href="/register">
+                                    {isCollapsed && <span>수강</span> || <span>수강 등록</span>}
                                 </Link>
                                 : user.user.type === 'STUDENT' &&
-                                <Link href="/courses">
+                                <Link href="/apply">
                                     {isCollapsed && <span>수강</span> || <span>수강 신청</span>}
                                 </Link>}
                         </li>
