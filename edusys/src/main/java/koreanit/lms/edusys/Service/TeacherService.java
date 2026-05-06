@@ -18,6 +18,10 @@ public class TeacherService {
         return teacherRepository.findAll();
     }
 
+    public Teacher findTeacherById(Integer tid) {
+        return teacherRepository.findById(tid).orElse(null);
+    }
+
     public Teacher findbyUserId(Long uid) {
         var user = userService.findUserById(uid); // 유저
         if(user == null) {

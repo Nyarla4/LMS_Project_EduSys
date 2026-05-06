@@ -51,26 +51,26 @@ export default function Sidebar() {
                             </Link>
                         </li>
                         <li>
-                            {user.type === 'TEACHER' ?
+                            {user.user.type === 'TEACHER' ?
                                 <Link href="/classRequest">
                                     {isCollapsed && <span>등록</span> || <span>강의 등록</span>}
                                 </Link>
-                                : user.type === 'STUDENT' &&
+                                : user.user.type === 'STUDENT' &&
                                 <Link href="/courses">
                                     {isCollapsed && <span>수강</span> || <span>수강 신청</span>}
                                 </Link>}
                         </li>
                         <li>
-                            <Link href={user.type === 'TEACHER' ? "/myClasses" : user.type === 'STUDENT' ? "/enrolledClasses" : "#"}>
+                            <Link href={user.user.type === 'TEACHER' ? "/myClasses" : user.user.type === 'STUDENT' ? "/enrolledClasses" : "#"}>
                                 {isCollapsed && <span>강의</span> || <span>강의 관리</span>}
                             </Link>
                         </li>
                         <li>
-                            <Link href={user.type === 'TEACHER' ? "/studentGrades" : user.type === 'STUDENT' ? "/myGrades" : "#"}>
+                            <Link href={user.user.type === 'TEACHER' ? "/studentGrades" : user.user.type === 'STUDENT' ? "/myGrades" : "#"}>
                                 {isCollapsed && <span>성적</span> || <span>성적 조회</span>}
                             </Link>
                         </li>
-                        {user.type === 'ADMIN' &&
+                        {user.user.type === 'ADMIN' &&
                             <li>
                                 <Link href="/users">
                                     {isCollapsed && <span>사용자</span> || <span>사용자 관리</span>}

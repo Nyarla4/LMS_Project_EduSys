@@ -11,7 +11,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const fetchUserData = async () => {
       try {
         // 1. 기본 유저 정보(UID, Type 등)를 먼저 가져옴
-        const userRes = await fetch("http://localhost:8080/api/users/2");// 현재 임시 유저, 추후 http://localhost:8080/api/auth/me 등으로 변경 가능성 있음
+        const userRes = await fetch("http://localhost:8080/api/users/1");// 현재 임시 유저, 1: 선생, 2: 학생
+        // 추후 http://localhost:8080/api/auth/me 등으로 변경 가능성 있음
         const baseUser = await userRes.json();
 
         let detailedData = baseUser;
