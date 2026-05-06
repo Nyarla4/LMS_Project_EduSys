@@ -1,7 +1,5 @@
 package koreanit.lms.edusys.Service;
 
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 
 import koreanit.lms.edusys.Entity.Student;

@@ -1,6 +1,7 @@
 package koreanit.lms.edusys.Entity;
 
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -22,5 +23,6 @@ public class Student {
     private Integer grade;
 
     @OneToOne
+    @JoinColumn(name = "uid")
     private User user;
 }

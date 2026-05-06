@@ -12,13 +12,17 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class Teacher {
+public class Subject {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer tid;
+    private Integer subid;
+
+    private String major;
+    private String name;
+    private Integer rate;
 
     @OneToOne
-    @JoinColumn(name = "uid")
-    private User user;
+    @JoinColumn(name = "tid")
+    private Teacher teacher;
 }
