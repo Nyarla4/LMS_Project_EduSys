@@ -37,32 +37,49 @@ export default function Sidebar() {
                     marginBottom: '2rem',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: isCollapsed ? 'center':'flex-end',
+                    justifyContent: isCollapsed ? 'center' : 'flex-end',
                     width: '100%'
                 }}>
                 {isCollapsed ? <Menu size={24} /> : <ChevronLeft size={24} />}
             </button>
             {user &&
-            <nav>
-                <ul style={{ listStyle: 'none', padding: 0 }}>
-                    <li>
-                        <Link href="/">
-                            <span>홈</span>
-                        </Link>
-                    </li>
-                    <li>
-                        <Link href="/courses">
-                            {isCollapsed && <span>강의</span> || <span>강의 목록</span>}
-                        </Link>
-                    </li>
-                    <li>
-                        <Link href="/users">
-                            {isCollapsed && <span>사용자</span> || <span>사용자 관리</span>}
-                        </Link>
-                    </li>
-                </ul>
-            </nav>
-    }
+                <nav>
+                    <ul style={{ listStyle: 'none', padding: 0 }}>
+                        <li>
+                            <Link href="/">
+                                <span>홈</span>
+                            </Link>
+                        </li>
+                        <li>
+                            {user.type === 'TEACHER' ?
+                                <Link href="/classRequest">
+                                    {isCollapsed && <span>등록</span> || <span>강의 등록</span>}
+                                </Link>
+                                : user.type === 'STUDENT' &&
+                                <Link href="/courses">
+                                    {isCollapsed && <span>수강</span> || <span>수강 신청</span>}
+                                </Link>}
+                        </li>
+                        <li>
+                            <Link href={user.type === 'TEACHER' ? "/myClasses" : user.type === 'STUDENT' ? "/enrolledClasses" : "#"}>
+                                {isCollapsed && <span>강의</span> || <span>강의 관리</span>}
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href={user.type === 'TEACHER' ? "/studentGrades" : user.type === 'STUDENT' ? "/myGrades" : "#"}>
+                                {isCollapsed && <span>성적</span> || <span>성적 조회</span>}
+                            </Link>
+                        </li>
+                        {user.type === 'ADMIN' &&
+                            <li>
+                                <Link href="/users">
+                                    {isCollapsed && <span>사용자</span> || <span>사용자 관리</span>}
+                                </Link>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
         </aside>
     );
 }

@@ -3,8 +3,6 @@ package koreanit.lms.edusys.Controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 
 import koreanit.lms.edusys.Entity.User;
 import koreanit.lms.edusys.Service.UserService;
@@ -14,7 +12,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -35,7 +32,7 @@ public class UserController {
 
         return ResponseEntity.ok(users); // 데이터와 함께 200 OK 전송
     }
-    
+
     @GetMapping("/{uid}")
     public ResponseEntity<User> getUserById(@PathVariable Long uid) {
         User user = userService.findUserById(uid); // 서비스에서 특정 유저를 가져옴
