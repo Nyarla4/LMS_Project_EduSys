@@ -35,7 +35,7 @@ export default function ClassRequest() { // 1. async 제거
 
   return (
     <main style={{ padding: "2rem" }}>
-      <h1>강의 관리 (교사: {user.user?.name || user.name})</h1>
+      <h1>강의 관리 (교사: {user.user?.username || user.username})</h1>
       {loading ? (
         <p>강의 목록을 불러오는 중...</p>
       ) : (

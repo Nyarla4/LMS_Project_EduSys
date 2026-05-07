@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import koreanit.lms.edusys.Entity.UserEntity;
 import koreanit.lms.edusys.Service.UserService;
+import koreanit.lms.edusys.Service.StudentService;
+import koreanit.lms.edusys.Service.TeacherService;
 import koreanit.lms.edusys.Service.UserCreateForm;
 import koreanit.lms.edusys.Service.UserDTO;
 import koreanit.lms.edusys.config.JwtTokenProvider;
@@ -29,6 +31,8 @@ public class UserController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final StudentService studentService;
+    private final TeacherService teacherService;
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody UserCreateForm userCreateForm, BindingResult bindingResult) {
@@ -44,8 +48,18 @@ public class UserController {
         }
 
         try {
-            userService.create(userCreateForm);
+            UserEntity user = userService.create(userCreateForm);
             response.put("message", "회원가입이 완료되었습니다.");
+            switch (userCreateForm.getUsertype()) {
+                case "S":
+                    studentService.create(user);
+                    break;
+                case "T":
+                    teacherService.create(user);
+                    break;
+                default:
+                    break;
+            }
             return ResponseEntity.ok(response);
         } catch (DataIntegrityViolationException e) {
             response.put("message", "이미 등록된 사용자 아이디 또는 이메일입니다.");

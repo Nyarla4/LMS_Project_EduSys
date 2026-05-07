@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import koreanit.lms.edusys.Entity.Teacher;
+import koreanit.lms.edusys.Entity.UserEntity;
 import koreanit.lms.edusys.Repository.TeacherRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -34,5 +35,11 @@ public class TeacherService {
             return null; // 유저가 없으면 null 반환
         }
         return teacherRepository.findByUser(user).orElse(null);
+    }
+
+    public Teacher create(UserEntity user) {
+        Teacher teacher = new Teacher();
+        teacher.setUser(user);
+        return teacherRepository.save(teacher);
     }
 }
