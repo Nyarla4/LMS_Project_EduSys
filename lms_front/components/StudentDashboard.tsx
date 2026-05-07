@@ -317,7 +317,9 @@ export default function StudentDashboard() {
       });
       if (res.ok) {
         const data = await res.json();
-        // 위치 이동(Seek)은 필요 시 여기서 처리 (여기서는 시청량 계산에 집중)
+        if (data && videoRef.current) {
+          videoRef.current.currentTime = data.progress; // 마지막 재생 위치로 이동
+        }
       }
     } catch (e) {
       console.log("기존 진행 정보가 없습니다.");
@@ -326,11 +328,11 @@ export default function StudentDashboard() {
 
   const saveVideoProgress = async () => {
     if (selectedVideo && sessionWatched > 0) {
-      // 기존 누적 시간 + 이번에 본 시간
-      const newTotalTime = (progressMap[selectedVideo.id] || 0) + sessionWatched;
+      // 현재 재생 위치를 저장 (누적 시청 시간이 아닌 마지막 재생 위치)
+      const currentTime = Math.floor(videoRef.current?.currentTime || 0);
       
       const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      await fetch(`${API_BASE}/progresses/update?studentId=${studentId}&videoId=${selectedVideo.id}&lastTime=${newTotalTime}`, {
+      await fetch(`${API_BASE}/progresses/update?studentId=${studentId}&videoId=${selectedVideo.id}&lastTime=${currentTime}`, {
         method: 'POST',
         headers: { 
           "Authorization": `Bearer ${token}`,
@@ -341,7 +343,7 @@ export default function StudentDashboard() {
       // 로컬 상태 업데이트
       setProgressMap(prev => ({
         ...prev,
-        [selectedVideo.id]: newTotalTime
+        [selectedVideo.id]: currentTime // progressMap도 마지막 재생 위치로 업데이트
       }));
       setSessionWatched(0); // 저장 후 세션 시간 초기화
     }
