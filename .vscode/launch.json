@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-EdusysApplication<edusys>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "koreanit.lms.edusys.EdusysApplication",
+            "projectName": "edusys",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
