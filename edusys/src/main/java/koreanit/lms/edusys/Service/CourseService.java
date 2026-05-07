@@ -1,6 +1,7 @@
 package koreanit.lms.edusys.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,13 @@ public class CourseService {
 
     public List<Course> findAllCourses() {
         return courseRepository.findAll();
+    }
+
+    public Optional<Course> findCourseById(Integer cid) {
+        if(cid == null) {
+            return null;
+        }
+        return courseRepository.findById(cid);
     }
 
     public List<Course> findAllCoursesByStudent(Integer sid) {

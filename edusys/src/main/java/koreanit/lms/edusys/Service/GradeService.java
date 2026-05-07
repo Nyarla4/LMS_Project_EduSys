@@ -1,6 +1,7 @@
 package koreanit.lms.edusys.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,13 @@ public class GradeService {
         return gradeRepository.findBySubjectSubid(subid);
     }
 
+    public Optional<Grade> findGradeById(Integer gid) {
+        if(gid == null) {
+            return null;
+        }
+        return gradeRepository.findById(gid);
+    }
+
     public Grade createGrade(Integer sid, Integer subid) {
         Grade grade = new Grade();
         Student student = studentService.findById(sid);
@@ -36,5 +44,15 @@ public class GradeService {
         grade.setStudent(student);
         grade.setSubject(subject);
         return gradeRepository.save(grade);
+    }
+
+    public void deleteGrade(Integer gid) {
+        if(gid == null) {
+            return;
+        }
+        Grade existingGrade = gradeRepository.findById(gid).orElse(null);
+        if (existingGrade != null) {
+            gradeRepository.delete(existingGrade);
+        }
     }
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.ManyToOne;
 
 import java.time.LocalDate;
 
+import jakarta.persistence.Table;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -14,6 +15,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
+@Table(name = "attendances")
 @Getter
 @Setter
 public class Attendance {

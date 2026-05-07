@@ -1,6 +1,7 @@
 package koreanit.lms.edusys.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,13 @@ public class ExamService {
         return examRepository.findBySubjectSubid(subid);
     }
 
+    public Optional<Exam> findExamById(Integer eid) {
+        if(eid == null) {
+            return null;
+        }
+        return examRepository.findById(eid);
+    }
+
     public Exam createExam(Integer subid) {
         Exam exam = new Exam();
         Subject subject = subjectService.findSubjectById(subid);
@@ -31,5 +39,15 @@ public class ExamService {
         }
         exam.setSubject(subject);
         return examRepository.save(exam);
+    }
+
+    public void deleteExam(Integer eid) {
+        if(eid == null) {
+            return;
+        }
+        Exam existingExam = examRepository.findById(eid).orElse(null);
+        if (existingExam != null) {
+            examRepository.delete(existingExam);
+        }
     }
 }

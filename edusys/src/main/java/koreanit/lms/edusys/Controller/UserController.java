@@ -1,4 +1,4 @@
-package koreanit.lms.edusys.Controller;
+package koreanit.lms.edusys.controller;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import koreanit.lms.edusys.Entity.UserEntity;
 import koreanit.lms.edusys.Service.UserService;
-import koreanit.lms.edusys.User.JwtTokenProvider;
-import koreanit.lms.edusys.User.UserCreateForm;
-import koreanit.lms.edusys.User.UserDTO;
+import koreanit.lms.edusys.Service.UserCreateForm;
+import koreanit.lms.edusys.Service.UserDTO;
+import koreanit.lms.edusys.config.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
@@ -59,8 +59,9 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> user) {
         Map<String, Object> response = new HashMap<>();
+        String loginId = user.get("loginid") != null ? user.get("loginid") : user.get("loginId");
 
-        UserEntity member = userService.getUser(user.get("loginid"));
+        UserEntity member = userService.getUser(loginId);
         
         if (member == null || !passwordEncoder.matches(user.get("password"), member.getPassword())) {
             response.put("message", "아이디 또는 비밀번호가 잘못되었습니다.");

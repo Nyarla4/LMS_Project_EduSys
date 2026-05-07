@@ -1,6 +1,7 @@
 package koreanit.lms.edusys.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,13 @@ public class LessonService {
 
     public List<Lesson> findAllLessonsBySubject(Integer subid) {
         return lessonRepository.findBySubjectSubid(subid);
+    }
+
+    public Optional<Lesson> findLessonById(Integer lid) {
+        if(lid == null) {
+            return null;
+        }
+        return lessonRepository.findById(lid);
     }
 
     public Lesson createLesson(Integer subid, String name, String file) {
