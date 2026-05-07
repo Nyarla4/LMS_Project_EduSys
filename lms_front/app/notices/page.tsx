@@ -61,25 +61,34 @@ export default function NoticeDetailPage() {
       {loading ? (
         <p>로딩 중...</p>
       ) : notices.length > 0 ? (
-        <div>
-          {notices.map((notice: any) => (
-            <li key={notice.nid}>
-              <Link href={`/notices/${notice.nid}`} style={{ textDecoration: 'none', color: 'blue' }}>
-                {notice.title}
-              </Link>
-              {user && user.usertype === "A" && (
-                <label className={styles.label}>
-                  <input id={`notice-${notice.nid}`}
-                    role="switch"
-                    type="checkbox"
-                    checked={notice.active}
-                    onChange={(e) => handleToggleActive(notice.nid, e.target.checked)}
-                    className={styles.checkbox} />
-                  <span>활성화</span>
-                </label>
-              )}
-            </li>
-          ))}
+          <div>
+            <ul className={styles.noticeList}>
+              {notices.map((notice: any) => (
+                <li key={notice.nid} className={styles.noticeItem}>
+                  {/* 1. 공지사항 제목 영역 */}
+                  <Link href={`/notices/${notice.nid}`} className={styles.link}>
+                    {notice.title}
+                  </Link>
+
+                  {/* 2. 관리자 전용 액션 영역 */}
+                  {user && user.usertype === "A" && (
+                    <div className={styles.adminSection}>
+                      <label className={styles.label}>
+                        <input
+                          id={`notice-${notice.nid}`}
+                          role="switch"
+                          type="checkbox"
+                          checked={notice.active}
+                          onChange={(e) => handleToggleActive(notice.nid, e.target.checked)}
+                          className={styles.checkbox}
+                        />
+                        <span>공개 여부</span>
+                      </label>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
         </div>
       ) : (
         <p>공지가 없습니다.</p>
