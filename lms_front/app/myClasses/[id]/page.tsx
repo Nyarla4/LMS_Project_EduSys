@@ -2,10 +2,17 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+interface Subject {
+  subid: number;
+  major: string;
+  name: string;
+  rate: number;
+}
+
 export default function SubjectDetailPage() {
   const params = useParams();
-  const suId = params.id; // URL의 [id] 값을 가져옴[cite: 2]
-  const [subjects, setSubjects] = useState(); // 과목 데이터를 담을 상태
+  const suId = params.id; // URL의 [id] 값을 가져옴
+  const [subjects, setSubjects] = useState<Subject | null>(null); // 과목 데이터를 담을 상태
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +34,7 @@ export default function SubjectDetailPage() {
 
   return (
     <div>
-      <h1>과목 상세 및 강의 관리 ({subjects?.name})</h1>
+      <h1>과목 상세 및 강의 관리 ({subjects && subjects.name})</h1>
       
     </div>
   );

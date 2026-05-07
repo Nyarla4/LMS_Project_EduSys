@@ -26,7 +26,7 @@ export default function Sidebar() {
             overflow: 'hidden',
         }}>
             <a href="/mypage">
-                {user && user.user.name} {user && user.user.type === 'STUDENT' && user.grade + "학년"}
+                {user && (user.user ? user.user.name : user.name)} 
             </a>
             <button
                 onClick={toggleSidebar}
@@ -50,6 +50,7 @@ export default function Sidebar() {
                                 <span>홈</span>
                             </Link>
                         </li>
+                        {user.user &&
                         <li>
                             {user.user.type === 'TEACHER' ?
                                 <Link href="/register">
@@ -60,17 +61,27 @@ export default function Sidebar() {
                                     {isCollapsed && <span>수강</span> || <span>수강 신청</span>}
                                 </Link>}
                         </li>
+                        }{user.user &&
                         <li>
                             <Link href={user.user.type === 'TEACHER' ? "/myClasses" : user.user.type === 'STUDENT' ? "/enrolledClasses" : "#"}>
                                 {isCollapsed && <span>강의</span> || <span>강의 관리</span>}
                             </Link>
                         </li>
+                        }{user.user &&
                         <li>
                             <Link href={user.user.type === 'TEACHER' ? "/studentGrades" : user.user.type === 'STUDENT' ? "/myGrades" : "#"}>
                                 {isCollapsed && <span>성적</span> || <span>성적 조회</span>}
                             </Link>
                         </li>
-                        {user.user.type === 'ADMIN' &&
+                        }
+                        {user.type === 'ADMIN' &&
+                            <li>
+                                <Link href="/notices">
+                                    {isCollapsed && <span>공지</span> || <span>공지사항</span>}
+                                </Link>
+                            </li>
+                        }
+                        {user.type === 'ADMIN' &&
                             <li>
                                 <Link href="/users">
                                     {isCollapsed && <span>사용자</span> || <span>사용자 관리</span>}
