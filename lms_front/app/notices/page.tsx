@@ -67,7 +67,7 @@ export default function NoticeDetailPage() {
               <Link href={`/notices/${notice.nid}`} style={{ textDecoration: 'none', color: 'blue' }}>
                 {notice.title}
               </Link>
-              {user && user.type === "ADMIN" && (
+              {user && user.usertype === "A" && (
                 <label className={styles.label}>
                   <input id={`notice-${notice.nid}`}
                     role="switch"

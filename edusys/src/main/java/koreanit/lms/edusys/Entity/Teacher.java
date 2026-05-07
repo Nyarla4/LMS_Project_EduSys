@@ -20,5 +20,5 @@ public class Teacher {
 
     @OneToOne
     @JoinColumn(name = "uid")
-    private User user;
+    private UserEntity user;
 }

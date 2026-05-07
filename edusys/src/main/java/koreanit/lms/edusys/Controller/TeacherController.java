@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class TeacherController {
     private final TeacherService teacherService;
 
-    @GetMapping("/{uid}")
-    public ResponseEntity<Teacher> getTeacherByUserId(@PathVariable Long uid) {
-        Teacher teacher = teacherService.findbyUserId(uid); // 서비스에서 특정 유저를 가져옴
+    @GetMapping("/{loginId}")
+    public ResponseEntity<Teacher> getTeacherByUserId(@PathVariable String loginId) {
+        Teacher teacher = teacherService.findbyUserId(loginId); // 서비스에서 특정 유저를 가져옴
 
         if (teacher == null) {
             return ResponseEntity.notFound().build(); // 유저가 없으면 404 Not Found

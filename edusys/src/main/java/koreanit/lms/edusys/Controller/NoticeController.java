@@ -70,7 +70,7 @@ public class NoticeController {
         noticeService.deleteNotice(nid);
         return ResponseEntity.noContent().build();
     }
-    //    const url = `http://localhost:8080/api/notices/${nid}/active?active=${currentState}`;
+    
     @PutMapping("{nid}/active")
     public ResponseEntity<Notice> setActiveNotice(@PathVariable Integer nid, @RequestParam boolean active) {
         Notice updated = noticeService.setActiveNotice(nid, active);

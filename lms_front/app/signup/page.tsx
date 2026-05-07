@@ -51,7 +51,7 @@ export default function SignupPage() {
         if (!validate()) return;
 
         try {
-            const res = await fetch("http://localhost:8686/user/signup", {
+            const res = await fetch("http://localhost:8080/user/signup", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(form),

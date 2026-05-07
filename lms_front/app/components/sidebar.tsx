@@ -14,6 +14,11 @@ export default function Sidebar() {
 
     const { user } = useUser();
 
+    const handleLogout = () => {
+        localStorage.clear();
+        window.location.href = "/";
+    };
+
     return (
         <aside style={{
             width: isCollapsed ? '80px' : '250px',
@@ -25,9 +30,10 @@ export default function Sidebar() {
             position: 'relative',
             overflow: 'hidden',
         }}>
-            <a href="/mypage">
-                {user && (user.user ? user.user.name : user.name)} 
+            <a href={user ? "/mypage" : "/login"}>
+                {user ? (user.user ? user.user.username : user.username) : "로그인"}
             </a>
+            {user && <button onClick={handleLogout} style={{ marginLeft: '1rem' }}>로그아웃</button>}
             <button
                 onClick={toggleSidebar}
                 style={{
@@ -52,36 +58,36 @@ export default function Sidebar() {
                         </li>
                         {user.user &&
                         <li>
-                            {user.user.type === 'TEACHER' ?
+                            {user.user.usertype === 'T' ?
                                 <Link href="/register">
                                     {isCollapsed && <span>수강</span> || <span>수강 등록</span>}
                                 </Link>
-                                : user.user.type === 'STUDENT' &&
+                                : user.user.usertype === 'S' &&
                                 <Link href="/apply">
                                     {isCollapsed && <span>수강</span> || <span>수강 신청</span>}
                                 </Link>}
                         </li>
                         }{user.user &&
                         <li>
-                            <Link href={user.user.type === 'TEACHER' ? "/myClasses" : user.user.type === 'STUDENT' ? "/enrolledClasses" : "#"}>
+                            <Link href={user.user.usertype === 'T' ? "/myClasses" : user.user.usertype === 'S' ? "/enrolledClasses" : "#"}>
                                 {isCollapsed && <span>강의</span> || <span>강의 관리</span>}
                             </Link>
                         </li>
                         }{user.user &&
                         <li>
-                            <Link href={user.user.type === 'TEACHER' ? "/studentGrades" : user.user.type === 'STUDENT' ? "/myGrades" : "#"}>
+                            <Link href={user.user.usertype === 'T' ? "/studentGrades" : user.user.usertype === 'S' ? "/myGrades" : "#"}>
                                 {isCollapsed && <span>성적</span> || <span>성적 조회</span>}
                             </Link>
                         </li>
                         }
-                        {user.type === 'ADMIN' &&
+                        {user.usertype === 'A' &&
                             <li>
                                 <Link href="/notices">
                                     {isCollapsed && <span>공지</span> || <span>공지사항</span>}
                                 </Link>
                             </li>
                         }
-                        {user.type === 'ADMIN' &&
+                        {user.usertype === 'A' &&
                             <li>
                                 <Link href="/users">
                                     {isCollapsed && <span>사용자</span> || <span>사용자 관리</span>}

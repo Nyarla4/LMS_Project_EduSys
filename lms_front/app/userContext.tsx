@@ -1,4 +1,3 @@
-// lms_front/context/UserContext.tsx
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
 
@@ -6,38 +5,62 @@ const UserContext = createContext<any>(null);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // 로딩 상태 추가
 
   useEffect(() => {
     const fetchUserData = async () => {
-      try {
-        // 1. 기본 유저 정보(UID, Type 등)를 먼저 가져옴
-        const userRes = await fetch("http://localhost:8080/api/users/3");// 현재 임시 유저, 1/4: 선생, 2: 학생, 3: 관리자
-        // 추후 http://localhost:8080/api/auth/me 등으로 변경 가능성 있음
-        const baseUser = await userRes.json();
+      const uid = localStorage.getItem("loginId");
 
+      // 1. 로그인 정보가 없으면 로딩 종료 후 null 상태 유지 (흐름 제어)
+      if (!uid) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // 2. 데이터 페칭 시작
+        const userRes = await fetch(`http://localhost:8080/user/entity/${uid}`, {
+          headers: {
+              "Authorization": `Bearer ${localStorage.getItem("token")}`
+          }
+        });
+        if (!userRes.ok) throw new Error("인증 실패");
+
+        const baseUser = await userRes.json();
         let detailedData = baseUser;
 
-        // 2. 유저 타입에 따라 추가 상세 정보 페칭
-        if (baseUser.type === "TEACHER") {
-          const teacherRes = await fetch(`http://localhost:8080/api/teachers/${baseUser.uid}`);
-          detailedData = await teacherRes.json();
-        } else if (baseUser.type === "STUDENT") {
-          const studentRes = await fetch(`http://localhost:8080/api/students/${baseUser.uid}`);
-          detailedData = await studentRes.json();
+        if (baseUser.usertype === "T") {
+          const teacherRes = await fetch(`http://localhost:8080/api/teachers/${baseUser.loginid}`, {
+            headers: {
+              "Authorization": `Bearer ${localStorage.getItem("token")}`
+            }
+          });
+          if (teacherRes.ok) detailedData = await teacherRes.json();
+        } else if (baseUser.usertype === "S") {
+          const studentRes = await fetch(`http://localhost:8080/api/students/${baseUser.loginid}`, {
+            headers: {
+              "Authorization": `Bearer ${localStorage.getItem("token")}`
+            }
+          });
+          if (studentRes.ok) detailedData = await studentRes.json();
         }
 
-        // 3. 통합된 데이터를 Provider에 저장
         setUser(detailedData);
       } catch (err) {
-        console.error("데이터 로드 실패:", err);
+        console.error("UserContext 인증 로드 실패:", err);
+        setUser(null); // 에러 발생 시에도 비로그인 상태로 처리
+      } finally {
+        setLoading(false); // 모든 처리가 끝나면 로딩 종료
       }
     };
 
     fetchUserData();
   }, []);
 
+  // user 데이터와 loading 상태를 함께 전달
   return (
-    <UserContext.Provider value={{ user }}>
+    <UserContext.Provider value={{ user, loading }}>
       {children}
     </UserContext.Provider>
   );

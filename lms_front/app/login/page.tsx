@@ -14,7 +14,7 @@ export default function LoginPage() {
         const password = (form.elements.namedItem("password") as HTMLInputElement).value;
 
         try {
-            const res = await fetch("http://localhost:8686/user/login", {
+            const res = await fetch("http://localhost:8080/user/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ loginid, password }),
@@ -25,6 +25,7 @@ export default function LoginPage() {
             if (res.ok) {
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("username", data.username);
+                localStorage.setItem("loginId", data.loginId);
                 
                 window.location.href = "/";
             } else {
@@ -67,6 +68,9 @@ export default function LoginPage() {
                         </div>
                         <button type="submit" className="btn btn-primary w-100 py-2">로그인</button>
                     </form>
+                    <button className="nav-link btn btn-link" onClick={() => {window.location.href = "/signup"}}>
+                        회원가입
+                    </button>
                 </div>
             </div>
         </div>

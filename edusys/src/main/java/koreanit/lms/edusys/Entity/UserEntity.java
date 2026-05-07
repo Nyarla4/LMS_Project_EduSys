@@ -1,4 +1,4 @@
-package koreanit.lms.edusys.User;
+package koreanit.lms.edusys.Entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;

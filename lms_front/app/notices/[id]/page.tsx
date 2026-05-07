@@ -110,7 +110,7 @@ export default function NoticeDetailPage() {
           </p>
           
           {/* 관리자(ADMIN)인 경우에만 수정 버튼 노출 */}
-          {user?.type === "ADMIN" && (
+          {user?.usertype === "A" && (
             <button onClick={() => setIsEditing(true)}>수정하기</button>
           )}
           <button onClick={() => router.back()}>목록으로</button>
