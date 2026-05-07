@@ -1,4 +1,4 @@
-package koreanit.lms.edusys.Controller;
+package koreanit.lms.edusys.controller;
 
 import org.springframework.http.ResponseEntity;
 

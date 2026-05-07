@@ -6,10 +6,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import koreanit.lms.edusys.DataNotFoundException;
 import koreanit.lms.edusys.Entity.UserEntity;
-import koreanit.lms.edusys.Entity.UserType;
 import koreanit.lms.edusys.Repository.UserRepository;
-import koreanit.lms.edusys.User.UserCreateForm;
-import koreanit.lms.edusys.User.UserDTO;
+import koreanit.lms.edusys.Entity.UserType;
+import koreanit.lms.edusys.Service.UserCreateForm;
+import koreanit.lms.edusys.Service.UserDTO;
 import lombok.RequiredArgsConstructor;
 
 @Service

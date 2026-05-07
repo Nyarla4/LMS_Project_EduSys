@@ -244,19 +244,27 @@ export default function StudentDashboard() {
   const [isPlaying, setIsPlaying] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
-  const studentId = 1; // 임시 학생 ID
-  const API_BASE = "http://localhost:8080/api";
+  const [studentId, setStudentId] = useState<number>(1); // 실제 운영 시 로그인 정보에서 추출
+  const API_BASE = "http://localhost:8080/api"; // 서버 포트가 8081이라면 여기를 8081로 수정하세요.
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        if (!token) {
+          setError("로그인이 필요합니다.");
+          setLoading(false);
+          return;
+        }
+        const headers = { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" };
+
         const [lessonRes, vidRes, attRes, examRes, assignRes, progRes] = await Promise.all([
-          fetch(`${API_BASE}/lessons`),
-          fetch(`${API_BASE}/lesson-videos`),
-          fetch(`${API_BASE}/attendances`), 
-          fetch(`${API_BASE}/exams`),        
-          fetch(`${API_BASE}/assignments`),
-          fetch(`${API_BASE}/progresses/student/${studentId}`)
+          fetch(`${API_BASE}/lessons`, { headers }),
+          fetch(`${API_BASE}/lesson-videos`, { headers }),
+          fetch(`${API_BASE}/attendances`, { headers }), 
+          fetch(`${API_BASE}/exams`, { headers }),        
+          fetch(`${API_BASE}/assignments`, { headers }),
+          fetch(`${API_BASE}/progresses/student/${studentId}`, { headers })
         ]);
         
         if (!lessonRes.ok) throw new Error(`강의 목록 로드 실패 (상태 코드: ${lessonRes.status})`);
@@ -290,7 +298,7 @@ export default function StudentDashboard() {
 
   // 스탑워치 로직: 영상이 재생 중일 때 1초마다 sessionWatched 증가
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: NodeJS.Timeout | number;
     if (isPlaying && selectedVideo) {
       interval = setInterval(() => {
         setSessionWatched((prev) => prev + 1);
@@ -303,7 +311,10 @@ export default function StudentDashboard() {
     setSessionWatched(0); // 새로운 영상 선택 시 스탑워치 초기화
     setSelectedVideo(video);
     try {
-      const res = await fetch(`http://localhost:8080/api/progresses/student/${studentId}/video/${video.id}`);
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const res = await fetch(`${API_BASE}/progresses/student/${studentId}/video/${video.id}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       if (res.ok) {
         const data = await res.json();
         // 위치 이동(Seek)은 필요 시 여기서 처리 (여기서는 시청량 계산에 집중)
@@ -318,8 +329,13 @@ export default function StudentDashboard() {
       // 기존 누적 시간 + 이번에 본 시간
       const newTotalTime = (progressMap[selectedVideo.id] || 0) + sessionWatched;
       
-      await fetch(`http://localhost:8080/api/progresses/update?studentId=${studentId}&videoId=${selectedVideo.id}&lastTime=${newTotalTime}`, {
-        method: 'POST'
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      await fetch(`${API_BASE}/progresses/update?studentId=${studentId}&videoId=${selectedVideo.id}&lastTime=${newTotalTime}`, {
+        method: 'POST',
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
       });
 
       // 로컬 상태 업데이트
@@ -388,7 +404,7 @@ export default function StudentDashboard() {
                 setIsPlaying(false);
                 saveVideoProgress();
               }}
-              src={`http://localhost:8080${selectedVideo.fileUrl}`}
+              src={`${API_BASE.replace('/api', '')}${selectedVideo.fileUrl}`}
             >
               브라우저가 동영상을 지원하지 않습니다.
             </video>
