@@ -27,4 +27,27 @@ public class ProgressService {
     public void deleteById(Long id) {
         progressRepository.deleteById(id);
     }
+
+    public Progress updateProgress(Long studentId, Long videoId, Integer lastTime) {
+        return progressRepository.findByStudentIdAndVideoId(studentId, videoId)
+                .map(p -> {
+                    p.setProgress(lastTime);
+                    return progressRepository.save(p);
+                })
+                .orElseGet(() -> {
+                    Progress newProgress = new Progress();
+                    newProgress.setStudentId(studentId);
+                    newProgress.setVideoId(videoId);
+                    newProgress.setProgress(lastTime);
+                    return progressRepository.save(newProgress);
+                });
+    }
+
+    public Optional<Progress> getProgressByStudentAndVideo(Long studentId, Long videoId) {
+        return progressRepository.findByStudentIdAndVideoId(studentId, videoId);
+    }
+
+    public List<Progress> findByStudentId(Long studentId) {
+        return progressRepository.findByStudentId(studentId);
+    }
 }

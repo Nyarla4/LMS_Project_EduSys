@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const tabs = [
   "Syllabus",
@@ -12,47 +12,63 @@ const tabs = [
 
 type Tab = (typeof tabs)[number];
 
-interface Lecture {
+interface Lesson {
   id: number;
   title: string;
   description: string;
   instructor: string;
 }
 
-const syllabusData = [
-  { week: "1주차", topic: "LMS 소개 및 사용법", summary: "학습 플랫폼 구조와 기능을 이해합니다." },
-  { week: "2주차", topic: "강의 콘텐츠 탐색", summary: "강의 계획서, 강의 영상, 과제 및 시험 탭을 확인합니다." },
-  { week: "3주차", topic: "출석 관리 및 진도", summary: "출석 현황과 진도를 직접 확인합니다." },
-  { week: "4주차", topic: "시험 준비", summary: "시험 일정과 성적 정보를 확인합니다." },
-];
+interface Attendance {
+  date: string;
+  status: string;
+  note: string;
+}
 
-const attendanceData = [
-  { date: "2026-04-01", status: "출석", note: "정상 참석" },
-  { date: "2026-04-08", status: "출석", note: "온라인 출석" },
-  { date: "2026-04-15", status: "결석", note: "유고결석" },
-  { date: "2026-04-22", status: "출석", note: "지각" },
-];
+interface Exam {
+  name: string;
+  date: string;
+  status: string;
+  score: string;
+}
 
-const videos = [
-  { title: "LMS 시스템 개요", duration: "12:30", progress: "100%" },
-  { title: "강의 계획서 활용하기", duration: "08:10", progress: "75%" },
-  { title: "과제 제출 흐름", duration: "09:45", progress: "50%" },
-  { title: "시험 응시 가이드", duration: "06:20", progress: "0%" },
-];
+interface Assignment {
+  title: string;
+  dueDate: string;
+  status: string;
+}
 
-const exams = [
-  { name: "중간고사", date: "2026-05-12", status: "예정", score: "-" },
-  { name: "퀴즈 1", date: "2026-04-28", status: "완료", score: "88" },
-  { name: "기말고사", date: "2026-06-18", status: "예정", score: "-" },
-];
+interface Video {
+  id: number;
+  title: string;
+  fileUrl: string;
+  duration: number;
+  week: number;
+}
 
-const assignments = [
-  { title: "강의 계획서 분석", dueDate: "2026-05-05", status: "제출 완료" },
-  { title: "출석 체크 보고서", dueDate: "2026-05-10", status: "진행 중" },
-  { title: "동영상 강의 요약", dueDate: "2026-05-17", status: "대기 중" },
-];
-
-function TabPanel({ activeTab, lectures }: { activeTab: Tab; lectures: Lecture[] }) {
+function TabPanel({ 
+  activeTab,
+  lessons,
+  attendanceData,
+  exams,
+  assignments,
+  videoList,
+  progressMap,
+  activeVideoId,
+  currentSessionSeconds,
+  onVideoSelect 
+}: { 
+  activeTab: Tab; 
+  lessons: Lesson[];
+  attendanceData: Attendance[];
+  exams: Exam[];
+  assignments: Assignment[];
+  videoList: Video[];
+  progressMap: Record<number, number>;
+  activeVideoId?: number;
+  currentSessionSeconds: number;
+  onVideoSelect: (video: Video) => void;
+}) {
   if (activeTab === "Syllabus") {
     return (
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -114,19 +130,43 @@ function TabPanel({ activeTab, lectures }: { activeTab: Tab; lectures: Lecture[]
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-xl font-semibold text-slate-900">동영상 강의</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          {videos.map((video) => (
-            <article key={video.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-base font-semibold text-slate-900">{video.title}</h3>
-                  <p className="mt-1 text-sm text-slate-600">길이: {video.duration}</p>
-                </div>
-                <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-slate-700">
-                  {video.progress}
-                </span>
-              </div>
-            </article>
-          ))}
+          {videoList.length > 0 ? (
+            videoList.map((video) => {
+              // 기존 저장된 시간 + 현재 세션에서 시청 중인 시간 합산
+              const savedTime = progressMap[video.id] || 0;
+              const sessionTime = (activeVideoId === video.id) ? currentSessionSeconds : 0;
+              const totalWatched = savedTime + sessionTime;
+              const percentage = video.duration > 0 
+                ? Math.min(100, Math.floor((totalWatched / video.duration) * 100)) 
+                : 0;
+
+              return (
+                <article 
+                  key={video.id} 
+                  className="cursor-pointer rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:bg-slate-100"
+                  onClick={() => onVideoSelect(video)}
+                >
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-base font-semibold text-slate-900">{video.title}</h3>
+                        <p className="mt-1 text-sm text-slate-600">{video.week}주차 학습 영상</p>
+                      </div>
+                      <span className="text-xs font-bold text-blue-600">{percentage}%</span>
+                    </div>
+                    {/* 진행 바 UI */}
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                      <div className="h-full bg-blue-500 transition-all" style={{ width: `${percentage}%` }}></div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })
+          ) : (
+            <p className="col-span-2 py-8 text-center text-slate-500">
+              현재 등록된 동영상 강의가 없습니다. (백엔드 데이터를 확인해주세요)
+            </p>
+          )}
         </div>
       </section>
     );
@@ -191,29 +231,105 @@ function TabPanel({ activeTab, lectures }: { activeTab: Tab; lectures: Lecture[]
 
 export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>("Syllabus");
-  const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [attendanceData, setAttendanceData] = useState<Attendance[]>([]);
+  const [exams, setExams] = useState<Exam[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [videoList, setVideoList] = useState<Video[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [progressMap, setProgressMap] = useState<Record<number, number>>({});
+  const [sessionWatched, setSessionWatched] = useState(0); // 스탑워치 상태
+  const [isPlaying, setIsPlaying] = useState(false);
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const studentId = 1; // 임시 학생 ID
+  const API_BASE = "http://localhost:8080/api";
 
   useEffect(() => {
-    const fetchLectures = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/lectures');
-        if (!response.ok) {
-          throw new Error('Failed to fetch lectures');
+        const [lessonRes, vidRes, attRes, examRes, assignRes, progRes] = await Promise.all([
+          fetch(`${API_BASE}/lessons`),
+          fetch(`${API_BASE}/lesson-videos`),
+          fetch(`${API_BASE}/attendances`), 
+          fetch(`${API_BASE}/exams`),        
+          fetch(`${API_BASE}/assignments`),
+          fetch(`${API_BASE}/progresses/student/${studentId}`)
+        ]);
+        
+        if (!lessonRes.ok) throw new Error(`강의 목록 로드 실패 (상태 코드: ${lessonRes.status})`);
+        if (!vidRes.ok) throw new Error(`비디오 목록 로드 실패 (상태 코드: ${vidRes.status})`);
+
+        setLessons(await lessonRes.json());
+        setVideoList(await vidRes.json());
+        if (attRes.ok) setAttendanceData(await attRes.json());
+        if (examRes.ok) setExams(await examRes.json());
+        if (assignRes.ok) setAssignments(await assignRes.json());
+        
+        if (progRes.ok) {
+          const progs = await progRes.json();
+          const map: Record<number, number> = {};
+          progs.forEach((p: any) => { 
+            // progress 필드를 '누적 시청 초'로 활용
+            map[p.videoId] = p.progress; 
+          });
+          setProgressMap(map);
         }
-        const data = await response.json();
-        setLectures(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
-        console.error('Error fetching lectures:', err);
+        console.error('Error fetching data:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLectures();
+    fetchData();
   }, []);
+
+  // 스탑워치 로직: 영상이 재생 중일 때 1초마다 sessionWatched 증가
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPlaying && selectedVideo) {
+      interval = setInterval(() => {
+        setSessionWatched((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, selectedVideo]);
+
+  const handleVideoSelect = async (video: Video) => {
+    setSessionWatched(0); // 새로운 영상 선택 시 스탑워치 초기화
+    setSelectedVideo(video);
+    try {
+      const res = await fetch(`http://localhost:8080/api/progresses/student/${studentId}/video/${video.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        // 위치 이동(Seek)은 필요 시 여기서 처리 (여기서는 시청량 계산에 집중)
+      }
+    } catch (e) {
+      console.log("기존 진행 정보가 없습니다.");
+    }
+  };
+
+  const saveVideoProgress = async () => {
+    if (selectedVideo && sessionWatched > 0) {
+      // 기존 누적 시간 + 이번에 본 시간
+      const newTotalTime = (progressMap[selectedVideo.id] || 0) + sessionWatched;
+      
+      await fetch(`http://localhost:8080/api/progresses/update?studentId=${studentId}&videoId=${selectedVideo.id}&lastTime=${newTotalTime}`, {
+        method: 'POST'
+      });
+
+      // 로컬 상태 업데이트
+      setProgressMap(prev => ({
+        ...prev,
+        [selectedVideo.id]: newTotalTime
+      }));
+      setSessionWatched(0); // 저장 후 세션 시간 초기화
+    }
+  };
 
   return (
     <main className="min-h-screen bg-zinc-100 px-4 py-8 text-slate-900 sm:px-6 lg:px-8">
@@ -253,7 +369,44 @@ export default function StudentDashboard() {
           </div>
         </section>
 
-        <TabPanel activeTab={activeTab} lectures={lectures} />
+        {selectedVideo && (
+          <section className="rounded-3xl border border-slate-200 bg-black p-4 shadow-sm">
+            <div className="mb-4 flex items-center justify-between text-white">
+              <h2 className="text-lg font-semibold">{selectedVideo.title} 재생 중</h2>
+              <button onClick={() => { saveVideoProgress(); setSelectedVideo(null); }} className="text-sm opacity-80 hover:opacity-100">닫기</button>
+            </div>
+            <video
+              ref={videoRef}
+              controls
+              className="w-full rounded-xl"
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => {
+                setIsPlaying(false);
+                saveVideoProgress();
+              }}
+              onEnded={() => {
+                setIsPlaying(false);
+                saveVideoProgress();
+              }}
+              src={`http://localhost:8080${selectedVideo.fileUrl}`}
+            >
+              브라우저가 동영상을 지원하지 않습니다.
+            </video>
+          </section>
+        )}
+
+        <TabPanel 
+          activeTab={activeTab} 
+          lessons={lessons}
+          attendanceData={attendanceData}
+          exams={exams}
+          assignments={assignments}
+          videoList={videoList}
+          progressMap={progressMap}
+          activeVideoId={selectedVideo?.id}
+          currentSessionSeconds={sessionWatched}
+          onVideoSelect={handleVideoSelect}
+        />
       </div>
     </main>
   );
