@@ -1,4 +1,4 @@
-package koreanit.lms.edusys.controller;
+package koreanit.lms.edusys.Controller;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;

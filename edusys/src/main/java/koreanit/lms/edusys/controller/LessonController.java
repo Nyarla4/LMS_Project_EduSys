@@ -1,4 +1,4 @@
-package koreanit.lms.edusys.controller;
+package koreanit.lms.edusys.Controller;
 
 import koreanit.lms.edusys.Entity.Lesson;
 import koreanit.lms.edusys.Service.LessonService;
