@@ -19,4 +19,11 @@ public class StudentService {
         }
         return studentRepository.findByUser(user).orElse(null);
     }
+
+    public Student findById(Integer sid) {
+        if(sid == null) {
+            return null;
+        }
+        return studentRepository.findById(sid).orElse(null);
+    }
 }
