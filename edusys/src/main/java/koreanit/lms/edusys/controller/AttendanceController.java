@@ -1,4 +1,4 @@
-package koreanit.lms.edusys.controller;
+package koreanit.lms.edusys.Controller;
 
 import koreanit.lms.edusys.Entity.Attendance;
 import koreanit.lms.edusys.Service.AttendanceService;
@@ -15,12 +15,12 @@ public class AttendanceController {
 
     @GetMapping
     public List<Attendance> getAllAttendances() {
-        return attendanceService.findAll();
+        return attendanceService.findAllAttendances();
     }
 
     @GetMapping("/{id}")
-    public Attendance getAttendanceById(@PathVariable Long id) {
-        return attendanceService.findById(id)
+    public Attendance getAttendanceById(@PathVariable Integer id) {
+        return attendanceService.findAttendanceById(id)
                 .orElseThrow(() -> new RuntimeException("Attendance not found with id: " + id));
     }
 
@@ -30,7 +30,7 @@ public class AttendanceController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteAttendance(@PathVariable Long id) {
+    public void deleteAttendance(@PathVariable Integer id) {
         attendanceService.deleteById(id);
     }
 }

@@ -1,4 +1,4 @@
-package koreanit.lms.edusys.controller;
+package koreanit.lms.edusys.Controller;
 
 import koreanit.lms.edusys.Entity.Progress;
 import koreanit.lms.edusys.Service.ProgressService;
@@ -16,35 +16,37 @@ public class ProgressController {
 
     @GetMapping
     public List<Progress> getAllProgresses() {
-        return progressService.findAll();
+        return progressService.findAllProgresses();
     }
 
     @GetMapping("/{id}")
-    public Progress getProgressById(@PathVariable Long id) {
-        return progressService.findById(id)
+    public Progress getProgressById(@PathVariable Integer id) {
+        return progressService.findProgressById(id)
                 .orElseThrow(() -> new RuntimeException("Progress not found with id: " + id));
     }
 
-    @GetMapping("/student/{studentId}/video/{videoId}")
-    public Optional<Progress> getProgress(@PathVariable Long studentId, @PathVariable Long videoId) {
-        return progressService.getProgressByStudentAndVideo(studentId, videoId);
-    }
+    // 임시로 주석처리, 추후 Lesson Video 수정시 참조
 
-    @PostMapping("/update")
-    public Progress updateProgress(
-            @RequestParam Long studentId,
-            @RequestParam Long videoId,
-            @RequestParam Integer lastTime) {
-        return progressService.updateProgress(studentId, videoId, lastTime);
-    }
+    // @GetMapping("/student/{studentId}/video/{videoId}")
+    // public Optional<Progress> getProgress(@PathVariable Integer studentId, @PathVariable Long videoId) {
+    //     return progressService.getProgressByStudentAndVideo(studentId, videoId);
+    // }
+
+    // @PostMapping("/update")
+    // public Progress updateProgress(
+    //         @RequestParam Integer studentId,
+    //         @RequestParam Long videoId,
+    //         @RequestParam Integer lastTime) {
+    //     return progressService.updateProgress(studentId, videoId, lastTime);
+    // }
 
     @PostMapping
     public Progress saveProgress(@RequestBody Progress progress) {
-        return progressService.save(progress);
+        return progressService.createProgress(progress);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteProgress(@PathVariable Long id) {
-        progressService.deleteById(id);
+    public void deleteProgress(@PathVariable Integer id) {
+        progressService.deleteProgress(id);
     }
 }

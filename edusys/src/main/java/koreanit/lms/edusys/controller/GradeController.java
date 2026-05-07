@@ -1,4 +1,4 @@
-package koreanit.lms.edusys.controller;
+package koreanit.lms.edusys.Controller;
 
 import koreanit.lms.edusys.Entity.Grade;
 import koreanit.lms.edusys.Service.GradeService;
@@ -15,22 +15,22 @@ public class GradeController {
 
     @GetMapping
     public List<Grade> getAllGrades() {
-        return gradeService.findAll();
+        return gradeService.findAllGrades();
     }
 
     @GetMapping("/{id}")
-    public Grade getGradeById(@PathVariable Long id) {
-        return gradeService.findById(id)
+    public Grade getGradeById(@PathVariable Integer id) {
+        return gradeService.findGradeById(id)
                 .orElseThrow(() -> new RuntimeException("Grade not found with id: " + id));
     }
 
     @PostMapping
     public Grade saveGrade(@RequestBody Grade grade) {
-        return gradeService.save(grade);
+        return gradeService.createGrade(grade);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteGrade(@PathVariable Long id) {
-        gradeService.deleteById(id);
+    public void deleteGrade(@PathVariable Integer id) {
+        gradeService.deleteGrade(id);
     }
 }

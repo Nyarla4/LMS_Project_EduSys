@@ -48,6 +48,12 @@ public class CourseService {
         course.setSubject(subject);
         return courseRepository.save(course);
     }
+    public Course createCourse(Course course) {
+        if(course == null) {
+            return null;
+        }
+        return courseRepository.save(course);
+    }
 
     public void deleteCourse(Integer cid) {
         if(cid == null) {

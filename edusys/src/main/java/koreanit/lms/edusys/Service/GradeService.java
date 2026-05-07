@@ -45,6 +45,13 @@ public class GradeService {
         grade.setSubject(subject);
         return gradeRepository.save(grade);
     }
+    
+    public Grade createGrade(Grade grade) {
+        if(grade == null) {
+            return null;
+        }
+        return gradeRepository.save(grade);
+    }
 
     public void deleteGrade(Integer gid) {
         if(gid == null) {

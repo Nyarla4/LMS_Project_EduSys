@@ -64,12 +64,24 @@ public class ProgressService {
         return progressRepository.save(progress);
     }
 
+    public Progress createProgress(Progress progress) {
+        if(progress == null) {
+            return null;
+        }
+        return progressRepository.save(progress);
+    }
+
     public void deleteProgress(Integer pid) {
         if(pid == null) {
             return;
         }
         Optional<Progress> optionalProgress = progressRepository.findById(pid);
+        if(optionalProgress.isEmpty()) {
+            return;
+        }
+        Progress progress = optionalProgress.get();
         if(optionalProgress.isPresent()) {
-            progressRepository.delete(optionalProgress.get());
+            progressRepository.delete(progress);
         }
     }
+}

@@ -42,6 +42,13 @@ public class LessonService {
         lesson.setFile(file);
         return lessonRepository.save(lesson);
     }
+    
+    public Lesson createLesson(Lesson lesson) {
+        if(lesson == null) {
+            return null;
+        }
+        return lessonRepository.save(lesson);
+    }
 
     public void deleteLesson(Integer lid) {
         if(lid == null) {

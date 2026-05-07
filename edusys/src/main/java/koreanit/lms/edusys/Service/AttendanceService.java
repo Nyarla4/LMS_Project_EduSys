@@ -19,7 +19,7 @@ public class AttendanceService {
         return attendanceRepository.findAll();
     }
 
-    public Optional<Attendance> findById(Integer aid) {
+    public Optional<Attendance> findAttendanceById(Integer aid) {
         if(aid == null) {
             return null;
         }

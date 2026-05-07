@@ -40,6 +40,13 @@ public class ExamService {
         exam.setSubject(subject);
         return examRepository.save(exam);
     }
+    
+    public Exam createExam(Exam exam) {
+        if(exam == null) {
+            return null;
+        }
+        return examRepository.save(exam);
+    }
 
     public void deleteExam(Integer eid) {
         if(eid == null) {

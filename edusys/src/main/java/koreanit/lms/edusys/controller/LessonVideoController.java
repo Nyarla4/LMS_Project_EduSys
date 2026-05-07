@@ -1,4 +1,4 @@
-package koreanit.lms.edusys.controller;
+package koreanit.lms.edusys.Controller;
 
 import koreanit.lms.edusys.Entity.LessonVideo;
 import koreanit.lms.edusys.Service.LessonVideoService;
@@ -45,21 +45,21 @@ public class LessonVideoController {
     @GetMapping("/lesson/{lessonId}/student/{studentId}")
     public List<Map<String, Object>> getVideosWithProgress(
             @PathVariable Long lessonId,
-            @PathVariable Long studentId) {
+            @PathVariable Integer studentId) {
         
         List<LessonVideo> videos = lessonVideoService.findByLessonId(lessonId);
-        List<Progress> progresses = progressService.findByStudentId(studentId);
+        List<Progress> progresses = progressService.findAllProgressesByStudent(studentId);
 
         return videos.stream().map(video -> {
             Map<String, Object> map = new HashMap<>();
             map.put("video", video);
             
             Progress progress = progresses.stream()
-                    .filter(p -> p.getVideoId() != null && p.getVideoId().equals(video.getId()))
+                    .filter(p -> p.getLesson() != null && p.getLesson().equals(video.getId()))// 현재 Progress에 Lesson Video가 없으므로 getLesson 으로 대체, 추후 Lesson Video 관련 수정시 참조
                     .findFirst()
                     .orElse(null);
             
-            int lastTime = progress != null ? progress.getProgress() : 0;
+            int lastTime = progress != null ? progress.getProgressed() : 0;
             map.put("lastTime", lastTime);
             
             double percent = (video.getDuration() != null && video.getDuration() > 0) 

@@ -1,57 +1,36 @@
 package koreanit.lms.edusys.Controller;
 
-import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-
 import koreanit.lms.edusys.Entity.Grade;
 import koreanit.lms.edusys.Service.GradeService;
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/grades")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:3000")
 public class GradeController {
+
     private final GradeService gradeService;
 
-    @GetMapping("/all")
-    public ResponseEntity<List<Grade>> getAllGrades() {
-        List<Grade> grades = gradeService.findAllGrades(); // 서비스에서 리스트를 가져옴
-
-        if (grades.isEmpty()) {
-            return ResponseEntity.noContent().build(); // 데이터가 없으면 204 No Content
-        }
-
-        return ResponseEntity.ok(grades); // 데이터와 함께 200 OK 전송
+    @GetMapping
+    public List<Grade> getAllGrades() {
+        return gradeService.findAllGrades();
     }
 
-    @GetMapping("/student/{sid}")
-    public ResponseEntity<List<Grade>> getGradesByStudent(@PathVariable Integer sid) {
-        List<Grade> grades = gradeService.findAllGradesByStudent(sid); // 서비스에서 리스트를 가져옴
-
-        if (grades.isEmpty()) {
-            return ResponseEntity.noContent().build(); // 데이터가 없으면 204 No Content
-        }
-
-        return ResponseEntity.ok(grades); // 데이터와 함께 200 OK 전송
+    @GetMapping("/{id}")
+    public Grade getGradeById(@PathVariable Integer id) {
+        return gradeService.findGradeById(id)
+                .orElseThrow(() -> new RuntimeException("Grade not found with id: " + id));
     }
 
-    @GetMapping("/subject/{subid}")
-    public ResponseEntity<List<Grade>> getGradesBySubject(@PathVariable Integer subid) {
-        List<Grade> grades = gradeService.findAllGradesBySubject(subid); // 서비스에서 리스트를 가져옴
+    @PostMapping
+    public Grade saveGrade(@RequestBody Grade grade) {
+        return gradeService.createGrade(grade);
+    }
 
-        if (grades.isEmpty()) {
-            return ResponseEntity.noContent().build(); // 데이터가 없으면 204 No Content
-        }
-
-        return ResponseEntity.ok(grades); // 데이터와 함께 200 OK 전송
+    @DeleteMapping("/{id}")
+    public void deleteGrade(@PathVariable Integer id) {
+        gradeService.deleteGrade(id);
     }
 }
