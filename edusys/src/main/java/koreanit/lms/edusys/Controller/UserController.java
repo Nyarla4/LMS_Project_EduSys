@@ -16,6 +16,7 @@ import koreanit.lms.edusys.User.UserDTO;
 import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -80,6 +81,12 @@ public class UserController {
     public ResponseEntity<UserDTO> getUserEntity(@PathVariable String uid) {
         UserDTO user = userService.getUserDto(uid);
         return ResponseEntity.ok(user);
+    }
+    
+    @GetMapping("/entity")
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
+        List<UserDTO> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
     }
     
 }

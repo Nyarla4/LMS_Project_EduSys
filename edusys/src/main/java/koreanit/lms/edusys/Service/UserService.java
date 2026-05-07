@@ -1,4 +1,7 @@
 package koreanit.lms.edusys.Service;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import koreanit.lms.edusys.DataNotFoundException;
@@ -50,5 +53,15 @@ public class UserService {
         dto.setUsertype(user.getUsertype().name());
         
         return dto;
+    }
+
+    public List<UserDTO> getAllUsers() {
+        List<UserEntity> users = this.userRepository.findAll();
+        List<UserDTO> userDTOs = new ArrayList<>();
+        for (UserEntity user : users) {
+            UserDTO dto = getUserDto(user.getLoginid());
+            userDTOs.add(dto);
+        }
+        return userDTOs;
     }
 }
