@@ -40,9 +40,9 @@ export default function Sidebar() {
             overflow: 'hidden',
         }}>
             <a href={user ? "/mypage" : "/login"}>
-                {user ? (user.user ? user.user.username : user.username) : "로그인"}
+                {user ? (user.user ? user.user.username : user.username) : "로그인"} {!isCollapsed && user && user.user && user.user.usertype === 'S' && ` (${user.grade}학년)`}
             </a>
-            {user && <button onClick={handleLogout} style={{ marginLeft: '1rem' }}>로그아웃</button>}
+            {user && <button className='btn' onClick={handleLogout} style={{ marginLeft: '1rem' }}>로그아웃</button>}
             <button
                 onClick={toggleSidebar}
                 style={{

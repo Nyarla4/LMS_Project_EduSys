@@ -1,14 +1,19 @@
 package koreanit.lms.edusys.Entity;
 
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+
+import java.time.LocalDate;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "works")
@@ -16,15 +21,22 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 public class Work {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String workId;
-    private String title;
-    private String form;
+    private Integer wid;
+    
+    private String form; // 임시로 String으로 저장, 나중에 파일로 저장하는 방법으로 변경
+    
     private LocalDate dueDate;
-    private String status;
+
     private String grade;
-    private Long subjectId;
-    private Long studentId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subid")
+    private Subject subject;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sid")
+    private Student student;
 }

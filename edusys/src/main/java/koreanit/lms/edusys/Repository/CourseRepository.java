@@ -1,9 +1,12 @@
 package koreanit.lms.edusys.Repository;
 
-import koreanit.lms.edusys.Entity.Course;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.List;
 
-@Repository
-public interface CourseRepository extends JpaRepository<Course, Long> {
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import koreanit.lms.edusys.Entity.Course;
+
+public interface CourseRepository extends JpaRepository<Course, Integer> {
+    List<Course> findByStudentSid(Integer sid);
+    List<Course> findBySubjectSubid(Integer subid);
 }

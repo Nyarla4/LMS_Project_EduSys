@@ -22,10 +22,16 @@ public class NoticeService {
     }
 
     public Notice findNoticeById(Integer nid) {
+        if(nid == null) {
+            return null;
+        }
         return noticeRepository.findById(nid).orElse(null);
     }
 
     public Notice updateNotice(Integer nid, Notice updatedNotice) {
+        if(nid == null) {
+            return null;
+        }
         Notice existingNotice = findNoticeById(nid);
         if (existingNotice == null) {
             return null;
@@ -36,6 +42,9 @@ public class NoticeService {
     }
 
     public void deleteNotice(Integer nid) {
+        if(nid == null) {
+            return;
+        }
         Notice existingNotice = findNoticeById(nid);
         if (existingNotice != null) {
             noticeRepository.delete(existingNotice);
@@ -43,6 +52,9 @@ public class NoticeService {
     }
 
     public Notice setActiveNotice(Integer nid, boolean active) {
+        if(nid == null) {
+            return null;
+        }
         Notice existingNotice = findNoticeById(nid);
         if (existingNotice == null) {
             return null;

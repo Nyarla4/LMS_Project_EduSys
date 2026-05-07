@@ -1,9 +1,14 @@
 package koreanit.lms.edusys.Repository;
 
-import koreanit.lms.edusys.Entity.Attendance;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.time.LocalDate;
+import java.util.List;
 
-@Repository
-public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import koreanit.lms.edusys.Entity.Attendance;
+
+public interface AttendanceRepository extends JpaRepository<Attendance, Integer> {
+    List<Attendance> findByStudentSid(Integer sid);
+    List<Attendance> findBySubjectSubid(Integer subid);
+    List<Attendance> findByDate(LocalDate date);
 }

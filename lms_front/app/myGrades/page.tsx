@@ -7,6 +7,7 @@ import { useUser } from "../userContext";
 export default function ClassRequest() {
   const { user } = useUser();
 
+  
   return (
     <main style={{ padding: "2rem" }}>
       <h1>성적 조회</h1>

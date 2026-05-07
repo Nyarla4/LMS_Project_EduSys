@@ -1,9 +1,14 @@
 package koreanit.lms.edusys.Repository;
 
-import koreanit.lms.edusys.Entity.Work;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.time.LocalDate;
+import java.util.List;
 
-@Repository
-public interface WorkRepository extends JpaRepository<Work, Long> {
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import koreanit.lms.edusys.Entity.Work;
+
+public interface WorkRepository extends JpaRepository<Work, Integer> {
+    List<Work> findByStudentSid(Integer sid);
+    List<Work> findBySubjectSubid(Integer subid);
+    List<Work> findBySubjectSubidAndDueDateBetween(Integer subid, LocalDate startDate, LocalDate endDate);
 }

@@ -15,22 +15,22 @@ public class ExamController {
 
     @GetMapping
     public List<Exam> getAllExams() {
-        return examService.findAll();
+        return examService.findAllExams();
     }
 
     @GetMapping("/{id}")
-    public Exam getExamById(@PathVariable Long id) {
-        return examService.findById(id)
+    public Exam getExamById(@PathVariable Integer id) {
+        return examService.findExamById(id)
                 .orElseThrow(() -> new RuntimeException("Exam not found with id: " + id));
     }
 
     @PostMapping
     public Exam saveExam(@RequestBody Exam exam) {
-        return examService.save(exam);
+        return examService.createExam(exam);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteExam(@PathVariable Long id) {
-        examService.deleteById(id);
+    public void deleteExam(@PathVariable Integer id) {
+        examService.deleteExam(id);
     }
 }

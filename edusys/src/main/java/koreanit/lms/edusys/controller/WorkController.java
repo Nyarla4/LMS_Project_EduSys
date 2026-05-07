@@ -15,22 +15,22 @@ public class WorkController {
 
     @GetMapping
     public List<Work> getAllWorks() {
-        return workService.findAll();
+        return workService.findAllWorks();
     }
 
     @GetMapping("/{id}")
-    public Work getWorkById(@PathVariable Long id) {
-        return workService.findById(id)
+    public Work getWorkById(@PathVariable Integer id) {
+        return workService.findWorkById(id)
                 .orElseThrow(() -> new RuntimeException("Work not found with id: " + id));
     }
 
     @PostMapping
     public Work saveWork(@RequestBody Work work) {
-        return workService.save(work);
+        return workService.createWork(work);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteWork(@PathVariable Long id) {
-        workService.deleteById(id);
+    public void deleteWork(@PathVariable Integer id) {
+        workService.deleteWork(id);
     }
 }

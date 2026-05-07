@@ -18,10 +18,16 @@ public class SubjectService {
     }
 
     public Subject findSubjectById(Integer subid) {
+        if(subid == null) {
+            return null;
+        }
         return subjectRepository.findById(subid).orElse(null);
     }
 
     public List<Subject> findSubjectsByTeacherId(Integer tid) {
+        if(tid == null) {
+            return null;
+        }
         return subjectRepository.findByTeacherTid(tid);
     }
 }
