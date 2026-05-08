@@ -16,7 +16,11 @@ export default function ClassRequest() { // 1. async 제거
       const url = `http://localhost:8080/api/subjects/teacher/${user.tid}`;
       console.log("Fetching subjects from:", url);
 
-      fetch(url)
+      fetch(url, {
+          headers: {
+              "Authorization": `Bearer ${localStorage.getItem("token")}`
+          }
+        })
         .then((res) => res.json())
         .then((data) => {
           setSubjects(data);

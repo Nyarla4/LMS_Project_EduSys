@@ -1,5 +1,6 @@
 package koreanit.lms.edusys.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,23 +19,56 @@ public class GradeService {
     private final StudentService studentService;
     private final SubjectService subjectService;
 
-    public List<Grade> findAllGrades() {
-        return gradeRepository.findAll();
+    public List<GradeDTO> findAllGrades() {
+        List<GradeDTO> gradeDTOs = new ArrayList<>();
+        for (Grade grade : gradeRepository.findAll()) {
+            GradeDTO gradeDTO = new GradeDTO();
+            gradeDTO.setGid(grade.getGid());
+            gradeDTO.setStudentName(grade.getStudent().getUser().getUsername());
+            gradeDTO.setSubjectName(grade.getSubject().getName());
+            gradeDTOs.add(gradeDTO);
+        }
+        return gradeDTOs;
     }
 
-    public List<Grade> findAllGradesByStudent(Integer sid) {
-        return gradeRepository.findByStudentSid(sid);
+    public List<GradeDTO> findAllGradesByStudent(Integer sid) {
+        List<GradeDTO> gradeDTOs = new ArrayList<>();
+        for (Grade grade : gradeRepository.findByStudentSid(sid)) {
+            GradeDTO gradeDTO = new GradeDTO();
+            gradeDTO.setGid(grade.getGid());
+            gradeDTO.setStudentName(grade.getStudent().getUser().getUsername());
+            gradeDTO.setSubjectName(grade.getSubject().getName());
+            gradeDTOs.add(gradeDTO);
+        }
+        return gradeDTOs;
     }
 
-    public List<Grade> findAllGradesBySubject(Integer subid) {
-        return gradeRepository.findBySubjectSubid(subid);
+    public List<GradeDTO> findAllGradesBySubject(Integer subid) {
+        List<GradeDTO> gradeDTOs = new ArrayList<>();
+        for (Grade grade : gradeRepository.findBySubjectSubid(subid)) {
+            GradeDTO gradeDTO = new GradeDTO();
+            gradeDTO.setGid(grade.getGid());
+            gradeDTO.setStudentName(grade.getStudent().getUser().getUsername());
+            gradeDTO.setSubjectName(grade.getSubject().getName());
+            gradeDTOs.add(gradeDTO);
+        }
+        return gradeDTOs;
     }
 
-    public Optional<Grade> findGradeById(Integer gid) {
+    public GradeDTO findGradeById(Integer gid) {
         if(gid == null) {
             return null;
         }
-        return gradeRepository.findById(gid);
+        Grade grade = gradeRepository.findById(gid).orElse(null);
+        if (grade == null) {
+            return null;
+        }
+        GradeDTO gradeDTO = new GradeDTO();
+        gradeDTO.setGid(grade.getGid());
+        gradeDTO.setStudentName(grade.getStudent().getUser().getUsername());
+        gradeDTO.setSubjectName(grade.getSubject().getName());
+
+        return gradeDTO;
     }
 
     public Grade createGrade(Integer sid, Integer subid) {

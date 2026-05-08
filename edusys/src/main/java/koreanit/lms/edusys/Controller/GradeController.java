@@ -1,10 +1,14 @@
 package koreanit.lms.edusys.Controller;
 
 import koreanit.lms.edusys.Entity.Grade;
+import koreanit.lms.edusys.Service.GradeDTO;
 import koreanit.lms.edusys.Service.GradeService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/grades")
@@ -13,15 +17,30 @@ public class GradeController {
 
     private final GradeService gradeService;
 
-    @GetMapping
-    public List<Grade> getAllGrades() {
-        return gradeService.findAllGrades();
+    public ResponseEntity<List<GradeDTO>> getAllGrades() {
+        List<GradeDTO> grades = gradeService.findAllGrades();
+        if (grades == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(grades);
     }
 
     @GetMapping("/{id}")
-    public Grade getGradeById(@PathVariable Integer id) {
-        return gradeService.findGradeById(id)
-                .orElseThrow(() -> new RuntimeException("Grade not found with id: " + id));
+    public ResponseEntity<GradeDTO> getGradeById(@PathVariable Integer id) {
+        GradeDTO grade = gradeService.findGradeById(id);
+        if (grade == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(grade);
+    }
+
+    @GetMapping("/student/{studentId}")
+    public ResponseEntity<List<GradeDTO>> getGradesByStudentId(@PathVariable Integer studentId) {
+        List<GradeDTO> grades = gradeService.findAllGradesByStudent(studentId);
+        if (grades == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(grades);
     }
 
     @PostMapping
