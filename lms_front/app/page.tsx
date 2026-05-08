@@ -32,6 +32,16 @@ export default function Home() {
 }, []);
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 font-sans text-slate-900 dark:bg-black">
+      <ul>
+        {notices.map((notice: any) => (
+          <li key={notice.nid}>
+            <Link href={`/notices/${notice.nid}`} style={{ textDecoration: 'none', color: 'blue' }}>
+              {notice.title}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {notices.length > 0 && <a href="/notices">더보기</a>}
       <main className="flex w-full max-w-4xl flex-col gap-10 rounded-[32px] border border-slate-200 bg-white p-10 shadow-sm sm:p-14">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">

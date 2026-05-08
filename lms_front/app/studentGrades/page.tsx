@@ -58,6 +58,10 @@ export default function ClassRequest() {
           const gradeData = await gradeRes.json();
           setScores(gradeData);
         }
+        else{
+          setSubject(null);
+          setScores([]);
+        }
       } catch (err) {
         console.error("데이터 로드 실패:", err);
       } finally {
@@ -107,44 +111,89 @@ export default function ClassRequest() {
   if (!user) return <p>로그인이 필요한 서비스입니다.</p>;
 
   return (
-    <main style={{ padding: "2rem" }}>
-      <h1>성적 관리</h1>
+    <main style={{ padding: "2rem", maxWidth: "900px", margin: "0 auto" }}>
+      <h1 style={{ marginBottom: "1.5rem", fontSize: "1.8rem", color: "#1e293b" }}>성적 관리</h1>
+
       {loading ? (
         <p>데이터를 불러오는 중...</p>
+      ) : !subject ? (
+        /* 과목 없음 스타일 (기존 유지) */
+        <div style={{
+          textAlign: "center", padding: "4rem", border: "1px dashed #cbd5e1",
+          borderRadius: "16px", backgroundColor: "#f8fafc", color: "#64748b"
+        }}>
+          <div style={{ fontSize: "3.5rem", marginBottom: "1rem" }}>📚</div>
+          <h2 style={{ color: "#334155", marginBottom: "0.5rem" }}>담당 과목이 없습니다</h2>
+          <p>현재 배정된 강의 정보를 찾을 수 없습니다.</p>
+          <button onClick={() => window.location.href = "/"}
+            style={{ marginTop: "1.5rem", padding: "0.6rem 1.2rem", borderRadius: "8px", cursor: "pointer" }}>
+            대시보드로 돌아가기
+          </button>
+        </div>
       ) : (
-        <div>
-          <h2>{subject ? `${subject.name} 과목 성적부` : "과목 정보 로드 중..."}</h2>
-          <ul style={{ listStyle: "none", padding: 0 }}>
+        /* 과목 있음: 카드 형태의 구조 (Structure 추천) */
+        <div style={{
+          backgroundColor: "#fff", border: "1px solid #e2e8f0",
+          borderRadius: "16px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", overflow: "hidden"
+        }}>
+          {/* 카드 헤더 */}
+          <div style={{ padding: "1.5rem", borderBottom: "2px solid #f1f5f9", backgroundColor: "#f8fafc" }}>
+            <h2 style={{ margin: 0, fontSize: "1.25rem", color: "#1e293b", display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "1.5rem" }}>📖</span> {subject.name} 성적
+            </h2>
+          </div>
+
+          {/* 성적 리스트 */}
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {scores.map((score: any) => (
               <li key={score.gid} style={{
-                padding: "10px",
-                borderBottom: "1px solid #eee",
-                display: "flex",
-                alignItems: "center",
-                gap: "15px"
-              }}>
-                <span style={{ width: "100px", fontWeight: "bold" }}>{score.studentName}</span>
+                padding: "1rem 1.5rem", borderBottom: "1px solid #f1f5f9",
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                transition: "background 0.2s"
+              }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#fdfdfd"}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}>
 
-                {editingId === score.gid ? (
-                  // 수정 모드
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    <input
-                      type="text"
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      placeholder="점수 입력"
-                      style={{ width: "80px", padding: "4px" }}
-                    />
-                    <button onClick={() => handleSave(score.gid)}>저장</button>
-                    <button onClick={() => setEditingId(null)}>취소</button>
-                  </div>
-                ) : (
-                  // 보기 모드
-                  <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                    <span style={{ minWidth: "50px" }}>{score.score ?? "미입력"}</span>
-                    <button onClick={() => handleEdit(score)}>성적 수정</button>
-                  </div>
-                )}
+                {/* 학생 이름 영역 */}
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontWeight: "600", color: "#334155" }}>{score.studentName}</span>
+                </div>
+
+                {/* 성적 입력/수정 영역 */}
+                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                  {editingId === score.gid ? (
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input
+                        type="text"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        style={{ width: "70px", padding: "6px", borderRadius: "6px", border: "1px solid #3b82f6", outline: "none" }}
+                        autoFocus
+                      />
+                      <button onClick={() => handleSave(score.gid)}
+                        style={{ padding: "6px 12px", backgroundColor: "#3b82f6", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer" }}>
+                        저장
+                      </button>
+                      <button onClick={() => setEditingId(null)}
+                        style={{ padding: "6px 12px", backgroundColor: "#f1f5f9", border: "none", borderRadius: "6px", cursor: "pointer" }}>
+                        취소
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+                      <span style={{
+                        minWidth: "60px", textAlign: "right", fontWeight: "700",
+                        color: score.score ? "#2563eb" : "#94a3b8"
+                      }}>
+                        {score.score ?? "미입력"}
+                      </span>
+                      <button onClick={() => handleEdit(score)}
+                        style={{ padding: "6px 12px", backgroundColor: "#fff", border: "1px solid #e2e8f0", borderRadius: "6px", cursor: "pointer", fontSize: "0.85rem" }}>
+                        수정
+                      </button>
+                    </div>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
