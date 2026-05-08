@@ -21,4 +21,6 @@ public class Teacher {
     @OneToOne
     @JoinColumn(name = "uid")
     private UserEntity user;
+
+    private boolean approved; // 승인 여부
 }

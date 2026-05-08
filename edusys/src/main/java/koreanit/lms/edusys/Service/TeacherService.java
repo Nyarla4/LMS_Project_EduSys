@@ -40,6 +40,20 @@ public class TeacherService {
     public Teacher create(UserEntity user) {
         Teacher teacher = new Teacher();
         teacher.setUser(user);
+        teacher.setApproved(false); // 기본적으로 승인되지 않은 상태로 생성
         return teacherRepository.save(teacher);
+    }
+
+    public List<Teacher> findUnapprovedTeachers() {
+        return teacherRepository.findByApprovedFalse();
+    }
+
+    public Teacher approveTeacher(Long tid) {
+        Teacher teacher = findTeacherById(tid.intValue());
+        if (teacher != null) {
+            teacher.setApproved(true);
+            return teacherRepository.save(teacher);
+        }
+        return null;
     }
 }

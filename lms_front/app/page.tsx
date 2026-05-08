@@ -3,8 +3,10 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useUser } from "./userContext";
 
 export default function Home() {
+  const { user } = useUser();
   const [notices, setNotices] = useState([]);
   useEffect(() => {
   const fetchNotices = async () => {
@@ -42,6 +44,7 @@ export default function Home() {
         ))}
       </ul>
       {notices.length > 0 && <a href="/notices">더보기</a>}
+      {user && user.user && user.user.usertype === 'S' && 
       <main className="flex w-full max-w-4xl flex-col gap-10 rounded-[32px] border border-slate-200 bg-white p-10 shadow-sm sm:p-14">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
@@ -72,6 +75,7 @@ export default function Home() {
           </div>
         </div>
       </main>
+  }
     </div>
   );
 }
