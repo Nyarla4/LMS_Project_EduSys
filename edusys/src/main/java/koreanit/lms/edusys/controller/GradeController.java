@@ -52,8 +52,14 @@ public class GradeController {
     }
 
     @PostMapping("/{gid}")
-    public Grade saveGrade(@PathVariable Integer gid, @RequestBody String score) {
-        return gradeService.saveGrade(gid, score);
+    public ResponseEntity<GradeDTO> saveGrade(@PathVariable Integer gid, @RequestBody String score) {
+        Grade savedGrade = gradeService.saveGrade(gid, score);
+
+        if (savedGrade == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(new GradeDTO(savedGrade));
     }
 
     @DeleteMapping("/{gid}")

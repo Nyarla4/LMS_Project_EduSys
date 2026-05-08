@@ -17,7 +17,6 @@ export default function ClassRequest() {
 
     // 3. 유저 로딩이 끝나고 user 객체가 있을 때만 fetch 실행
     const url = `http://localhost:8080/api/grades/student/${user.sid}`;
-    console.log("Fetching grades for sid:", user.sid);
 
     fetch(url, {
       headers: {
