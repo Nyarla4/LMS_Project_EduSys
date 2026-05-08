@@ -2,7 +2,6 @@ package koreanit.lms.edusys.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -22,11 +21,7 @@ public class GradeService {
     public List<GradeDTO> findAllGrades() {
         List<GradeDTO> gradeDTOs = new ArrayList<>();
         for (Grade grade : gradeRepository.findAll()) {
-            GradeDTO gradeDTO = new GradeDTO();
-            gradeDTO.setGid(grade.getGid());
-            gradeDTO.setStudentName(grade.getStudent().getUser().getUsername());
-            gradeDTO.setSubjectName(grade.getSubject().getName());
-            gradeDTOs.add(gradeDTO);
+            gradeDTOs.add(new GradeDTO(grade));
         }
         return gradeDTOs;
     }
@@ -34,11 +29,7 @@ public class GradeService {
     public List<GradeDTO> findAllGradesByStudent(Integer sid) {
         List<GradeDTO> gradeDTOs = new ArrayList<>();
         for (Grade grade : gradeRepository.findByStudentSid(sid)) {
-            GradeDTO gradeDTO = new GradeDTO();
-            gradeDTO.setGid(grade.getGid());
-            gradeDTO.setStudentName(grade.getStudent().getUser().getUsername());
-            gradeDTO.setSubjectName(grade.getSubject().getName());
-            gradeDTOs.add(gradeDTO);
+            gradeDTOs.add(new GradeDTO(grade));
         }
         return gradeDTOs;
     }
@@ -46,11 +37,7 @@ public class GradeService {
     public List<GradeDTO> findAllGradesBySubject(Integer subid) {
         List<GradeDTO> gradeDTOs = new ArrayList<>();
         for (Grade grade : gradeRepository.findBySubjectSubid(subid)) {
-            GradeDTO gradeDTO = new GradeDTO();
-            gradeDTO.setGid(grade.getGid());
-            gradeDTO.setStudentName(grade.getStudent().getUser().getUsername());
-            gradeDTO.setSubjectName(grade.getSubject().getName());
-            gradeDTOs.add(gradeDTO);
+            gradeDTOs.add(new GradeDTO(grade));
         }
         return gradeDTOs;
     }
@@ -63,12 +50,7 @@ public class GradeService {
         if (grade == null) {
             return null;
         }
-        GradeDTO gradeDTO = new GradeDTO();
-        gradeDTO.setGid(grade.getGid());
-        gradeDTO.setStudentName(grade.getStudent().getUser().getUsername());
-        gradeDTO.setSubjectName(grade.getSubject().getName());
-
-        return gradeDTO;
+        return new GradeDTO(grade);
     }
 
     public Grade createGrade(Integer sid, Integer subid) {
@@ -85,6 +67,18 @@ public class GradeService {
             return null;
         }
         return gradeRepository.save(grade);
+    }
+
+    public Grade saveGrade(Integer gid, String score) {
+        if(gid == null) {
+            return null;
+        }
+        Grade existingGrade = gradeRepository.findById(gid).orElse(null);
+        if (existingGrade != null) {
+            existingGrade.setScore(score);
+            return gradeRepository.save(existingGrade);
+        }
+        return null;
     }
 
     public void deleteGrade(Integer gid) {

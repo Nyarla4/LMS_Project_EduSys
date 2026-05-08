@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/grades")
@@ -25,9 +24,9 @@ public class GradeController {
         return ResponseEntity.ok(grades);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<GradeDTO> getGradeById(@PathVariable Integer id) {
-        GradeDTO grade = gradeService.findGradeById(id);
+    @GetMapping("/{gid}")
+    public ResponseEntity<GradeDTO> getGradeById(@PathVariable Integer gid) {
+        GradeDTO grade = gradeService.findGradeById(gid);
         if (grade == null) {
             return ResponseEntity.notFound().build();
         }
@@ -43,13 +42,22 @@ public class GradeController {
         return ResponseEntity.ok(grades);
     }
 
-    @PostMapping
-    public Grade saveGrade(@RequestBody Grade grade) {
-        return gradeService.createGrade(grade);
+    @GetMapping("/subject/{subjectId}")
+    public ResponseEntity<List<GradeDTO>> getGradesBySubjectId(@PathVariable Integer subjectId) {
+        List<GradeDTO> grades = gradeService.findAllGradesBySubject(subjectId);
+        if (grades == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(grades);
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteGrade(@PathVariable Integer id) {
-        gradeService.deleteGrade(id);
+    @PostMapping("/{gid}")
+    public Grade saveGrade(@PathVariable Integer gid, @RequestBody String score) {
+        return gradeService.saveGrade(gid, score);
+    }
+
+    @DeleteMapping("/{gid}")
+    public void deleteGrade(@PathVariable Integer gid) {
+        gradeService.deleteGrade(gid);
     }
 }

@@ -1,5 +1,6 @@
 package koreanit.lms.edusys.Service;
 
+import koreanit.lms.edusys.Entity.Grade;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,4 +12,11 @@ public class GradeDTO {
     private String studentName;
     private String subjectName;
     private String score;
+    
+    public GradeDTO(Grade grade) {
+        this.gid = grade.getGid();
+        this.studentName = grade.getStudent().getUser().getUsername();
+        this.subjectName = grade.getSubject().getName();
+        this.score = grade.getScore();
+    }
 }
