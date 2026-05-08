@@ -95,7 +95,23 @@ export default function Sidebar() {
                             <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <Link href="/notices" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
                                     <Bell size={20} />
-                                    {!isCollapsed && <span>공지사항</span>}
+                                    {!isCollapsed && <span>공지 사항</span>}
+                                </Link>
+                            </li>
+                        }
+                        {user.usertype === 'A' &&
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <Link href="/check/classes" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                                    <PlayCircle size={20} />
+                                    {!isCollapsed && <span>강의 검토</span>}
+                                </Link>
+                            </li>
+                        }
+                        {user.usertype === 'A' &&
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <Link href="/check/teachers" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                                    <Users size={20} />
+                                    {!isCollapsed && <span>교사 인증</span>}
                                 </Link>
                             </li>
                         }
