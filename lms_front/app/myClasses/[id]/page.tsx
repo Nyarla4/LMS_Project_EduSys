@@ -2,10 +2,17 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+type Subject = {
+  subid: number;
+  name: string;
+  major: string;
+}
+
+
 export default function SubjectDetailPage() {
   const params = useParams();
   const suId = params.id; // URL의 [id] 값을 가져옴[cite: 2]
-  const [subjects, setSubjects] = useState(); // 과목 데이터를 담을 상태
+  const [subjects, setSubjects] = useState<Subject | null>(null); // 과목 데이터를 담을 상태
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,7 +22,7 @@ export default function SubjectDetailPage() {
 
       fetch(url)
         .then((res) => res.json())
-        .then((data) => {
+        .then((data: Subject) => {
           setSubjects(data);
           setLoading(false);
         })
@@ -23,12 +30,12 @@ export default function SubjectDetailPage() {
           console.error("과목 로드 실패:", err);
           setLoading(false);
         });
-  }, []);
+  }, [suId]);
 
   return (
     <div>
       <h1>과목 상세 및 강의 관리 ({subjects?.name})</h1>
-      
+      {loading && <p>과목 정보를 불러오는 중...</p>}
     </div>
   );
 }

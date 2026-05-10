@@ -22,6 +22,10 @@ public class Subject {
     private String name;
     private Integer rate;
 
+    private Integer capacity;
+    private String plan_file;
+    //private 
+
     @OneToOne
     @JoinColumn(name = "tid")
     private Teacher teacher;
