@@ -2,7 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, ChevronLeft } from 'lucide-react';
+import { 
+    Menu, 
+    ChevronLeft, 
+    Home, 
+    BookOpen, 
+    PlayCircle, 
+    BarChart3, 
+    Bell, 
+    Users 
+} from 'lucide-react';
 import { useUser } from '../userContext';
 
 export default function Sidebar() {
@@ -13,6 +22,11 @@ export default function Sidebar() {
     };
 
     const { user } = useUser();
+
+    const handleLogout = () => {
+        localStorage.clear();
+        window.location.href = "/";
+    };
 
     return (
         <aside style={{
@@ -25,9 +39,10 @@ export default function Sidebar() {
             position: 'relative',
             overflow: 'hidden',
         }}>
-            <a href="/mypage">
-                {user && user.user.name} {user && user.user.type === 'STUDENT' && user.grade + "학년"}
+            <a href={user ? "/mypage" : "/login"}>
+                {user ? (user.user ? user.user.username : user.username) : "로그인"} {!isCollapsed && user && user.user && user.user.usertype === 'S' && ` (${user.grade}학년)`}
             </a>
+            {user && <button className='btn' onClick={handleLogout} style={{ marginLeft: '1rem' }}>로그아웃</button>}
             <button
                 onClick={toggleSidebar}
                 style={{
@@ -44,36 +59,51 @@ export default function Sidebar() {
             </button>
             {user &&
                 <nav>
-                    <ul style={{ listStyle: 'none', padding: 0 }}>
-                        <li>
-                            <Link href="/">
-                                <span>홈</span>
+                    <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                                <Home size={20} />
+                                {!isCollapsed && <span>홈</span>}
                             </Link>
                         </li>
-                        <li>
-                            {user.user.type === 'TEACHER' ?
-                                <Link href="/register">
-                                    {isCollapsed && <span>수강</span> || <span>수강 등록</span>}
+                        {user.user &&
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <BookOpen size={20} />
+                                {!isCollapsed && (
+                                    user.user.usertype === 'T' ? 
+                                    <Link href="/register" style={{ textDecoration: 'none', color: 'inherit' }}>수강 등록</Link> : 
+                                    <Link href="/apply" style={{ textDecoration: 'none', color: 'inherit' }}>수강 신청</Link>
+                                )}
+                            </li>
+                        }
+                        {user.user &&
+                        <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Link href={user.user.usertype === 'T' ? "/myClasses" : user.user.usertype === 'S' ? "/enrolledClasses" : "#"} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                                <PlayCircle size={20} />
+                                {!isCollapsed && <span>강의 관리</span>}
+                            </Link>
+                        </li>
+                        }{user.user &&
+                        <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Link href={user.user.usertype === 'T' ? "/studentGrades" : user.user.usertype === 'S' ? "/myGrades" : "#"} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                                <BarChart3 size={20} />
+                                {!isCollapsed && <span>성적 조회</span>}
+                            </Link>
+                        </li>
+                        }
+                        {user.usertype === 'A' &&
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <Link href="/notices" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                                    <Bell size={20} />
+                                    {!isCollapsed && <span>공지사항</span>}
                                 </Link>
-                                : user.user.type === 'STUDENT' &&
-                                <Link href="/apply">
-                                    {isCollapsed && <span>수강</span> || <span>수강 신청</span>}
-                                </Link>}
-                        </li>
-                        <li>
-                            <Link href={user.user.type === 'TEACHER' ? "/myClasses" : user.user.type === 'STUDENT' ? "/enrolledClasses" : "#"}>
-                                {isCollapsed && <span>강의</span> || <span>강의 관리</span>}
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href={user.user.type === 'TEACHER' ? "/studentGrades" : user.user.type === 'STUDENT' ? "/myGrades" : "#"}>
-                                {isCollapsed && <span>성적</span> || <span>성적 조회</span>}
-                            </Link>
-                        </li>
-                        {user.user.type === 'ADMIN' &&
-                            <li>
-                                <Link href="/users">
-                                    {isCollapsed && <span>사용자</span> || <span>사용자 관리</span>}
+                            </li>
+                        }
+                        {user.usertype === 'A' &&
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <Link href="/users" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                                    <Users size={20} />
+                                    {!isCollapsed && <span>사용자 관리</span>}
                                 </Link>
                             </li>
                         }

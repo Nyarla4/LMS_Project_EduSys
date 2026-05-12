@@ -24,5 +24,5 @@ public class Student {
 
     @OneToOne
     @JoinColumn(name = "uid")
-    private User user;
+    private UserEntity user;
 }

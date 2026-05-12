@@ -1,46 +1,93 @@
 package koreanit.lms.edusys.Controller;
 
-import java.util.List;
-
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
 
-import koreanit.lms.edusys.Entity.User;
+import jakarta.validation.Valid;
+import koreanit.lms.edusys.Entity.UserEntity;
 import koreanit.lms.edusys.Service.UserService;
+import koreanit.lms.edusys.Service.UserCreateForm;
+import koreanit.lms.edusys.Service.UserDTO;
+import koreanit.lms.edusys.config.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
-@RestController
-@RequestMapping("/api/users")
 @RequiredArgsConstructor
+@RestController
+@RequestMapping("/user")
 @CrossOrigin(origins = "http://localhost:3000")
 public class UserController {
+
     private final UserService userService;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final PasswordEncoder passwordEncoder;
 
-    @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.findAllUsers(); // 서비스에서 리스트를 가져옴
+    @PostMapping("/signup")
+    public ResponseEntity<?> signup(@Valid @RequestBody UserCreateForm userCreateForm, BindingResult bindingResult) {
+        Map<String, String> response = new HashMap<>();
 
-        if (users.isEmpty()) {
-            return ResponseEntity.noContent().build(); // 데이터가 없으면 204 No Content
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
         }
 
-        return ResponseEntity.ok(users); // 데이터와 함께 200 OK 전송
-    }
-
-    @GetMapping("/{uid}")
-    public ResponseEntity<User> getUserById(@PathVariable Long uid) {
-        User user = userService.findUserById(uid); // 서비스에서 특정 유저를 가져옴
-
-        if (user == null) {
-            return ResponseEntity.notFound().build(); // 유저가 없으면 404 Not Found
+        if (!userCreateForm.getPassword().equals(userCreateForm.getPasswordConfirm())) {
+            response.put("message", "2개의 비밀번호가 일치하지 않습니다.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
-        return ResponseEntity.ok(user); // 데이터와 함께 200 OK 전송
+        try {
+            userService.create(userCreateForm);
+            response.put("message", "회원가입이 완료되었습니다.");
+            return ResponseEntity.ok(response);
+        } catch (DataIntegrityViolationException e) {
+            response.put("message", "이미 등록된 사용자 아이디 또는 이메일입니다.");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        } catch (Exception e) {
+            response.put("message", "회원가입 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> user) {
+        Map<String, Object> response = new HashMap<>();
+        String loginId = user.get("loginid") != null ? user.get("loginid") : user.get("loginId");
+
+        UserEntity member = userService.getUser(loginId);
+        
+        if (member == null || !passwordEncoder.matches(user.get("password"), member.getPassword())) {
+            response.put("message", "아이디 또는 비밀번호가 잘못되었습니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        String token = jwtTokenProvider.createToken(member.getLoginid());
+        
+        response.put("token", token);
+        response.put("username", member.getUsername());
+        response.put("loginId", member.getLoginid());
+        response.put("message", "로그인 성공");
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/entity/{uid}")
+    public ResponseEntity<UserDTO> getUserEntity(@PathVariable String uid) {
+        UserDTO user = userService.getUserDto(uid);
+        return ResponseEntity.ok(user);
+    }
+    
+    @GetMapping("/entity")
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
+        List<UserDTO> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
+    }
+    
 }

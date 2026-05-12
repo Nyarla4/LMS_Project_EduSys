@@ -7,7 +7,11 @@ export default function Users() {
 
   useEffect(() => {
     // 백엔드의 UserController에서 지정한 엔드포인트 호출
-    fetch("http://localhost:8080/api/users")
+    fetch("http://localhost:8080/user/entity", {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      }
+    })
       .then((res) => res.json())
       .then((data) => {
         setUsers(data);
@@ -21,8 +25,8 @@ export default function Users() {
       <ul>
         {users.length > 0 ? (
           users.map((user: any) => (
-            <li key={user.uid}>
-              {user.name} ({user.type})
+            <li key={user.loginid}>
+              {user.username} ({user.usertype})
             </li>
           ))
         ) : (

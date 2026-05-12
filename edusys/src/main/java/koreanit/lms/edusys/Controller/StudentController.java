@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class StudentController {
     private final StudentService studentService;
 
-    @GetMapping("/{uid}")
-    public ResponseEntity<Student> getStudentByUserId(@PathVariable Long uid) {
-        Student student = studentService.findbyUserId(uid); // 서비스에서 특정 유저를 가져옴
+    @GetMapping("/{loginId}")
+    public ResponseEntity<Student> getStudentByUserId(@PathVariable String loginId) {
+        Student student = studentService.findbyUserId(loginId); // 서비스에서 특정 유저를 가져옴
 
         if (student == null) {
             return ResponseEntity.notFound().build(); // 유저가 없으면 404 Not Found
