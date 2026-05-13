@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import koreanit.lms.edusys.Entity.Lesson;
 import koreanit.lms.edusys.Entity.Progress;
@@ -25,22 +26,43 @@ public class ProgressService {
     }
 
     public List<Progress> findAllProgressesByStudent(Integer sid) {
-        return progressRepository.findByStudentSid(sid);
+        return progressRepository.findByStudent_Sid(sid);
     }
 
     public List<Progress> findAllProgressesBySubject(Integer subid) {
-        return progressRepository.findBySubjectSubid(subid);
+        return progressRepository.findBySubject_Subid(subid);
     }
 
     public List<Progress> findAllProgressesByLesson(Integer lid) {
-        return progressRepository.findByLessonLid(lid);
+        return progressRepository.findByLesson_Lid(lid);
     }
 
     public Optional<Progress> findProgressById(Integer pid) {
         if(pid == null) {
-            return null;
+            return Optional.empty();
         }
         return progressRepository.findById(pid);
+    }
+
+    public Optional<Progress> getProgressByStudentAndLesson(Integer studentId, Integer lessonId) {
+        return progressRepository.findByStudent_SidAndLesson_Lid(studentId, lessonId);
+    }
+
+    @Transactional
+    public Progress updateProgress(Integer studentId, Integer lessonId, Integer lastTime) {
+        Progress progress = progressRepository.findByStudent_SidAndLesson_Lid(studentId, lessonId)
+                .orElse(new Progress());
+        
+        if (progress.getPid() == null) {
+            Student student = studentService.findById(studentId);
+            Lesson lesson = lessonService.findLessonById(lessonId).orElseThrow(() -> new RuntimeException("Lesson not found"));
+            progress.setStudent(student);
+            progress.setLesson(lesson);
+            progress.setSubject(lesson.getSubject());
+        }
+        
+        progress.setProgressed(lastTime);
+        return progressRepository.save(progress);
     }
 
     public Progress createProgress(Integer sid, Integer subid, Integer lid) {
@@ -75,13 +97,6 @@ public class ProgressService {
         if(pid == null) {
             return;
         }
-        Optional<Progress> optionalProgress = progressRepository.findById(pid);
-        if(optionalProgress.isEmpty()) {
-            return;
-        }
-        Progress progress = optionalProgress.get();
-        if(optionalProgress.isPresent()) {
-            progressRepository.delete(progress);
-        }
+        progressRepository.findById(pid).ifPresent(progressRepository::delete);
     }
 }
