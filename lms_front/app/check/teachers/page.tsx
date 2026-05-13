@@ -13,6 +13,7 @@ interface Teacher {
     loginId: string;
   };
   approved: boolean;
+  approveString: string;
 }
 
 export default function checkTeacher() {
@@ -82,7 +83,7 @@ export default function checkTeacher() {
         <ul>
           {unapprovedTeachers.map((teacher) => (
             <li key={teacher.tid}>
-              {teacher.user?.username || teacher.user?.loginId} - 
+              {teacher.user?.username || teacher.user?.loginId} - {teacher.approveString}
               {!teacher.approved && <button className="btn" onClick={() => handleApprove(teacher.tid)}>승인</button>}
             </li>
           ))}
