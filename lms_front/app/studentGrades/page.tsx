@@ -19,7 +19,7 @@ interface Score {
 }
 
 export default function ClassRequest() {
-  const { user, loading: userLoading } = useUser(); 
+  const { user, loading: userLoading } = useUser();
   const [subject, setSubject] = useState<Subject | null>(null);
   const [scores, setScores] = useState<Score[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +58,7 @@ export default function ClassRequest() {
           const gradeData = await gradeRes.json();
           setScores(gradeData);
         }
-        else{
+        else {
           setSubject(null);
           setScores([]);
         }
@@ -111,84 +111,129 @@ export default function ClassRequest() {
   if (!user) return <p>로그인이 필요한 서비스입니다.</p>;
 
   return (
-    <main style={{ padding: "2rem", maxWidth: "900px", margin: "0 auto" }}>
-      <h1 style={{ marginBottom: "1.5rem", fontSize: "1.8rem", color: "#1e293b" }}>성적 관리</h1>
-
+    <main style={{
+      padding: "2rem",
+      maxWidth: "900px",
+      margin: "0 auto",
+      backgroundColor: "#f2ede3", // 이미지의 전체 배경색
+      minHeight: "100vh",
+      fontFamily: "'Noto Sans KR', sans-serif",
+      borderRadius: "12px",
+      border: "1px solid #d6c2a8"
+    }}>
       {loading ? (
-        <p>데이터를 불러오는 중...</p>
+        <p style={{ textAlign: "center", color: "#8b5e3c" }}>데이터를 불러오는 중...</p>
       ) : !subject ? (
-        /* 과목 없음 스타일 (기존 유지) */
         <div style={{
-          textAlign: "center", padding: "4rem", border: "1px dashed #cbd5e1",
-          borderRadius: "16px", backgroundColor: "#f8fafc", color: "#64748b"
+          textAlign: "center", padding: "4rem", border: "1px solid #d1c1a8",
+          borderRadius: "16px", backgroundColor: "#fdfbf7", color: "#8b5e3c"
         }}>
           <div style={{ fontSize: "3.5rem", marginBottom: "1rem" }}>📚</div>
-          <h2 style={{ color: "#334155", marginBottom: "0.5rem" }}>담당 과목이 없습니다</h2>
-          <p>현재 배정된 강의 정보를 찾을 수 없습니다.</p>
-          <button onClick={() => window.location.href = "/"}
-            style={{ marginTop: "1.5rem", padding: "0.6rem 1.2rem", borderRadius: "8px", cursor: "pointer" }}>
+          <h2 style={{ color: "#8b5e3c", marginBottom: "0.5rem" }}>담당 과목이 없습니다</h2>
+          <button
+            onClick={() => window.location.href = "/"}
+            style={{
+              marginTop: "1.5rem", padding: "0.6rem 1.5rem", borderRadius: "10px",
+              cursor: "pointer", backgroundColor: "#8b5e3c", color: "#fff", border: "none",
+              fontWeight: "bold"
+            }}>
             대시보드로 돌아가기
           </button>
         </div>
       ) : (
-        /* 과목 있음: 카드 형태의 구조 (Structure 추천) */
+        /* 메인 카드 영역: 이미지의 큰 컨테이너 스타일 */
         <div style={{
-          backgroundColor: "#fff", border: "1px solid #e2e8f0",
-          borderRadius: "16px", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)", overflow: "hidden"
+          backgroundColor: "#fdfbf7",
+          border: "1px solid #d1c1a8",
+          borderRadius: "16px",
+          padding: "2rem",
+          boxShadow: "0 4px 15px rgba(0,0,0,0.03)"
         }}>
-          {/* 카드 헤더 */}
-          <div style={{ padding: "1.5rem", borderBottom: "2px solid #f1f5f9", backgroundColor: "#f8fafc" }}>
-            <h2 style={{ margin: 0, fontSize: "1.25rem", color: "#1e293b", display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ fontSize: "1.5rem" }}>📖</span> {subject.name} 성적
-            </h2>
+          <h1 style={{
+            backgroundColor: "#e7d7c1",
+            border: "1px solid #d1c1a8",
+            borderRadius: "50px",
+            padding: "0.8rem 2rem",
+            width: "100%",
+            margin: "0 auto 2.5rem",
+            textAlign: "center", fontSize: "1.8rem", color: "#4a3a2e", fontWeight: "bold"
+          }}>성적 관리</h1>
+          {/* 과목명 헤더: 이미지의 카드 내부 과목명 스타일 */}
+          <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+            <h2 style={{ fontSize: "1.6rem", color: "#333", marginBottom: "0.5rem" }}>{subject.name}</h2>
+            <div style={{ width: "100%", height: "1px", backgroundColor: "#333", margin: "0 auto" }}></div>
           </div>
 
           {/* 성적 리스트 */}
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {scores.map((score: any) => (
               <li key={score.gid} style={{
-                padding: "1rem 1.5rem", borderBottom: "1px solid #f1f5f9",
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-                transition: "background 0.2s"
-              }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#fdfdfd"}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}>
+                padding: "1.2rem 1.5rem",
+                borderBottom: "1px solid #e7d7c1",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                backgroundColor: "white",
+                borderRadius: "12px",
+                marginBottom: "0.8rem",
+                border: "1px solid #eee"
+              }}>
 
-                {/* 학생 이름 영역 */}
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontWeight: "600", color: "#334155" }}>{score.studentName}</span>
+                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span style={{ color: "#8b5e3c", fontSize: "1.1rem" }}>👤</span>
+                  <span style={{ fontWeight: "600", color: "#4a3a2e", fontSize: "1.05rem" }}>{score.studentName}</span>
                 </div>
 
-                {/* 성적 입력/수정 영역 */}
-                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
                   {editingId === score.gid ? (
-                    <div style={{ display: "flex", gap: "8px" }}>
+                    <div style={{ display: "flex", gap: "10px" }}>
                       <input
                         type="text"
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        style={{ width: "70px", padding: "6px", borderRadius: "6px", border: "1px solid #3b82f6", outline: "none" }}
+                        style={{
+                          width: "80px", padding: "8px", borderRadius: "8px",
+                          border: "1px solid #8b5e3c", textAlign: "center", outline: "none"
+                        }}
                         autoFocus
                       />
                       <button onClick={() => handleSave(score.gid)}
-                        style={{ padding: "6px 12px", backgroundColor: "#3b82f6", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer" }}>
+                        style={{
+                          padding: "8px 16px", backgroundColor: "#8b5e3c", color: "#fff",
+                          border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold"
+                        }}>
                         저장
                       </button>
                       <button onClick={() => setEditingId(null)}
-                        style={{ padding: "6px 12px", backgroundColor: "#f1f5f9", border: "none", borderRadius: "6px", cursor: "pointer" }}>
+                        style={{
+                          padding: "8px 16px", backgroundColor: "#ff4d4d", color: "#fff",
+                          border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold"
+                        }}>
                         취소
                       </button>
                     </div>
                   ) : (
-                    <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
                       <span style={{
-                        minWidth: "60px", textAlign: "right", fontWeight: "700",
-                        color: score.score ? "#2563eb" : "#94a3b8"
+                        minWidth: "60px", textAlign: "right", fontWeight: "bold", fontSize: "1.2rem",
+                        color: score.score ? "#333" : "#c4a484"
                       }}>
                         {score.score ?? "미입력"}
                       </span>
                       <button onClick={() => handleEdit(score)}
-                        style={{ padding: "6px 12px", backgroundColor: "#fff", border: "1px solid #e2e8f0", borderRadius: "6px", cursor: "pointer", fontSize: "0.85rem" }}>
+                        style={{
+                          padding: "8px 20px",
+                          backgroundColor: "#8b5e3c", // 이미지의 '신청하기' 버튼색
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          fontSize: "0.9rem",
+                          fontWeight: "bold",
+                          transition: "opacity 0.2s"
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>
                         수정
                       </button>
                     </div>

@@ -29,6 +29,11 @@ public class GradeController {
         return gradeService.findAllGradesByStudent(sid);
     }
 
+    @GetMapping("/subject/{subid}")
+    public List<GradeDTO> getGradesBySubjectId(@PathVariable Integer subid) {
+        return gradeService.findAllGradesBySubject(subid);
+    }
+
     @PostMapping
     public Grade saveGrade(@RequestBody Grade grade) {
         return gradeService.createGrade(grade);

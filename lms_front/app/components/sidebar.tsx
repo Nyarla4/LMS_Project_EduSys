@@ -59,16 +59,26 @@ export default function Sidebar() {
                 {isCollapsed ? <Menu size={24} /> : <ChevronLeft size={24} />}
             </button>
             {user &&
-                <a href='"/mypage"'>
+                <a href='/mypage' style={{ padding: "10px", }}>
                     {user.user ? user.user.username : user.username}{!isCollapsed && user && user.user && user.user.usertype === 'S' && ` (${user.grade}학년)`}
                 </a>
             }
-            <button className='btn btn-light' onClick={user ? handleLogout : handleLogin} style={{ color: '#8b5e3c' }}>{user ? (isCollapsed ? <LogOut size={20} /> : "로그아웃") : (isCollapsed ? <LogIn size={20} /> : "로그인")}</button>
+            <button className='btn' onClick={user ? handleLogout : handleLogin}
+                style={{
+                    color: '#8b5e3c',
+                    backgroundColor: '#e7d7c1',
+                    border: "1px solid #d1c1a8",
+                    borderRadius: "12px",
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#d3c5b1"}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#e7d7c1"}>
+                {user ? (isCollapsed ? <LogOut size={20} /> : "로그아웃") : (isCollapsed ? <LogIn size={20} /> : "로그인")}
+            </button>
             {user &&
                 <nav style={{color: '#8b5e3c'}}>
                     <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit', backgroundColor: '#e7d7c1' }}>
+                            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
                                 <Home size={20} />
                                 {!isCollapsed && <span>홈</span>}
                             </Link>
