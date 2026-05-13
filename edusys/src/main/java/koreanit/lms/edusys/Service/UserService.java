@@ -24,7 +24,7 @@ public class UserService {
         user.setUsername(form.getUsername());
         user.setEmail(form.getEmail());
         user.setPhonenum(form.getPhonenum());
-        user.setUsertype(UserType.valueOf(form.getUsertype().toUpperCase()));
+        user.setUsertype(UserType.S);
         
         user.setPassword(passwordEncoder.encode(form.getPassword()));
         
