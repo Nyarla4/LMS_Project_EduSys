@@ -1,8 +1,11 @@
 package koreanit.lms.edusys.Controller;
 
 import koreanit.lms.edusys.Entity.Grade;
+import koreanit.lms.edusys.Service.GradeDTO;
 import koreanit.lms.edusys.Service.GradeService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -13,24 +16,54 @@ public class GradeController {
 
     private final GradeService gradeService;
 
-    @GetMapping
-    public List<Grade> getAllGrades() {
-        return gradeService.findAllGrades();
+    public ResponseEntity<List<GradeDTO>> getAllGrades() {
+        List<GradeDTO> grades = gradeService.findAllGrades();
+        if (grades == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(grades);
     }
 
-    @GetMapping("/{id}")
-    public Grade getGradeById(@PathVariable Integer id) {
-        return gradeService.findGradeById(id)
-                .orElseThrow(() -> new RuntimeException("Grade not found with id: " + id));
+    @GetMapping("/{gid}")
+    public ResponseEntity<GradeDTO> getGradeById(@PathVariable Integer gid) {
+        GradeDTO grade = gradeService.findGradeById(gid);
+        if (grade == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(grade);
     }
 
-    @PostMapping
-    public Grade saveGrade(@RequestBody Grade grade) {
-        return gradeService.createGrade(grade);
+    @GetMapping("/student/{studentId}")
+    public ResponseEntity<List<GradeDTO>> getGradesByStudentId(@PathVariable Integer studentId) {
+        List<GradeDTO> grades = gradeService.findAllGradesByStudent(studentId);
+        if (grades == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(grades);
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteGrade(@PathVariable Integer id) {
-        gradeService.deleteGrade(id);
+    @GetMapping("/subject/{subjectId}")
+    public ResponseEntity<List<GradeDTO>> getGradesBySubjectId(@PathVariable Integer subjectId) {
+        List<GradeDTO> grades = gradeService.findAllGradesBySubject(subjectId);
+        if (grades == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(grades);
+    }
+
+    @PostMapping("/{gid}")
+    public ResponseEntity<GradeDTO> saveGrade(@PathVariable Integer gid, @RequestBody String score) {
+        Grade savedGrade = gradeService.saveGrade(gid, score);
+
+        if (savedGrade == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(new GradeDTO(savedGrade));
+    }
+
+    @DeleteMapping("/{gid}")
+    public void deleteGrade(@PathVariable Integer gid) {
+        gradeService.deleteGrade(gid);
     }
 }
