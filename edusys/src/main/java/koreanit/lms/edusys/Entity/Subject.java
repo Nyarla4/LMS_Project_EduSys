@@ -31,27 +31,6 @@ public class Subject {
     @JoinColumn(name = "tid")
     private Teacher teacher;
 
-    @OneToMany(mappedBy = "subject")
-    private List<Lesson> lessons;
-
-    @OneToMany(mappedBy = "subject")
-    private List<Course> courses;
-
-    @OneToMany(mappedBy = "subject")
-    private List<Attendance> attendances;
-
-    @OneToMany(mappedBy = "subject")
-    private List<Progress> progresses;
-
-    @OneToMany(mappedBy = "subject")
-    private List<Work> works;
-
-    @OneToMany(mappedBy = "subject")
-    private List<Exam> exams;
-
-    @OneToMany(mappedBy = "subject")
-    private List<Grade> grades;
-
     private Integer capacity;
     private String planFile;
 

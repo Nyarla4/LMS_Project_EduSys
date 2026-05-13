@@ -28,19 +28,4 @@ public class Student {
     @OneToOne
     @JoinColumn(name = "uid")
     private UserEntity user;
-
-    @OneToMany(mappedBy = "student")
-    private List<Course> courses;
-
-    @OneToMany(mappedBy = "student")
-    private List<Attendance> attendances;
-
-    @OneToMany(mappedBy = "student")
-    private List<Progress> progresses;
-
-    @OneToMany(mappedBy = "student")
-    private List<Work> works;
-
-    @OneToMany(mappedBy = "student")
-    private List<Grade> grades;
 }
