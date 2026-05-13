@@ -54,7 +54,9 @@ FLUSH PRIVILEGES;
 ## 통합CSS 구성(페이지 별 사이즈 조절 필요)
 
 ### 1. 전체 영역
+```jsx
 <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10">
+```
 
 ### 2. 내부 전체 영역
 ```jsx
