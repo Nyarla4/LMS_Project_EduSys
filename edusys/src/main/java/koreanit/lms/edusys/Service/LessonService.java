@@ -15,12 +15,30 @@ public class LessonService {
     private final LessonRepository lessonRepository;
 
     public List<Lesson> findAllLessons() {
-        return lessonRepository.findAll();
+        List<Lesson> lessons = lessonRepository.findAll();
+        lessons.forEach(this::calculateAndSetWeek);
+        return lessons;
     }
 
     public Optional<Lesson> findLessonById(Integer id) {
-        if (id == null) return Optional.empty();
-        return lessonRepository.findById(id);
+        return lessonRepository.findById(id).map(lesson -> {
+            calculateAndSetWeek(lesson);
+            return lesson;
+        });
+    }
+
+    /**
+     * 과목 내에서 생성 순서에 따라 주차를 계산하여 설정합니다.
+     */
+    private void calculateAndSetWeek(Lesson lesson) {
+        if (lesson.getSubject() != null) {
+            // 해당 과목에서 현재 lid보다 작거나 같은 데이터의 개수가 곧 "n주차"가 됨
+            long count = lessonRepository.countBySubjectSubidAndLidLessThanEqual(
+                lesson.getSubject().getSubid(), 
+                lesson.getLid()
+            );
+            lesson.setWeek((int) count);
+        }
     }
 
     @Transactional

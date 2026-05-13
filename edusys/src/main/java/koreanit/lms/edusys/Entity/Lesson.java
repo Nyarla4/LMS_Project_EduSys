@@ -5,6 +5,8 @@ import koreanit.lms.edusys.util.VideoUtils;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.temporal.WeekFields;
+import java.util.Locale;
 
 @Entity
 @Getter
@@ -18,7 +20,6 @@ public class Lesson {
     private Integer lid;
 
     private String name;
-    private Integer week;
     private LocalDate date;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -27,6 +28,10 @@ public class Lesson {
 
     // 영상 파일 경로만 저장
     private String fileUrl;
+
+    // DB에는 없지만 API 응답 시 순서대로 계산해서 넣어줄 필드
+    @Transient
+    private Integer week;
 
     // 나머지 정보들은 코드에서 계산
     @Transient

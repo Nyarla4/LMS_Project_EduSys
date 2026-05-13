@@ -55,8 +55,9 @@ public class LessonController {
         Map<String, Object> map = new HashMap<>();
         map.put("lesson", lesson);
         
+        // Progress 리스트에서 현재 Lesson(lid)에 해당하는 진도 정보 찾기
         Progress progress = progresses.stream()
-                .filter(p -> p.getLesson() != null && p.getLesson().getLid().equals(lesson.getLid()))
+                .filter(p -> p.getLesson() != null && lesson.getLid().equals(p.getLesson().getLid()))
                 .findFirst()
                 .orElse(null);
         
@@ -80,7 +81,6 @@ public class LessonController {
     public ResponseEntity<Lesson> uploadVideo(
             @RequestParam("file") MultipartFile file,
             @RequestParam("lessonId") Integer lessonId,
-            @RequestParam("week") Integer week,
             @RequestParam("title") String title) throws IOException {
 
         String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
@@ -96,7 +96,6 @@ public class LessonController {
         Lesson lesson = lessonService.findLessonById(lessonId)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
         
-        lesson.setWeek(week);
         lesson.setName(title);
         lesson.setFileUrl(fileUrl);
 
@@ -108,7 +107,6 @@ public class LessonController {
     public ResponseEntity<Lesson> uploadVideoAsBlob(
             @RequestParam("file") MultipartFile file,
             @RequestParam("lessonId") Integer lessonId,
-            @RequestParam("week") Integer week,
             @RequestParam("title") String title) throws IOException {
 
         String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
@@ -124,7 +122,6 @@ public class LessonController {
         Lesson lesson = lessonService.findLessonById(lessonId)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
 
-        lesson.setWeek(week);
         lesson.setName(title);
         lesson.setFileUrl(fileUrl);
 
