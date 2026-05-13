@@ -28,4 +28,7 @@ public class Teacher {
     private boolean approved; // 승인 여부
 
     private String approveString; // 승인 판단을 위한 데이터
+
+    @OneToMany(mappedBy = "teacher")
+    private List<Subject> subjects;
 }
