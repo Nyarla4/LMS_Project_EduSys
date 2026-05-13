@@ -23,6 +23,11 @@ public class GradeController {
     public GradeDTO getGradeById(@PathVariable Integer id) {
         return gradeService.findGradeById(id);
     }
+    
+    @GetMapping("/student/{sid}")
+    public List<GradeDTO> getGradesByStudentId(@PathVariable Integer sid) {
+        return gradeService.findAllGradesByStudent(sid);
+    }
 
     @PostMapping
     public Grade saveGrade(@RequestBody Grade grade) {
