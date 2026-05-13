@@ -22,7 +22,14 @@ export default function NoticeDetailPage() {
   useEffect(() => {
     const fetchNotices = async () => {
       try {
-        const noticeRes = await fetch("http://localhost:8080/api/notices/all");
+        const noticeRes = await fetch("http://localhost:8080/api/notices/all", {
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          }
+        });
+        if(!noticeRes.ok) {
+          throw new Error("공지사항 로드 실패");
+        }
         const notices = await noticeRes.json();
         setNotices(notices);
 
@@ -43,7 +50,6 @@ export default function NoticeDetailPage() {
     .then((res) => {
       if (!res.ok) throw new Error("공지 상태 변경 실패");
       
-      // ✅ 성공 시: 리액트 상태(notices)를 순회하며 해당 ID의 상태만 업데이트
       setNotices((prevNotices) =>
         prevNotices.map((notice: any) =>
           notice.nid === nid ? { ...notice, active: newState } : notice
@@ -88,10 +94,17 @@ export default function NoticeDetailPage() {
                   )}
                 </li>
               ))}
-            </ul>
+          </ul>
         </div>
       ) : (
         <p>공지가 없습니다.</p>
+      )}
+      {user && user.usertype === "A" && (
+        <div style={{ marginTop: "1.5rem", textAlign: "right" }}>
+          <Link href="/notices/create">
+            <button className={styles.createButton}>공지 작성</button>
+          </Link>
+        </div>
       )}
     </div>
   );

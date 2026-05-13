@@ -16,11 +16,14 @@ export default function SubjectDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 2. user 정보와 tid가 확실히 로드되었을 때만 fetch 실행
     const url = `http://localhost:8080/api/subjects/${suId}`;
       console.log("Fetching subjects from:", url);
 
-      fetch(url)
+      fetch(url, {
+          headers: {
+              "Authorization": `Bearer ${localStorage.getItem("token")}`
+          }
+        })
         .then((res) => res.json())
         .then((data: Subject) => {
           setSubjects(data);

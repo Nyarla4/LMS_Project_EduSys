@@ -1,7 +1,7 @@
 package koreanit.lms.edusys.Service;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -18,23 +18,39 @@ public class GradeService {
     private final StudentService studentService;
     private final SubjectService subjectService;
 
-    public List<Grade> findAllGrades() {
-        return gradeRepository.findAll();
+    public List<GradeDTO> findAllGrades() {
+        List<GradeDTO> gradeDTOs = new ArrayList<>();
+        for (Grade grade : gradeRepository.findAll()) {
+            gradeDTOs.add(new GradeDTO(grade));
+        }
+        return gradeDTOs;
     }
 
-    public List<Grade> findAllGradesByStudent(Integer sid) {
-        return gradeRepository.findByStudentSid(sid);
+    public List<GradeDTO> findAllGradesByStudent(Integer sid) {
+        List<GradeDTO> gradeDTOs = new ArrayList<>();
+        for (Grade grade : gradeRepository.findByStudentSid(sid)) {
+            gradeDTOs.add(new GradeDTO(grade));
+        }
+        return gradeDTOs;
     }
 
-    public List<Grade> findAllGradesBySubject(Integer subid) {
-        return gradeRepository.findBySubjectSubid(subid);
+    public List<GradeDTO> findAllGradesBySubject(Integer subid) {
+        List<GradeDTO> gradeDTOs = new ArrayList<>();
+        for (Grade grade : gradeRepository.findBySubjectSubid(subid)) {
+            gradeDTOs.add(new GradeDTO(grade));
+        }
+        return gradeDTOs;
     }
 
-    public Optional<Grade> findGradeById(Integer gid) {
+    public GradeDTO findGradeById(Integer gid) {
         if(gid == null) {
             return null;
         }
-        return gradeRepository.findById(gid);
+        Grade grade = gradeRepository.findById(gid).orElse(null);
+        if (grade == null) {
+            return null;
+        }
+        return new GradeDTO(grade);
     }
 
     public Grade createGrade(Integer sid, Integer subid) {
@@ -51,6 +67,18 @@ public class GradeService {
             return null;
         }
         return gradeRepository.save(grade);
+    }
+
+    public Grade saveGrade(Integer gid, String score) {
+        if(gid == null) {
+            return null;
+        }
+        Grade existingGrade = gradeRepository.findById(gid).orElse(null);
+        if (existingGrade != null) {
+            existingGrade.setScore(score);
+            return gradeRepository.save(existingGrade);
+        }
+        return null;
     }
 
     public void deleteGrade(Integer gid) {

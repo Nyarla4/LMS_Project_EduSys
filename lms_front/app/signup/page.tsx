@@ -14,6 +14,7 @@ export default function SignupPage() {
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setForm({ ...form, [e.target.name]: e.target.value });
         setErrors(prev => ({ ...prev, [e.target.name]: "" }));
+        console.log(form);
     }
 
     function validate(): boolean {

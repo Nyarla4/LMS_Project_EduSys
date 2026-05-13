@@ -3,11 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 
 const tabs = [
-  "Syllabus",
-  "Attendance",
-  "Video Lectures",
-  "Exam",
-  "Assignments",
+  "강의 계획서",
+  "출석 현황",
+  "동영상 강의",
+  "시험 정보",
+  "과제 목록",
 ] as const;
 
 type Tab = (typeof tabs)[number];
@@ -69,26 +69,29 @@ function TabPanel({
   currentSessionSeconds: number;
   onVideoSelect: (video: Video) => void;
 }) {
-  if (activeTab === "Syllabus") {
+  if (activeTab === "강의 계획서") {
     return (
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-slate-900">강의 계획서 미리보기</h2>
+      <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-[#3d2b1f]">강의 계획서 미리보기</h2>
+            <p className="mt-2 text-sm text-[#7b6346]">과목별 수업 계획서를 내려받거나 바로 확인할 수 있습니다.</p>
+          </div>
           <a 
             href="http://localhost:8080/api/files/syllabus.pdf" 
-            className="text-sm font-medium text-blue-600 hover:underline"
+            className="inline-flex items-center rounded-full bg-[#8d6a44] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7c5935]"
             download
           >
             파일 다운로드
           </a>
         </div>
-        <div className="aspect-[3/4] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-          {/* 브라우저 내장 PDF 뷰어를 사용하여 PDF 파일 렌더링 */}
+        <div className="aspect-[3/4] w-full overflow-hidden rounded-[28px] border border-[#f1e1c4] bg-[#fbf1e8]">
           <iframe
             src="http://localhost:8080/api/files/syllabus.pdf"
             width="100%"
             height="100%"
             title="Syllabus PDF Viewer"
+            className="h-full w-full"
           >
             이 브라우저는 iframe을 지원하지 않습니다.
           </iframe>
@@ -97,25 +100,25 @@ function TabPanel({
     );
   }
 
-  if (activeTab === "Attendance") {
+  if (activeTab === "출석 현황") {
     return (
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">출석 현황</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-left text-sm text-slate-700">
-            <thead className="bg-slate-100 text-slate-700">
+      <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
+        <h2 className="mb-4 text-2xl font-semibold text-[#3d2b1f]">출석 현황</h2>
+        <div className="overflow-x-auto rounded-[28px] border border-[#f0debe] bg-white shadow-sm">
+          <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
+            <thead className="bg-[#f7ecd9] text-[#6d5b46]">
               <tr>
-                <th className="px-4 py-3">날짜</th>
-                <th className="px-4 py-3">상태</th>
-                <th className="px-4 py-3">비고</th>
+                <th className="px-4 py-4">날짜</th>
+                <th className="px-4 py-4">상태</th>
+                <th className="px-4 py-4">비고</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 bg-white">
+            <tbody className="divide-y divide-[#e9d7b0] bg-white">
               {attendanceData.map((item) => (
-                <tr key={item.date} className="hover:bg-slate-50">
-                  <td className="px-4 py-3">{item.date}</td>
-                  <td className="px-4 py-3">{item.status}</td>
-                  <td className="px-4 py-3">{item.note}</td>
+                <tr key={item.date} className="hover:bg-[#fff6eb]">
+                  <td className="px-4 py-4">{item.date}</td>
+                  <td className="px-4 py-4">{item.status}</td>
+                  <td className="px-4 py-4">{item.note}</td>
                 </tr>
               ))}
             </tbody>
@@ -125,14 +128,13 @@ function TabPanel({
     );
   }
 
-  if (activeTab === "Video Lectures") {
+  if (activeTab === "동영상 강의") {
     return (
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">동영상 강의</h2>
+      <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
+        <h2 className="mb-4 text-2xl font-semibold text-[#3d2b1f]">동영상 강의</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {videoList.length > 0 ? (
             videoList.map((video) => {
-              // 기존 저장된 시간 + 현재 세션에서 시청 중인 시간 합산
               const savedTime = progressMap[video.id] || 0;
               const sessionTime = (activeVideoId === video.id) ? currentSessionSeconds : 0;
               const totalWatched = savedTime + sessionTime;
@@ -143,28 +145,30 @@ function TabPanel({
               return (
                 <article 
                   key={video.id} 
-                  className="cursor-pointer rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:bg-slate-100"
+                  className="cursor-pointer rounded-[28px] border border-[#f0debe] bg-[#fff8ef] p-5 transition duration-200 hover:border-[#d6b77a] hover:bg-[#f6e8d6]"
                   onClick={() => onVideoSelect(video)}
                 >
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h3 className="text-base font-semibold text-slate-900">{video.title}</h3>
-                        <p className="mt-1 text-sm text-slate-600">{video.week}주차 학습 영상</p>
+                        <h3 className="text-base font-semibold text-[#3d2b1f]">{video.title}</h3>
+                        <p className="mt-2 text-sm text-[#7b6346]">{video.week}주차 학습 영상</p>
                       </div>
-                      <span className="text-xs font-bold text-blue-600">{percentage}%</span>
+                      <span className="rounded-full bg-[#e8d1a5] px-3 py-1 text-xs font-bold text-[#5c4326]">{percentage}%</span>
                     </div>
-                    {/* 진행 바 UI */}
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                      <div className="h-full bg-blue-500 transition-all" style={{ width: `${percentage}%` }}></div>
+                    <div className="space-y-2">
+                      <div className="h-3 overflow-hidden rounded-full bg-[#eedfc2]">
+                        <div className="h-full rounded-full bg-[#8d6a44] transition-all" style={{ width: `${percentage}%` }} />
+                      </div>
+                      <p className="text-xs text-[#7b6346]">총 {video.duration}초 중 {Math.floor((totalWatched/60))}분 {totalWatched % 60}초 시청</p>
                     </div>
                   </div>
                 </article>
               );
             })
           ) : (
-            <p className="col-span-2 py-8 text-center text-slate-500">
-              현재 등록된 동영상 강의가 없습니다. (백엔드 데이터를 확인해주세요)
+            <p className="col-span-2 py-8 text-center text-[#7b6346]">
+              현재 등록된 동영상 강의가 없습니다.
             </p>
           )}
         </div>
@@ -172,27 +176,27 @@ function TabPanel({
     );
   }
 
-  if (activeTab === "Exam") {
+  if (activeTab === "시험 정보") {
     return (
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">시험 정보</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-left text-sm text-slate-700">
-            <thead className="bg-slate-100 text-slate-700">
+      <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
+        <h2 className="mb-4 text-2xl font-semibold text-[#3d2b1f]">시험 정보</h2>
+        <div className="overflow-x-auto rounded-[28px] border border-[#f0debe] bg-white shadow-sm">
+          <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
+            <thead className="bg-[#f7ecd9] text-[#6d5b46]">
               <tr>
-                <th className="px-4 py-3">시험명</th>
-                <th className="px-4 py-3">일정</th>
-                <th className="px-4 py-3">상태</th>
-                <th className="px-4 py-3">점수</th>
+                <th className="px-4 py-4">시험명</th>
+                <th className="px-4 py-4">일정</th>
+                <th className="px-4 py-4">상태</th>
+                <th className="px-4 py-4">점수</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 bg-white">
+            <tbody className="divide-y divide-[#e9d7b0] bg-white">
               {exams.map((exam) => (
-                <tr key={exam.name} className="hover:bg-slate-50">
-                  <td className="px-4 py-3">{exam.name}</td>
-                  <td className="px-4 py-3">{exam.date}</td>
-                  <td className="px-4 py-3">{exam.status}</td>
-                  <td className="px-4 py-3">{exam.score}</td>
+                <tr key={exam.name} className="hover:bg-[#fff6eb]">
+                  <td className="px-4 py-4">{exam.name}</td>
+                  <td className="px-4 py-4">{exam.date}</td>
+                  <td className="px-4 py-4">{exam.status}</td>
+                  <td className="px-4 py-4">{exam.score}</td>
                 </tr>
               ))}
             </tbody>
@@ -203,23 +207,23 @@ function TabPanel({
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-4 text-xl font-semibold text-slate-900">과제 목록</h2>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-200 text-left text-sm text-slate-700">
-          <thead className="bg-slate-100 text-slate-700">
+    <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
+      <h2 className="mb-4 text-2xl font-semibold text-[#3d2b1f]">과제 목록</h2>
+      <div className="overflow-x-auto rounded-[28px] border border-[#f0debe] bg-white shadow-sm">
+        <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
+          <thead className="bg-[#f7ecd9] text-[#6d5b46]">
             <tr>
-              <th className="px-4 py-3">과제명</th>
-              <th className="px-4 py-3">마감일</th>
-              <th className="px-4 py-3">상태</th>
+              <th className="px-4 py-4">과제명</th>
+              <th className="px-4 py-4">마감일</th>
+              <th className="px-4 py-4">상태</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 bg-white">
+          <tbody className="divide-y divide-[#e9d7b0] bg-white">
             {assignments.map((assignment) => (
-              <tr key={assignment.title} className="hover:bg-slate-50">
-                <td className="px-4 py-3">{assignment.title}</td>
-                <td className="px-4 py-3">{assignment.dueDate}</td>
-                <td className="px-4 py-3">{assignment.status}</td>
+              <tr key={assignment.title} className="hover:bg-[#fff6eb]">
+                <td className="px-4 py-4">{assignment.title}</td>
+                <td className="px-4 py-4">{assignment.dueDate}</td>
+                <td className="px-4 py-4">{assignment.status}</td>
               </tr>
             ))}
           </tbody>
@@ -230,7 +234,7 @@ function TabPanel({
 }
 
 export default function StudentDashboard() {
-  const [activeTab, setActiveTab] = useState<Tab>("Syllabus");
+  const [activeTab, setActiveTab] = useState<Tab>("강의 계획서");
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [attendanceData, setAttendanceData] = useState<Attendance[]>([]);
   const [exams, setExams] = useState<Exam[]>([]);
@@ -260,7 +264,7 @@ export default function StudentDashboard() {
 
         const [lessonRes, vidRes, attRes, examRes, assignRes, progRes] = await Promise.all([
           fetch(`${API_BASE}/lessons`, { headers }),
-          fetch(`${API_BASE}/lesson-videos`, { headers }),
+          fetch(`${API_BASE}/lessons`, { headers }), // LessonVideo가 통합되었으므로 lessons에서 가져옴
           fetch(`${API_BASE}/attendances`, { headers }), 
           fetch(`${API_BASE}/exams`, { headers }),        
           fetch(`${API_BASE}/assignments`, { headers }),
@@ -350,22 +354,24 @@ export default function StudentDashboard() {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-100 px-4 py-8 text-slate-900 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <section className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <main className="min-h-screen bg-[#f3e9d6] px-4 py-8 text-slate-900 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-7xl">
+        <section className="rounded-[40px] border border-[#dfc9a2] bg-[#fef7ec] p-8 shadow-[0_30px_70px_rgba(95,69,34,0.08)]">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-slate-500">학생 LMS</p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">강의 학습 관리</h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                강의 계획서, 출석, 동영상 강의, 시험, 과제를 한 곳에서 확인할 수 있도록 구성된 학생용 학습 대시보드입니다.
+              <p className="text-sm uppercase tracking-[0.28em] text-[#8d6a44]">학생 LMS</p>
+              <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[#3d2b1f]">강의 학습 대시보드</h1>
+              <p className="mt-3 max-w-2xl text-base leading-8 text-[#6d5b46]">
+                수강 현황, 출석, 동영상 강의, 시험, 과제를 한 곳에서 확인하고 학습 흐름을 관리하세요.
               </p>
               {error && (
-                <p className="mt-2 text-sm text-red-600">백엔드 연결 오류: {error}</p>
+                <p className="mt-4 rounded-3xl bg-[#ffe6e1] px-4 py-3 text-sm text-[#9f2b2b] shadow-sm">
+                  백엔드 연결 오류: {error}
+                </p>
               )}
             </div>
-            <div className="rounded-3xl bg-slate-50 p-4 text-sm leading-6 text-slate-700 shadow-sm">
-              아래 탭을 눌러 학습 요소를 전환하세요.
+            <div className="rounded-[30px] border border-[#ecd6b7] bg-[#fff5e4] px-5 py-4 text-sm leading-6 text-[#7c6445] shadow-sm">
+              탭을 눌러 학습 요소를 빠르게 전환할 수 있습니다.
             </div>
           </div>
 
@@ -374,10 +380,10 @@ export default function StudentDashboard() {
               <button
                 key={tab}
                 type="button"
-                className={`rounded-full px-5 py-3 text-sm font-semibold transition ${
+                className={`rounded-full px-5 py-3 text-sm font-semibold transition duration-200 ${
                   activeTab === tab
-                    ? "bg-slate-950 text-white shadow"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    ? "bg-[#8d6a44] text-white shadow-[0_10px_25px_rgba(141,106,68,0.24)]"
+                    : "bg-[#f3e1bf] text-[#5c4326] hover:bg-[#e7cd9f]"
                 }`}
                 onClick={() => setActiveTab(tab)}
               >
@@ -387,16 +393,48 @@ export default function StudentDashboard() {
           </div>
         </section>
 
+        <section className="mt-6 rounded-[40px] border border-[#dfc9a2] bg-[#fff7ec] p-7 shadow-[0_30px_60px_rgba(95,69,34,0.08)]">
+          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.25em] text-[#8d6a44]">대시보드</p>
+              <h2 className="mt-2 text-3xl font-semibold text-[#3d2b1f]">학습 정보</h2>
+            </div>
+            <div className="rounded-full bg-[#f3e1bf] px-4 py-2 text-sm font-medium text-[#5c4326]">
+              현재 선택된 탭: {activeTab}
+            </div>
+          </div>
+          <TabPanel 
+            activeTab={activeTab} 
+            lessons={lessons}
+            attendanceData={attendanceData}
+            exams={exams}
+            assignments={assignments}
+            videoList={videoList}
+            progressMap={progressMap}
+            activeVideoId={selectedVideo?.id}
+            currentSessionSeconds={sessionWatched}
+            onVideoSelect={handleVideoSelect}
+          />
+        </section>
+
         {selectedVideo && (
-          <section className="rounded-3xl border border-slate-200 bg-black p-4 shadow-sm">
-            <div className="mb-4 flex items-center justify-between text-white">
-              <h2 className="text-lg font-semibold">{selectedVideo.title} 재생 중</h2>
-              <button onClick={() => { saveVideoProgress(); setSelectedVideo(null); }} className="text-sm opacity-80 hover:opacity-100">닫기</button>
+          <section className="mt-6 rounded-[36px] border border-[#d7c2a1] bg-[#fff8ed] p-6 shadow-[0_30px_60px_rgba(95,69,34,0.12)]">
+            <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-[0.25em] text-[#8c6f4d]">재생 중</p>
+                <h2 className="mt-2 text-2xl font-semibold text-[#3d2b1f]">{selectedVideo.title}</h2>
+              </div>
+              <button
+                onClick={() => { saveVideoProgress(); setSelectedVideo(null); }}
+                className="rounded-full bg-[#8d6a44] px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-[#7c5935]"
+              >
+                닫기
+              </button>
             </div>
             <video
               ref={videoRef}
               controls
-              className="w-full rounded-xl"
+              className="w-full rounded-[24px] bg-black"
               onPlay={() => setIsPlaying(true)}
               onPause={() => {
                 setIsPlaying(false);
@@ -412,19 +450,6 @@ export default function StudentDashboard() {
             </video>
           </section>
         )}
-
-        <TabPanel 
-          activeTab={activeTab} 
-          lessons={lessons}
-          attendanceData={attendanceData}
-          exams={exams}
-          assignments={assignments}
-          videoList={videoList}
-          progressMap={progressMap}
-          activeVideoId={selectedVideo?.id}
-          currentSessionSeconds={sessionWatched}
-          onVideoSelect={handleVideoSelect}
-        />
       </div>
     </main>
   );

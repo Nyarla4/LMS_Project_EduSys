@@ -1,6 +1,7 @@
 package koreanit.lms.edusys.Controller;
 
 import koreanit.lms.edusys.Entity.Grade;
+import koreanit.lms.edusys.Service.GradeDTO;
 import koreanit.lms.edusys.Service.GradeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -14,14 +15,18 @@ public class GradeController {
     private final GradeService gradeService;
 
     @GetMapping
-    public List<Grade> getAllGrades() {
+    public List<GradeDTO> getAllGrades() {
         return gradeService.findAllGrades();
     }
 
     @GetMapping("/{id}")
-    public Grade getGradeById(@PathVariable Integer id) {
-        return gradeService.findGradeById(id)
-                .orElseThrow(() -> new RuntimeException("Grade not found with id: " + id));
+    public GradeDTO getGradeById(@PathVariable Integer id) {
+        return gradeService.findGradeById(id);
+    }
+    
+    @GetMapping("/student/{sid}")
+    public List<GradeDTO> getGradesByStudentId(@PathVariable Integer sid) {
+        return gradeService.findAllGradesByStudent(sid);
     }
 
     @PostMapping

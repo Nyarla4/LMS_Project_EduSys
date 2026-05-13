@@ -10,7 +10,9 @@ import {
     PlayCircle, 
     BarChart3, 
     Bell, 
-    Users 
+    Users, 
+    LogIn,
+    LogOut
 } from 'lucide-react';
 import { useUser } from '../userContext';
 
@@ -23,6 +25,9 @@ export default function Sidebar() {
 
     const { user } = useUser();
 
+    const handleLogin = () => {
+        window.location.href = "/login";
+    };
     const handleLogout = () => {
         localStorage.clear();
         window.location.href = "/";
@@ -30,38 +35,40 @@ export default function Sidebar() {
 
     return (
         <aside style={{
-            width: isCollapsed ? '80px' : '250px',
+            width: isCollapsed ? '130px' : '200px',
             height: '100vh',
-            backgroundColor: '#cecece',
+            backgroundColor: '#f5f1e8',
             padding: '1rem',
-            borderRight: '1px solid #ddd',
+            borderRight: '1px solid #8b5e3c',
             transition: 'width 0.3s ease',
             position: 'relative',
             overflow: 'hidden',
         }}>
-            <a href={user ? "/mypage" : "/login"}>
-                {user ? (user.user ? user.user.username : user.username) : "로그인"} {!isCollapsed && user && user.user && user.user.usertype === 'S' && ` (${user.grade}학년)`}
-            </a>
-            {user && <button className='btn' onClick={handleLogout} style={{ marginLeft: '1rem' }}>로그아웃</button>}
             <button
                 onClick={toggleSidebar}
                 style={{
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
-                    marginBottom: '2rem',
-                    display: 'flex',
                     alignItems: 'center',
-                    justifyContent: isCollapsed ? 'center' : 'flex-end',
-                    width: '100%'
+                    color: '#8b5e3c',
+                    display: 'flex',
+                    width: '100%',
+                    justifyContent: isCollapsed ? 'flex-start' : 'flex-end'
                 }}>
                 {isCollapsed ? <Menu size={24} /> : <ChevronLeft size={24} />}
             </button>
             {user &&
-                <nav>
+                <a href='"/mypage"'>
+                    {user.user ? user.user.username : user.username}{!isCollapsed && user && user.user && user.user.usertype === 'S' && ` (${user.grade}학년)`}
+                </a>
+            }
+            <button className='btn btn-light' onClick={user ? handleLogout : handleLogin} style={{ color: '#8b5e3c' }}>{user ? (isCollapsed ? <LogOut size={20} /> : "로그아웃") : (isCollapsed ? <LogIn size={20} /> : "로그인")}</button>
+            {user &&
+                <nav style={{color: '#8b5e3c'}}>
                     <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit', backgroundColor: '#e7d7c1' }}>
                                 <Home size={20} />
                                 {!isCollapsed && <span>홈</span>}
                             </Link>
@@ -78,7 +85,7 @@ export default function Sidebar() {
                         }
                         {user.user &&
                         <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Link href={user.user.usertype === 'T' ? "/myClasses" : user.user.usertype === 'S' ? "/enrolledClasses" : "#"} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                            <Link href={user.user.usertype === 'T' ? "/myClasses" : user.user.usertype === 'S' ? "/student" : "#"} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
                                 <PlayCircle size={20} />
                                 {!isCollapsed && <span>강의 관리</span>}
                             </Link>
@@ -95,7 +102,23 @@ export default function Sidebar() {
                             <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <Link href="/notices" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
                                     <Bell size={20} />
-                                    {!isCollapsed && <span>공지사항</span>}
+                                    {!isCollapsed && <span>공지 사항</span>}
+                                </Link>
+                            </li>
+                        }
+                        {user.usertype === 'A' &&
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <Link href="/check/classes" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                                    <PlayCircle size={20} />
+                                    {!isCollapsed && <span>강의 검토</span>}
+                                </Link>
+                            </li>
+                        }
+                        {user.usertype === 'A' &&
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <Link href="/check/teachers" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                                    <Users size={20} />
+                                    {!isCollapsed && <span>교사 인증</span>}
                                 </Link>
                             </li>
                         }

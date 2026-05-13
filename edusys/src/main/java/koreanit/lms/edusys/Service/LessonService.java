@@ -1,62 +1,56 @@
 package koreanit.lms.edusys.Service;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.stereotype.Service;
-
 import koreanit.lms.edusys.Entity.Lesson;
-import koreanit.lms.edusys.Entity.Subject;
 import koreanit.lms.edusys.Repository.LessonRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class LessonService {
     private final LessonRepository lessonRepository;
-    private final SubjectService subjectService;
 
     public List<Lesson> findAllLessons() {
-        return lessonRepository.findAll();
+        List<Lesson> lessons = lessonRepository.findAll();
+        lessons.forEach(this::calculateAndSetWeek);
+        return lessons;
     }
 
-    public List<Lesson> findAllLessonsBySubject(Integer subid) {
-        return lessonRepository.findBySubjectSubid(subid);
+    public Optional<Lesson> findLessonById(Integer id) {
+        return lessonRepository.findById(id).map(lesson -> {
+            calculateAndSetWeek(lesson);
+            return lesson;
+        });
     }
 
-    public Optional<Lesson> findLessonById(Integer lid) {
-        if(lid == null) {
-            return null;
+    /**
+     * 과목 내에서 생성 순서에 따라 주차를 계산하여 설정합니다.
+     */
+    private void calculateAndSetWeek(Lesson lesson) {
+        if (lesson.getSubject() != null) {
+            // 해당 과목에서 현재 lid보다 작거나 같은 데이터의 개수가 곧 "n주차"가 됨
+            long count = lessonRepository.countBySubjectSubidAndLidLessThanEqual(
+                lesson.getSubject().getSubid(), 
+                lesson.getLid()
+            );
+            lesson.setWeek((int) count);
         }
-        return lessonRepository.findById(lid);
     }
 
-    public Lesson createLesson(Integer subid, String name, String file) {
-        Lesson lesson = new Lesson();
-        Subject subject = subjectService.findSubjectById(subid);
-        if(subject == null) {
-            return null;
-        }
-        lesson.setSubject(subject);
-        lesson.setName(name);
-        lesson.setFile(file);
-        return lessonRepository.save(lesson);
-    }
-    
+    @Transactional
     public Lesson createLesson(Lesson lesson) {
-        if(lesson == null) {
-            return null;
-        }
+        if (lesson == null) return null;
         return lessonRepository.save(lesson);
     }
 
-    public void deleteLesson(Integer lid) {
-        if(lid == null) {
-            return;
-        }
-        Lesson existingLesson = lessonRepository.findById(lid).orElse(null);
-        if (existingLesson != null) {
-            lessonRepository.delete(existingLesson);
+    @Transactional
+    public void deleteLesson(Integer id) {
+        if (id != null && lessonRepository.existsById(id)) {
+            lessonRepository.deleteById(id);
         }
     }
 }

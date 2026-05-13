@@ -3,6 +3,7 @@ package koreanit.lms.edusys.Service;
 import org.springframework.stereotype.Service;
 
 import koreanit.lms.edusys.Entity.Student;
+import koreanit.lms.edusys.Entity.UserEntity;
 import koreanit.lms.edusys.Repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -25,5 +26,13 @@ public class StudentService {
             return null;
         }
         return studentRepository.findById(sid).orElse(null);
+    }
+
+    public Student create(UserEntity user) {
+        Student student = new Student();
+        student.setUser(user);
+        student.setGrade(1); // 기본 학년 설정
+        student.setMajor(null);
+        return studentRepository.save(student);
     }
 }

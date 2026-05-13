@@ -62,4 +62,11 @@ public class NoticeService {
         existingNotice.setActive(active);
         return noticeRepository.save(existingNotice);
     }
+
+    public Notice createNotice(Notice notice) {
+        if(notice == null) {
+            return null;
+        }
+        return noticeRepository.save(notice);
+    }
 }

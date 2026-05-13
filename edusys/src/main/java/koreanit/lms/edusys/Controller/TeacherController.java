@@ -1,5 +1,7 @@
 package koreanit.lms.edusys.Controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 
 import koreanit.lms.edusys.Entity.Teacher;
@@ -9,8 +11,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 
 @RestController
 @RequestMapping("/api/teachers")
@@ -28,5 +32,20 @@ public class TeacherController {
         }
 
         return ResponseEntity.ok(teacher); // 데이터와 함께 200 OK 전송
+    }
+
+    @GetMapping("/unApproved")
+    public ResponseEntity<List<Teacher>> getUnapprovedTeachers() {
+        List<Teacher> unapprovedTeachers = teacherService.findUnapprovedTeachers();
+        return ResponseEntity.ok(unapprovedTeachers);
+    }
+    
+    @PostMapping("/approve/{tid}")
+    public ResponseEntity<Teacher> approveTeacher(@PathVariable Long tid) {
+        Teacher teacher = teacherService.approveTeacher(tid);
+        if (teacher == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(teacher);
     }
 }
