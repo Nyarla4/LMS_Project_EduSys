@@ -25,7 +25,7 @@ export default function SubjectDetailPage() {
           }
         })
         .then((res) => res.json())
-        .then((data) => {
+        .then((data: Subject) => {
           setSubjects(data);
           setLoading(false);
         })
@@ -33,7 +33,7 @@ export default function SubjectDetailPage() {
           console.error("과목 로드 실패:", err);
           setLoading(false);
         });
-  }, []);
+  }, [suId]);
 
   return (
     <div>
