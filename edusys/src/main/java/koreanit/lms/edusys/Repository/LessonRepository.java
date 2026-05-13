@@ -1,11 +1,11 @@
 package koreanit.lms.edusys.Repository;
 
+import koreanit.lms.edusys.Entity.Lesson;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
 import java.util.List;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import koreanit.lms.edusys.Entity.Lesson;
-
+@Repository
 public interface LessonRepository extends JpaRepository<Lesson, Integer> {
-    List<Lesson> findBySubjectSubid(Integer subid);
 }

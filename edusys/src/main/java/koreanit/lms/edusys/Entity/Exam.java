@@ -24,7 +24,8 @@ public class Exam {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer eid;
     
-    private String name;    
+    private String name;
+    private String grade;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subid")
