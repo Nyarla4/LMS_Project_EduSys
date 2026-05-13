@@ -78,7 +78,7 @@ export default function Sidebar() {
                         }
                         {user.user &&
                         <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Link href={user.user.usertype === 'T' ? "/myClasses" : user.user.usertype === 'S' ? "/enrolledClasses" : "#"} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                            <Link href={user.user.usertype === 'T' ? "/myClasses" : user.user.usertype === 'S' ? "/student" : "#"} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
                                 <PlayCircle size={20} />
                                 {!isCollapsed && <span>강의 관리</span>}
                             </Link>
@@ -95,7 +95,23 @@ export default function Sidebar() {
                             <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <Link href="/notices" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
                                     <Bell size={20} />
-                                    {!isCollapsed && <span>공지사항</span>}
+                                    {!isCollapsed && <span>공지 사항</span>}
+                                </Link>
+                            </li>
+                        }
+                        {user.usertype === 'A' &&
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <Link href="/check/classes" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                                    <PlayCircle size={20} />
+                                    {!isCollapsed && <span>강의 검토</span>}
+                                </Link>
+                            </li>
+                        }
+                        {user.usertype === 'A' &&
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <Link href="/check/teachers" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                                    <Users size={20} />
+                                    {!isCollapsed && <span>교사 인증</span>}
                                 </Link>
                             </li>
                         }

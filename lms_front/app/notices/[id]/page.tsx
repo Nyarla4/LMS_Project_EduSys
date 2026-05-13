@@ -113,7 +113,8 @@ export default function NoticeDetailPage() {
           {user?.usertype === "A" && (
             <button onClick={() => setIsEditing(true)}>수정하기</button>
           )}
-          <button onClick={() => router.back()}>목록으로</button>
+          <button onClick={() => router.push("/notices")}>목록으로</button>
+          <button onClick={() => router.back()}>뒤로</button>
         </div>
       )}
     </main>
