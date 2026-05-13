@@ -41,31 +41,31 @@ export default function Page() {
 
   return (
     // 전체 페이지 영역 
-  <div className="min-h-screen bg-zinc-100 flex justify-center py-10">
+  <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10">
     {/* 내부 div 전체 영역 */}
     <div className="w-full max-w-6xl flex gap-6 mt-10 px-10">
         
         {/* 수강신청 영역 */}
-        <div className="flex-1 bg-white rounded-2xl shadow-lg p-4">
-            <h1 className="text-3xl font-bold text-center mb-4 bg-gray-200 rounded-full py-2">수강신청</h1>
+        <div className="flex-1 bg-[#fffaf3] border-[#d6c2a8] border-2 rounded-2xl shadow-md p-4">
+            <p className="text-4xl font-bold text-center mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">수강신청</p>
             <p className="text-xl font-bold">개설과목</p>
             <div className="mt-2">
                 <button type="button"
                     onClick={() => setSelectedCategory("전체")}
-                    className={`px-3 py-1 rounded text-sm ${selectedCategory === "전체" ? "bg-black text-white" : "bg-gray-300"}`}>전체</button>
+                    className={`px-3 py-1 rounded text-sm border-[#b89b7a] border-1 font-bold ${selectedCategory === "전체" ? "bg-[#8b5e3c] text-white" : "bg-[#dbc7b1] text-[#5c4033]"}`}>전체</button>
                 <button type="button" 
                     onClick={() => setSelectedCategory("이과")}
-                    className={`px-3 py-1 rounded text-sm ml-2 ${selectedCategory === "이과" ? "bg-black text-white" : "bg-gray-300"}`}>이과</button>
+                    className={`px-3 py-1 rounded text-sm ml-2 border-[#b89b7a] border-1 font-bold ${selectedCategory === "이과" ? "bg-[#8b5e3c] text-white" : "bg-[#dbc7b1] text-[#5c4033]"}`}>이과</button>
                 <button type="button" 
                     onClick={() => setSelectedCategory("문과")}
-                    className={`px-3 py-1 rounded text-sm ml-2 ${selectedCategory === "문과" ? "bg-black text-white" : "bg-gray-300"}`}>문과</button>
+                    className={`px-3 py-1 rounded text-sm ml-2 border-[#b89b7a] border-1 font-bold ${selectedCategory === "문과" ? "bg-[#8b5e3c] text-white" : "bg-[#dbc7b1] text-[#5c4033]"}`}>문과</button>
             </div>
 
             {/* 수강신청 카드 */}
             <div className="mt-4 grid grid-cols-2 gap-4">
                 {cards.map((card) => (
-                <div key={card.id} className="bg-gray-50 border rounded-lg p-3 shadow-sm font-bold">
-                    <h2 className="text-lg text-center border-b mb-2">{card.title}</h2>
+                <div key={card.id} className="bg-[#fcf7f0] border-[#b89b7a] border-1 rounded-lg p-3 shadow-sm font-bold">
+                    <p className="text-2xl text-center border-b mb-2">{card.title}</p>
                     <p className="text-gray-600 h-20 mb-4">{card.description}</p>
                     <div className="flex justify-between text-sm">
                     <p>📖 김선생</p>
@@ -74,7 +74,7 @@ export default function Page() {
                     <p className="text-sm border-b mb-2">👥 5/32</p>
                     <button type="button" 
                         onClick={() => handleApply(card)}
-                        className="bg-black text-white px-3 py-1 rounded text-sm mx-auto block mt-2"
+                        className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-3 py-2 rounded text-lg mx-auto block mt-2"
                         >신청하기</button>
                 </div>
                 ))}
@@ -82,14 +82,14 @@ export default function Page() {
         </div>
         
         {/* 신청현황 영역 */}
-        <div className="w-64 bg-white rounded-2xl shadow-lg p-4">
-        <h1 className="text-lg text-center bg-gray-200 rounded-full mb-4 py-1">
+        <div className="w-64 bg-[#fffaf3] border-[#d6c2a8] border-2 rounded-2xl shadow-md p-4">
+        <p className="text-xl font-bold text-center bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full mb-4 py-1">
             신청현황
-        </h1>
+        </p>
 
         {appliedCards.map((card) => (
-            <div key={card.id} className="border rounded-lg p-3 mb-3 text-sm font-semibold">
-                <h2 className="text-xl  text-center mb-2 border-b">{card.title}</h2>
+            <div key={card.id} className="bg-[#fcf7f0] border-[#b89b7a] border-1 rounded-lg p-3 mb-3 text-sm font-semibold">
+                <p className="text-xl  text-center mb-2 border-b">{card.title}</p>
                 <p className="text-sm">👥 5/32</p>
                 <div className="flex justify-between text-sm mb-1">
                     <p>📖 김선생</p>
@@ -101,6 +101,12 @@ export default function Page() {
                     >취소</button>
             </div>
         ))}
+
+        {appliedCards.length === 0 && (
+        <p className="text-sm text-[#8b735f] text-center mt-6">
+            신청한 과목이 없습니다.
+        </p>
+        )}
         </div>
     </div>
   </div>
