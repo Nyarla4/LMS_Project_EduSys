@@ -2,6 +2,7 @@ package koreanit.lms.edusys.Controller;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.BindingResult;
@@ -21,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/user")
@@ -34,8 +34,8 @@ public class UserController {
     private final StudentService studentService;
     private final TeacherService teacherService;
 
-    @PostMapping("/signup")
-    public ResponseEntity<?> signup(@Valid @RequestBody UserCreateForm userCreateForm, BindingResult bindingResult) {
+    @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> signup(@Valid @ModelAttribute UserCreateForm userCreateForm, BindingResult bindingResult) {
         Map<String, String> response = new HashMap<>();
 
         if (bindingResult.hasErrors()) {
@@ -47,9 +47,15 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
+        if (userCreateForm.getProofFile() == null || userCreateForm.getProofFile().isEmpty()) {
+            response.put("message", "증빙서류를 반드시 첨부해야 합니다.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
         try {
             UserEntity user = userService.create(userCreateForm);
             response.put("message", "회원가입이 완료되었습니다.");
+            
             switch (userCreateForm.getUsertype()) {
                 case "S":
                     studentService.create(user);
@@ -65,7 +71,7 @@ public class UserController {
             response.put("message", "이미 등록된 사용자 아이디 또는 이메일입니다.");
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         } catch (Exception e) {
-            response.put("message", "회원가입 중 오류가 발생했습니다.");
+            response.put("message", "회원가입 중 오류가 발생했습니다: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -103,5 +109,4 @@ public class UserController {
         List<UserDTO> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
-    
 }

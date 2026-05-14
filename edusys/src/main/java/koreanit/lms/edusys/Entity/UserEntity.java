@@ -36,6 +36,9 @@ public class UserEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_type", nullable = false, length = 1, columnDefinition = "CHAR(1) DEFAULT 'S'") 
-    private UserType usertype = UserType.S; 
-    
+    private UserType usertype = UserType.S;
+
+    @Column(name = "proof_file_path", length = 255)
+    private String proofFilePath;
+
 }
