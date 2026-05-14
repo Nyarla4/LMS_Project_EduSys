@@ -92,6 +92,12 @@ export default function Sidebar() {
                                 text: "성적 조회",
                                 show: !!user.user
                             },
+                            {
+                                href: user.user?.usertype === 'T' || user.user?.usertype === 'S' ? "/counseling" : "#",
+                                icon: <BarChart3 size={24} />,
+                                text: "상담 관리",
+                                show: !!user.user
+                            },
                             /* 관리자 메뉴 */
                             { href: "/notices", icon: <Bell size={24} />, text: "공지 사항", show: user.usertype === 'A' },
                             { href: "/check/classes", icon: <PlayCircle size={24} />, text: "강의 검토", show: user.usertype === 'A' },

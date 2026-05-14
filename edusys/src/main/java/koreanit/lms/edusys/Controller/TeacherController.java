@@ -39,6 +39,12 @@ public class TeacherController {
         List<Teacher> unapprovedTeachers = teacherService.findUnapprovedTeachers();
         return ResponseEntity.ok(unapprovedTeachers);
     }
+
+    @GetMapping("/approved")
+    public ResponseEntity<List<Teacher>> getApprovedTeachers() {
+        List<Teacher> approvedTeachers = teacherService.findApprovedTeachers();
+        return ResponseEntity.ok(approvedTeachers);
+    }
     
     @PostMapping("/approve/{tid}")
     public ResponseEntity<Teacher> approveTeacher(@PathVariable Long tid) {
