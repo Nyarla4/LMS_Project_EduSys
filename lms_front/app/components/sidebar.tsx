@@ -47,8 +47,6 @@ export default function Sidebar() {
             >
                 {isCollapsed ? <Menu size={24} /> : <ChevronLeft size={24} />}
             </button>
-
-            {/* 4. 큰 제목 스타일을 응용한 사용자 프로필 (인라인 스타일로 파란색 차단) */}
             {user && (
                 <a
                     href="/mypage"
@@ -59,18 +57,17 @@ export default function Sidebar() {
                     {!isCollapsed && user?.user?.usertype === 'S' && ` (${user.grade}학년)`}
                 </a>
             )}
-
-            {/* 6. 일반 버튼 스타일의 로그인/로그아웃 버튼 */}
-            <button
+            <a
                 onClick={user ? handleLogout : handleLogin}
                 className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white w-full py-2 rounded-lg text-sm font-bold flex justify-center items-center transition-colors border-none cursor-pointer"
+                style={{textDecoration: 'none'}}
             >
                 {user ? (
                     isCollapsed ? <LogOut size={20} /> : "로그아웃"
                 ) : (
                     isCollapsed ? <LogIn size={20} /> : "로그인"
                 )}
-            </button>
+            </a>
 
             {user && (
                 <nav className="mt-4">
