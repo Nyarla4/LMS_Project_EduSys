@@ -137,9 +137,7 @@ export default function NoticeDetailPage() {
 
               <div className="mt-8 pt-4 border-t border-[#e7d7c1] flex justify-between items-center text-sm text-[#b89b7a] font-bold">
                 <span>작성일: {new Date(notice.createDate).toLocaleString()}</span>
-                {user?.usertype === "A" && (
-                  <span className="bg-[#8b5e3c] text-white px-3 py-1 rounded-full text-xs">관리자 작성</span>
-                )}
+                <span className="bg-[#8b5e3c] text-white px-3 py-1 rounded-full text-xs">{notice.author} 작성</span>
               </div>
             </div>
 

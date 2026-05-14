@@ -55,7 +55,7 @@ public class NoticeController {
         Notice newNotice = new Notice();
         newNotice.setTitle(noticeDto.getTitle());
         newNotice.setContent(noticeDto.getContent());
-        newNotice.setAuthor(noticeDto.getAuthor());
+        newNotice.setAuthor(noticeDto.getUserName());
         newNotice.setActive(true); // 새 공지는 기본적으로 활성화 상태로 설정   
         noticeService.createNotice(newNotice); // 새 공지 저장
         return ResponseEntity.ok(newNotice); // 데이터와 함께 200 OK 전송

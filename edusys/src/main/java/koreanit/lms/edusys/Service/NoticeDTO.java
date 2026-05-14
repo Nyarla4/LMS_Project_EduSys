@@ -12,12 +12,12 @@ public class NoticeDTO {
     private Integer nid;
     private String title;
     private String content;
-    private String author;
+    private String userName;
 
     public NoticeDTO(Notice notice) {
         this.nid = notice.getNid();
         this.title = notice.getTitle();
         this.content = notice.getContent();
-        this.author = notice.getAuthor();
+        this.userName = notice.getAuthor();
     }
 }
