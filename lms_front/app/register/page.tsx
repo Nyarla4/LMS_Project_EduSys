@@ -1,11 +1,20 @@
 "use client";
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
+import { useUser } from "../userContext";
 
 export default function Page() {
 
+    const { user, loading } = useUser();
     const [teacherName, setTeacherName] = useState("");
-    const [videoFile, setVideoFile] = useState<File | null>(null);
+    const [fileUrl, setFileUrl] = useState("");
+    const [subject, setSubject] = useState("");
+    const [detailSubject, setDetailSubject] = useState("");
+    const [major, setMajor] = useState("");
+    const [capacity, setCapacity] = useState("");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+    const [planFile, setPlanFile] = useState("");
+
 
     const subjectOptions = {
         국어: ["화법과 작문", "독서", "언어와매체", "문학"],
@@ -15,8 +24,36 @@ export default function Page() {
         통합과학: ["물리I", "화학I", "생명과학I", "지구과학I"],
     };
 
-    const [subject, setSubject] = useState("");
-    const [detailSubject, setDetailSubject] = useState("");
+    // 강사명 자동 입력
+    useEffect(() => {
+        if (!loading && user) {
+            // 이름이 존재하지 않으면 빈값
+            setTeacherName(user.user?.name || user.username || "");
+        }
+    }, [loading, user]);
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        const data = {
+            major, subName: subject, lessonName: detailSubject,
+            startDate, endDate, capacity: Number(capacity), planFile, fileUrl
+        };
+
+        const res = await fetch("http://localhost:8080/api/subjects", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+            }
+        ); console.log(await res.text()); // 응답 텍스트 확인용
+        if (!res.ok) {
+            alert("등록 실패하였습니다.");
+            return;
+        }
+        alert("등록 완료되었습니다.");
+    };
 
     return (
         // 전체 페이지 영역 
@@ -28,7 +65,7 @@ export default function Page() {
                 <div className="flex-1 bg-[#fffaf3] border-[#d6c2a8] border-2 rounded-2xl shadow-md p-4">
                     <p className="text-4xl font-bold text-center mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">강의등록</p>
 
-                    <form className="flex flex-col gap-4">
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         {/* 강사명, 전공 */}
                         <div className="flex gap-6">
                             <div className="w-1/2 flex flex-col gap-2">
@@ -37,7 +74,8 @@ export default function Page() {
                             </div>
                             <div className="w-1/2 flex flex-col gap-2">
                                 <label className="text-xl font-bold">전공</label>
-                                <select className="border-[#b89b7a] border-1 rounded px-3 py-2">
+                                <select value={major} onChange={(e) => setMajor(e.target.value)}
+                                    className="border-[#b89b7a] border-1 rounded px-3 py-2">
                                     <option value="">전공 선택</option>
                                     <option value="science">이과</option>
                                     <option value="arts">문과</option>
@@ -91,29 +129,29 @@ export default function Page() {
                             <div className="w-1/2 flex flex-col gap-2">
                                 <label className="text-xl font-bold">강의 개설 기간</label>
                                 <div className="flex gap-2">
-                                    <input type="date" className="border-[#b89b7a] border-1 rounded px-3 py-2" />
+                                    <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                                        className="border-[#b89b7a] border-1 rounded px-3 py-2" />
                                     <span>~</span>
-                                    <input type="date" className="border-[#b89b7a] border-1 rounded px-3 py-2" />
+                                    <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+                                        className="border-[#b89b7a] border-1 rounded px-3 py-2" />
                                 </div>
                             </div>
 
                             <div className="w-1/2 flex flex-col gap-2">
                                 <label className="text-xl font-bold">신청 최대 인원(최대 32명)</label>
-                                <input type="number" max={32} min={1} className="border-[#b89b7a] border-1 rounded px-3 py-2" />
+                                <input type="number" value={capacity} onChange={(e) => setCapacity(e.target.value)}
+                                    max={32} min={1} className="border-[#b89b7a] border-1 rounded px-3 py-2" />
                             </div>
                         </div>
 
                         <label className="text-xl font-bold">강의 계획서</label>
-                        <input type="text" className="border-[#b89b7a] border-1 rounded px-3 py-30" />
+                        <input type="text" value={planFile} onChange={(e) => setPlanFile(e.target.value)}
+                            className="border-[#b89b7a] border-1 rounded px-3 py-30" />
 
-                        <label className="text-xl font-bold">강의 영상</label>
-                        <input type="file" accept="video/*"
-                            onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                    setVideoFile(file);
-                                }
-                            }}
+                        <label className="text-xl font-bold">강의 영상 주소</label>
+                        <input type="url" value={fileUrl}
+                            onChange={(e) => setFileUrl(e.target.value)}
+                            placeholder="https://xxx.com"
                             className="border-[#b89b7a] border-1 rounded px-3 py-2"
                         />
 
