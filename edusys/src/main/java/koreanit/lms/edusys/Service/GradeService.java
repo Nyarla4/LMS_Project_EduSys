@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import koreanit.lms.edusys.Dto.GradeDTO;
 import koreanit.lms.edusys.Entity.Grade;
 import koreanit.lms.edusys.Entity.Student;
 import koreanit.lms.edusys.Entity.Subject;

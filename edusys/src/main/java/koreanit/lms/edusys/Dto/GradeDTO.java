@@ -1,4 +1,4 @@
-package koreanit.lms.edusys.Service;
+package koreanit.lms.edusys.Dto;
 
 import koreanit.lms.edusys.Entity.Grade;
 import lombok.Getter;
