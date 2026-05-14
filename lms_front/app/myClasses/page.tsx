@@ -35,7 +35,7 @@ export default function ClassRequest() { // 1. async 제거
 
   // 4. 데이터 로딩 중이거나 유저 정보가 없을 때의 예외 처리
   if (!user) return <div>사용자 정보를 불러오는 중...</div>;
-  if (user.user.usertype !== "T") return <div>교사 권한이 필요한 페이지입니다.</div>; // 권한 체크
+  if (user.user.usertype !== "T" || !user.approved) return <div>교사 권한이 필요한 페이지입니다.</div>; // 권한 체크
 
   return (
     <main style={{ padding: "2rem" }}>

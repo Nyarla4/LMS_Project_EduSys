@@ -47,6 +47,10 @@ public class TeacherService {
     public List<Teacher> findUnapprovedTeachers() {
         return teacherRepository.findByApprovedFalse();
     }
+    
+    public List<Teacher> findApprovedTeachers() {
+        return teacherRepository.findByApprovedTrue();
+    }
 
     public Teacher approveTeacher(Long tid) {
         Teacher teacher = findTeacherById(tid.intValue());

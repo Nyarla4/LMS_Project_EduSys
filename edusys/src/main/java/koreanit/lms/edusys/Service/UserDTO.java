@@ -1,5 +1,7 @@
 package koreanit.lms.edusys.Service;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,8 +11,10 @@ public class UserDTO {
     private Long userid;
 
     private String loginid;
+    private String password;
     private String email;
     private String username;
     private String phonenum;
     private String usertype;
+    private MultipartFile proofFile;
 }

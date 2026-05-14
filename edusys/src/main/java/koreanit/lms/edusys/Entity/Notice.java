@@ -33,4 +33,6 @@ public class Notice {
     private LocalDateTime createDate;
 
     private boolean isActive = true;
+
+    private String author;
 }

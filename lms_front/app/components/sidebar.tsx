@@ -36,7 +36,7 @@ export default function Sidebar() {
 
     return (
         <aside
-            className={`h-screen bg-[#f5f1e8] border-r-2 border-[#d6c2a8] p-4 transition-all duration-300 flex flex-col gap-4 relative overflow-hidden ${isCollapsed ? "w-[90px]" : "w-[200px]"
+            className={`sticky top-0 bg-[#f5f1e8] border-r-2 border-[#d6c2a8] p-4 transition-all duration-300 flex flex-col gap-4 relative overflow-hidden ${isCollapsed ? "w-[90px]" : "w-[200px]"
                 }`}
         >
             {/* 사이드바 토글 버튼 */}
@@ -47,8 +47,6 @@ export default function Sidebar() {
             >
                 {isCollapsed ? <Menu size={24} /> : <ChevronLeft size={24} />}
             </button>
-
-            {/* 4. 큰 제목 스타일을 응용한 사용자 프로필 (인라인 스타일로 파란색 차단) */}
             {user && (
                 <a
                     href="/mypage"
@@ -59,18 +57,17 @@ export default function Sidebar() {
                     {!isCollapsed && user?.user?.usertype === 'S' && ` (${user.grade}학년)`}
                 </a>
             )}
-
-            {/* 6. 일반 버튼 스타일의 로그인/로그아웃 버튼 */}
-            <button
+            <a
                 onClick={user ? handleLogout : handleLogin}
                 className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white w-full py-2 rounded-lg text-sm font-bold flex justify-center items-center transition-colors border-none cursor-pointer"
+                style={{textDecoration: 'none'}}
             >
                 {user ? (
                     isCollapsed ? <LogOut size={20} /> : "로그아웃"
                 ) : (
                     isCollapsed ? <LogIn size={20} /> : "로그인"
                 )}
-            </button>
+            </a>
 
             {user && (
                 <nav className="mt-4">
@@ -93,6 +90,12 @@ export default function Sidebar() {
                                 href: user.user?.usertype === 'T' ? "/studentGrades" : user.user?.usertype === 'S' ? "/myGrades" : "#",
                                 icon: <BarChart3 size={24} />,
                                 text: "성적 조회",
+                                show: !!user.user
+                            },
+                            {
+                                href: user.user?.usertype === 'T' || user.user?.usertype === 'S' ? "/counseling" : "#",
+                                icon: <BarChart3 size={24} />,
+                                text: "상담 관리",
                                 show: !!user.user
                             },
                             /* 관리자 메뉴 */

@@ -1,15 +1,20 @@
 package koreanit.lms.edusys.Service;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import koreanit.lms.edusys.DataNotFoundException;
 import koreanit.lms.edusys.Entity.UserEntity;
 import koreanit.lms.edusys.Repository.UserRepository;
 import koreanit.lms.edusys.Entity.UserType;
-import koreanit.lms.edusys.Service.UserCreateForm;
-import koreanit.lms.edusys.Service.UserDTO;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -18,17 +23,46 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    private final String uploadDir = Paths.get(System.getProperty("user.dir"), "Document").toString();
+
     public UserEntity create(UserCreateForm form) {
         UserEntity user = new UserEntity();
         user.setLoginid(form.getLoginid());
         user.setUsername(form.getUsername());
         user.setEmail(form.getEmail());
         user.setPhonenum(form.getPhonenum());
-        user.setUsertype(UserType.valueOf(form.getUsertype().toUpperCase()));
+        
+        if (form.getUsertype() != null) {
+            user.setUsertype(UserType.valueOf(form.getUsertype()));
+        }
+
+        String savedFileName = saveFile(form.getProofFile());
+        user.setProofFilePath(savedFileName);
         
         user.setPassword(passwordEncoder.encode(form.getPassword()));
         
         return this.userRepository.save(user);
+    }
+
+    private String saveFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return null;
+        }
+
+        try {
+            File folder = new File(uploadDir);
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
+
+            String savedName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+            File target = new File(uploadDir, savedName);
+            file.transferTo(target);
+
+            return savedName;
+        } catch (IOException e) {
+            throw new RuntimeException("증빙서류 저장 중 오류가 발생했습니다.", e);
+        }
     }
 
     public UserEntity getUser(String loginid) {

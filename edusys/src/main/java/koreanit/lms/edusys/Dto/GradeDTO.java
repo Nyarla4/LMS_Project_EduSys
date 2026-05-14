@@ -1,4 +1,4 @@
-package koreanit.lms.edusys.Service;
+package koreanit.lms.edusys.Dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import koreanit.lms.edusys.Entity.Grade;

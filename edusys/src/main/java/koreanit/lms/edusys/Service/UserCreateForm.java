@@ -1,5 +1,7 @@
 package koreanit.lms.edusys.Service;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
@@ -33,4 +35,7 @@ public class UserCreateForm {
 
     @NotEmpty(message = "회원 유형은 필수 선택입니다.")
     private String usertype;
+
+    private MultipartFile proofFile;
+    
 }

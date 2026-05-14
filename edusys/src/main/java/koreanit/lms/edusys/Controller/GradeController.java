@@ -1,8 +1,8 @@
 package koreanit.lms.edusys.Controller;
 
+import koreanit.lms.edusys.Dto.GradeDTO;
 import koreanit.lms.edusys.Entity.Grade;
 import koreanit.lms.edusys.Entity.Teacher;
-import koreanit.lms.edusys.Service.GradeDTO;
 import koreanit.lms.edusys.Service.GradeService;
 import lombok.RequiredArgsConstructor;
 
