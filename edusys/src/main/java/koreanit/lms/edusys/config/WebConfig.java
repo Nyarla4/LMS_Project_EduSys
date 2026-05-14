@@ -15,7 +15,8 @@ public class WebConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         String uploadDir = Paths.get("uploads").toAbsolutePath().toUri().toString();
         
-        registry.addResourceHandler("/api/files/**")
+        // 정적 리소스 핸들러가 Controller의 매핑을 방해하지 않도록 경로를 분리하거나 좁힙니다.
+        registry.addResourceHandler("/static/files/**")
                 .addResourceLocations(uploadDir);
     }
 

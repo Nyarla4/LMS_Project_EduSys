@@ -52,4 +52,24 @@ public class FileController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    // uploads/pdf 폴더 내의 PDF 파일을 반환하는 엔드포인트
+    @GetMapping("/pdf/{filename:.+}")
+    public ResponseEntity<Resource> getPdf(@PathVariable String filename) {
+        try {
+            Path filePath = Paths.get(UPLOAD_DIR + "pdf/" + filename);
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

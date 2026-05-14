@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useUser } from "../app/userContext";
 
 // YouTube API 타입을 위한 전역 선언
 declare global {
@@ -20,10 +21,17 @@ const tabs = [
 
 type Tab = (typeof tabs)[number];
 
+interface Subject {
+  subid: number;
+  name: string;
+  planFile?: string; // 강의 계획서 PDF 경로 (DB 컬럼명 planFile 대응)
+}
+
 interface Lesson {
   lid: number;
   name: string;
   date: string;
+  subject?: Subject;
 }
 
 interface Attendance {
@@ -65,6 +73,7 @@ function TabPanel({
   videoList,
   progressMap,
   activeVideoId,
+  apiBase,
   sessionBaseProgress,
   currentSessionSeconds,
   onVideoSelect 
@@ -77,11 +86,20 @@ function TabPanel({
   videoList: Video[];
   progressMap: Record<number, number>;
   activeVideoId?: number;
+  apiBase: string;
   sessionBaseProgress: number;
   currentSessionSeconds: number;
   onVideoSelect: (video: Video) => void;
 }) {
   if (activeTab === "강의 계획서") {
+    // 첫 번째 강의의 과목 정보에서 planFile 파일명을 가져옵니다.
+    const planFile = lessons.length > 0 ? lessons[0].subject?.planFile : null;
+    
+    // 하드코딩된 localhost:8080 대신 apiBase를 사용합니다.
+    const syllabusUrl = planFile 
+      ? `${apiBase}/files/pdf/${planFile}` 
+      : `${apiBase}/files/syllabus.pdf`;
+
     return (
       <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -90,7 +108,7 @@ function TabPanel({
             <p className="mt-2 text-sm text-[#7b6346]">과목별 수업 계획서를 내려받거나 바로 확인할 수 있습니다.</p>
           </div>
           <a 
-            href="http://localhost:8080/api/files/syllabus.pdf" 
+            href={syllabusUrl}
             className="inline-flex items-center rounded-full bg-[#8d6a44] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7c5935]"
             download
           >
@@ -99,7 +117,7 @@ function TabPanel({
         </div>
         <div className="aspect-[3/4] w-full overflow-hidden rounded-[28px] border border-[#f1e1c4] bg-[#fbf1e8]">
           <iframe
-            src="http://localhost:8080/api/files/syllabus.pdf"
+            src={syllabusUrl}
             width="100%"
             height="100%"
             title="Syllabus PDF Viewer"
@@ -120,7 +138,7 @@ function TabPanel({
           <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
             <thead className="bg-[#f7ecd9] text-[#6d5b46]">
               <tr>
-                <th className="px-4 py-4">날짜</th>
+                 <th className="px-4 py-4">기간</th>
                 <th className="px-4 py-4">강의명</th>
                 <th className="px-4 py-4">상태</th>
                 <th className="px-4 py-4">비고</th>
@@ -128,11 +146,19 @@ function TabPanel({
             </thead>
             <tbody className="divide-y divide-[#e9d7b0] bg-white">
               {lessons.map((lesson) => {
+                // 강의 시작 날짜로부터 일주일(7일) 기간 계산
+                const startDate = new Date(lesson.date);
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 6);
+                
+                const formattedEndDate = endDate.toISOString().split('T')[0];
+                const dateRange = `${lesson.date} ~ ${formattedEndDate}`;
+
                 // 강의 날짜와 일치하는 출석 데이터를 찾습니다.
                 const att = attendanceData.find(a => a.date === lesson.date);
                 return (
                 <tr key={lesson.lid} className="hover:bg-[#fff6eb]">
-                  <td className="px-4 py-4">{lesson.date}</td>
+                  <td className="px-4 py-4">{dateRange}</td>
                   <td className="px-4 py-4">{lesson.name}</td>
                   <td className="px-4 py-4">
                     {att ? (att.whether ? "출석" : "결석") : "결석"}
@@ -280,37 +306,21 @@ export default function StudentDashboard() {
   const ytPlayerRef = useRef<any>(null); // 유튜브 플레이어 인스턴스 저장용
   const trackingInterval = useRef<NodeJS.Timeout | null>(null);
 
-  const [studentId, setStudentId] = useState<number | null>(null); 
-  const API_BASE = "http://localhost:8080/api";
+  const { user } = useUser();
+  const studentId = user?.sid || user?.id; // UserContext에서 학생 ID 추출
 
-  // 1. 컴포넌트 로드 시 토큰에서 실제 학생 ID(sid) 추출
-  useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (token) {
-      try {
-        const base64Payload = token.split(".")[1];
-        const payload = JSON.parse(atob(base64Payload));
-        // 백엔드 토큰에 저장된 학생 고유 번호(예: sid)를 상태에 반영
-        if (payload.sid) setStudentId(Number(payload.sid));
-        else setStudentId(1); // 폴백용
-      } catch (e) {
-        setStudentId(1);
-      }
-    }
-  }, []);
+  const API_BASE = "http://localhost:8080/api";
 
   useEffect(() => {
     const fetchData = async () => {
-      if (studentId === null) return; // ID가 확인될 때까지 대기
+      // 유저 정보가 아직 로드되지 않았으면 대기
+      if (!studentId) return;
 
       try {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-        if (!token) {
-          setError("로그인이 필요합니다.");
-          setLoading(false);
-          return;
-        }
-        const headers = { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" };
+        // 토큰이 없더라도 기본 데이터는 가져올 수 있도록 headers를 유연하게 설정
+        const headers: any = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
 
         // 중복되는 /lessons 호출을 제거하고 하나로 통합
         const [lessonRes, attRes, examRes, assignRes, progRes] = await Promise.all([
@@ -584,6 +594,7 @@ function getCookie(name: string) {
             videoList={videoList}
             progressMap={progressMap}
             activeVideoId={selectedVideo?.lid}
+            apiBase={API_BASE}
             sessionBaseProgress={sessionBaseProgress}
             currentSessionSeconds={currentSessionSeconds}
             onVideoSelect={handleVideoSelect}

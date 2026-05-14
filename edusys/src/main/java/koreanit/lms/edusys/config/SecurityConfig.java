@@ -34,8 +34,12 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // iframe 내에서 PDF 뷰어를 띄우기 위해 필요
+            .headers(headers -> headers.frameOptions(frame -> frame.disable()))
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/user/login", "/user/signup", "/api/notices/**", "/api/lessons/video/**").permitAll()
+                // 로그인, 회원가입 및 정적 파일(PDF, 비디오) 등 공개가 필요한 경로만 허용
+                .requestMatchers("/user/login", "/user/signup", "/api/notices/**", "/api/lessons/video/**", "/api/files/**").permitAll()
+                // 그 외 모든 API 요청은 인증(JWT 토큰)이 필요함
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form.disable())
