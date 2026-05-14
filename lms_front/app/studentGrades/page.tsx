@@ -111,15 +111,11 @@ export default function ClassRequest() {
   if (!user) return <p>로그인이 필요한 서비스입니다.</p>;
 
   return (
-  /* 1. 전체 영역 */
   <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10 font-['Noto_Sans_KR']">
-    
-    <div className="w-full max-w-4xl flex flex-col gap-6 mt-10 px-10">
-      
+    <div className="w-full max-w-4xl flex flex-col gap-6 mt-10 px-10">      
       <p className="text-4xl font-bold text-center mb-8 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2 text-[#5c4033]">
         성적 관리
       </p>
-
       {loading ? (
         <div className="text-center text-[#8b5e3c] font-bold py-10">데이터를 불러오는 중...</div>
       ) : !subject ? (

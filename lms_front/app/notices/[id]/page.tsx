@@ -75,48 +75,99 @@ export default function NoticeDetailPage() {
   if (!notice) return <p>공지가 없습니다.</p>;
 
   return (
-    <main style={{ padding: "2rem" }}>
-      <h1>공지 상세</h1>
-      
-      {isEditing ? (
-        /* 수정 모드 UI */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <input 
-            value={editTitle} 
-            onChange={(e) => setEditTitle(e.target.value)}
-            style={{ fontSize: '1.5rem', padding: '0.5rem' }}
-          />
-          <textarea 
-            value={editContent} 
-            onChange={(e) => setEditContent(e.target.value)}
-            style={{ height: '300px', padding: '0.5rem' }}
-          />
-          <div>
-            <button onClick={handleUpdate}>저장</button>
-            <button onClick={handleDelete}>삭제</button>
-            <button onClick={() => setIsEditing(false)}>취소</button>
+    <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10 font-sans text-[#5c4033]">
+      <div className="w-full max-w-4xl flex flex-col gap-6 mt-10 px-10">
+        <p className="text-4xl font-bold text-center mb-6 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2 shadow-sm">
+          {isEditing ? "공지사항 수정" : "공지사항 상세"}
+        </p>
+
+        {isEditing ? (
+          /* ================= 수정 모드 UI ================= */
+          <div className="bg-[#fcf7f0] border-[#b89b7a] border border-1 rounded-lg p-8 shadow-sm flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-xl font-bold ml-1">제목 수정</label>
+              <input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="border-[#b89b7a] border-1 border rounded px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-[#8b5e3c] bg-white"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-xl font-bold ml-1">내용 수정</label>
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="border-[#b89b7a] border-1 border rounded px-4 py-2 h-[300px] text-lg resize-vertical focus:outline-none focus:ring-2 focus:ring-[#8b5e3c] bg-white"
+              />
+            </div>
+
+            <div className="flex gap-3 justify-end mt-4">
+              <button
+                onClick={handleUpdate}
+                className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-5 py-2 rounded-lg font-bold shadow-md transition-all active:scale-95"
+              >
+                저장하기
+              </button>
+              <button
+                onClick={handleDelete}
+                className="bg-[#d97706] hover:bg-[#b45309] text-white px-5 py-2 rounded-lg font-bold shadow-md transition-all active:scale-95"
+              >
+                삭제
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="bg-[#dbc7b1] hover:bg-[#c9b49d] text-[#5c4033] px-5 py-2 rounded-lg font-bold border border-[#b89b7a] transition-all"
+              >
+                취소
+              </button>
+            </div>
           </div>
-        </div>
-      ) : (
-        /* 보기 모드 UI */
-        <div>
-          <h2>{notice.title}</h2>
-          <hr />
-          <div style={{ minHeight: '200px', whiteSpace: 'pre-wrap' }}>
-            {notice.content}
+        ) : (
+          /* ================= 보기 모드 UI ================= */
+          <div className="flex flex-col gap-6">
+            <div className="bg-[#fcf7f0] border-[#b89b7a] border border-1 rounded-lg p-10 shadow-sm min-h-[400px] flex flex-col">
+              <h2 className="text-3xl font-bold mb-4 border-b-2 border-[#e7d7c1] pb-4 text-[#8b5e3c]">
+                {notice.title}
+              </h2>
+
+              <div className="flex-1 text-lg leading-8 whitespace-pre-wrap py-4 text-[#5c4033]">
+                {notice.content}
+              </div>
+
+              <div className="mt-8 pt-4 border-t border-[#e7d7c1] flex justify-between items-center text-sm text-[#b89b7a] font-bold">
+                <span>작성일: {new Date(notice.createDate).toLocaleString()}</span>
+                {user?.usertype === "A" && (
+                  <span className="bg-[#8b5e3c] text-white px-3 py-1 rounded-full text-xs">관리자 작성</span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-center mt-4">
+              {user?.usertype === "A" && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-6 py-2 rounded-lg text-lg font-bold shadow-md transition-all"
+                >
+                  수정하기
+                </button>
+              )}
+              <button
+                onClick={() => router.push("/notices")}
+                className="bg-[#dbc7b1] hover:bg-[#c9b49d] text-[#5c4033] px-6 py-2 rounded-lg text-lg font-bold border border-[#b89b7a] transition-all"
+              >
+                목록으로
+              </button>
+              <button
+                onClick={() => router.back()}
+                className="bg-white hover:bg-[#f5f1e8] text-[#b89b7a] px-6 py-2 rounded-lg text-lg font-bold border border-[#d6c2a8] transition-all"
+              >
+                뒤로가기
+              </button>
+            </div>
           </div>
-          <p style={{ color: '#666', fontSize: '0.9rem' }}>
-            작성일: {new Date(notice.createDate).toLocaleString()}
-          </p>
-          
-          {/* 관리자(ADMIN)인 경우에만 수정 버튼 노출 */}
-          {user?.usertype === "A" && (
-            <button onClick={() => setIsEditing(true)}>수정하기</button>
-          )}
-          <button onClick={() => router.push("/notices")}>목록으로</button>
-          <button onClick={() => router.back()}>뒤로</button>
-        </div>
-      )}
-    </main>
+        )}
+      </div>
+    </div>
   );
 }
