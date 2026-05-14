@@ -38,6 +38,7 @@ public class Lesson {
 
     // 유튜브 API 등을 통해 영상 길이를 실시간으로 가져옴
     @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("duration")
     public Integer getDuration() {
         try {
             if (fileUrl == null) return 0;

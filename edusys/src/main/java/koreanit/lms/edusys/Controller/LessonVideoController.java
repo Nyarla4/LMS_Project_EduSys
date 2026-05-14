@@ -1,4 +1,4 @@
-package koreanit.lms.edusys.Controller;
+/*package koreanit.lms.edusys.Controller;
 
 import koreanit.lms.edusys.Entity.LessonVideo;
 import koreanit.lms.edusys.Service.LessonVideoService;
@@ -144,4 +144,4 @@ public class LessonVideoController {
     public void deleteLessonVideo(@PathVariable Long id) {
         lessonVideoService.deleteById(id);
     }
-}
+}*/

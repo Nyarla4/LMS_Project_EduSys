@@ -74,8 +74,11 @@ public class ProgressService {
         // 시청률 계산 및 90% 이상 시 출석 처리
         Integer duration = lesson.getDuration();
         if (duration != null && duration > 0) {
-            if ((double) lastTime / duration >= 0.9) {
-                attendanceService.markAsPresent(studentId, lesson.getSubject().getSubid(), lesson.getDate());
+            double ratio = (double) lastTime / duration;
+            if (ratio >= 0.9) {
+                if (lesson.getSubject() != null) {
+                    attendanceService.markAsPresent(studentId, lesson.getSubject().getSubid(), lesson.getDate());
+                }
             }
         }
         
