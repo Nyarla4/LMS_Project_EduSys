@@ -121,18 +121,26 @@ function TabPanel({
             <thead className="bg-[#f7ecd9] text-[#6d5b46]">
               <tr>
                 <th className="px-4 py-4">날짜</th>
+                <th className="px-4 py-4">강의명</th>
                 <th className="px-4 py-4">상태</th>
                 <th className="px-4 py-4">비고</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e9d7b0] bg-white">
-              {attendanceData.map((item) => (
-                <tr key={item.aid} className="hover:bg-[#fff6eb]">
-                  <td className="px-4 py-4">{item.date}</td>
-                  <td className="px-4 py-4">{item.whether ? "출석" : "결석"}</td>
+              {lessons.map((lesson) => {
+                // 강의 날짜와 일치하는 출석 데이터를 찾습니다.
+                const att = attendanceData.find(a => a.date === lesson.date);
+                return (
+                <tr key={lesson.lid} className="hover:bg-[#fff6eb]">
+                  <td className="px-4 py-4">{lesson.date}</td>
+                  <td className="px-4 py-4">{lesson.name}</td>
+                  <td className="px-4 py-4">
+                    {att ? (att.whether ? "출석" : "결석") : "결석"}
+                  </td>
                   <td className="px-4 py-4">-</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
