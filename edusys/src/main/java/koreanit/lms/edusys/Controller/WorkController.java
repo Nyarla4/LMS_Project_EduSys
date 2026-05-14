@@ -9,6 +9,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/works")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class WorkController {
 
     private final WorkService workService;

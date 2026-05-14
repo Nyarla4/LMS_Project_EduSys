@@ -2,6 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 
+// YouTube API 타입을 위한 전역 선언
+declare global {
+  interface Window {
+    onYouTubeIframeAPIReady: () => void;
+    YT: any;
+  }
+}
+
 const tabs = [
   "강의 계획서",
   "출석 현황",
@@ -13,34 +21,36 @@ const tabs = [
 type Tab = (typeof tabs)[number];
 
 interface Lesson {
-  id: number;
-  title: string;
-  description: string;
-  instructor: string;
+  lid: number;
+  name: string;
+  date: string;
 }
 
 interface Attendance {
+  aid: number;
   date: string;
-  status: string;
-  note: string;
+  whether: boolean;
 }
 
 interface Exam {
+  eid: number;
   name: string;
-  date: string;
-  status: string;
-  score: string;
+  grade: string;
+  date?: string; // 엔티티엔 없으나 UI용으로 유지
+  status?: string;
 }
 
 interface Assignment {
-  title: string;
+  wid: number;
+  form: string;
   dueDate: string;
-  status: string;
+  grade: string;
+  status?: string; // UI용
 }
 
 interface Video {
-  id: number;
-  title: string;
+  lid: number;
+  name: string;
   fileUrl: string;
   duration: number;
   week: number;
@@ -115,10 +125,10 @@ function TabPanel({
             </thead>
             <tbody className="divide-y divide-[#e9d7b0] bg-white">
               {attendanceData.map((item) => (
-                <tr key={item.date} className="hover:bg-[#fff6eb]">
+                <tr key={item.aid} className="hover:bg-[#fff6eb]">
                   <td className="px-4 py-4">{item.date}</td>
-                  <td className="px-4 py-4">{item.status}</td>
-                  <td className="px-4 py-4">{item.note}</td>
+                  <td className="px-4 py-4">{item.whether ? "출석" : "결석"}</td>
+                  <td className="px-4 py-4">-</td>
                 </tr>
               ))}
             </tbody>
@@ -135,8 +145,8 @@ function TabPanel({
         <div className="grid gap-4 sm:grid-cols-2">
           {videoList.length > 0 ? (
             videoList.map((video) => {
-              const savedTime = progressMap[video.id] || 0;
-              const sessionTime = (activeVideoId === video.id) ? currentSessionSeconds : 0;
+              const savedTime = progressMap[video.lid] || 0;
+              const sessionTime = (activeVideoId === video.lid) ? currentSessionSeconds : 0;
               const totalWatched = savedTime + sessionTime;
               const percentage = video.duration > 0 
                 ? Math.min(100, Math.floor((totalWatched / video.duration) * 100)) 
@@ -144,14 +154,14 @@ function TabPanel({
 
               return (
                 <article 
-                  key={video.id} 
+                  key={video.lid} 
                   className="cursor-pointer rounded-[28px] border border-[#f0debe] bg-[#fff8ef] p-5 transition duration-200 hover:border-[#d6b77a] hover:bg-[#f6e8d6]"
                   onClick={() => onVideoSelect(video)}
                 >
                   <div className="flex flex-col gap-4">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h3 className="text-base font-semibold text-[#3d2b1f]">{video.title}</h3>
+                        <h3 className="text-base font-semibold text-[#3d2b1f]">{video.name}</h3>
                         <p className="mt-2 text-sm text-[#7b6346]">{video.week}주차 학습 영상</p>
                       </div>
                       <span className="rounded-full bg-[#e8d1a5] px-3 py-1 text-xs font-bold text-[#5c4326]">{percentage}%</span>
@@ -192,11 +202,11 @@ function TabPanel({
             </thead>
             <tbody className="divide-y divide-[#e9d7b0] bg-white">
               {exams.map((exam) => (
-                <tr key={exam.name} className="hover:bg-[#fff6eb]">
+                <tr key={exam.eid} className="hover:bg-[#fff6eb]">
                   <td className="px-4 py-4">{exam.name}</td>
-                  <td className="px-4 py-4">{exam.date}</td>
-                  <td className="px-4 py-4">{exam.status}</td>
-                  <td className="px-4 py-4">{exam.score}</td>
+                  <td className="px-4 py-4">{exam.date || "-"}</td>
+                  <td className="px-4 py-4">{exam.status || "완료"}</td>
+                  <td className="px-4 py-4">{exam.grade}</td>
                 </tr>
               ))}
             </tbody>
@@ -220,10 +230,10 @@ function TabPanel({
           </thead>
           <tbody className="divide-y divide-[#e9d7b0] bg-white">
             {assignments.map((assignment) => (
-              <tr key={assignment.title} className="hover:bg-[#fff6eb]">
-                <td className="px-4 py-4">{assignment.title}</td>
+              <tr key={assignment.wid} className="hover:bg-[#fff6eb]">
+                <td className="px-4 py-4">{assignment.form}</td>
                 <td className="px-4 py-4">{assignment.dueDate}</td>
-                <td className="px-4 py-4">{assignment.status}</td>
+                <td className="px-4 py-4">{assignment.grade || "제출전"}</td>
               </tr>
             ))}
           </tbody>
@@ -244,12 +254,15 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progressMap, setProgressMap] = useState<Record<number, number>>({});
-  const [sessionWatched, setSessionWatched] = useState(0); // 스탑워치 상태
+  const [currentPlayTime, setCurrentPlayTime] = useState(0); // 실시간 재생 시점
   const [isPlaying, setIsPlaying] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
+  const ytPlayerRef = useRef<any>(null); // 유튜브 플레이어 인스턴스 저장용
+  const trackingInterval = useRef<NodeJS.Timeout | null>(null);
+
   const [studentId, setStudentId] = useState<number>(1); // 실제 운영 시 로그인 정보에서 추출
-  const API_BASE = "http://localhost:8080/api"; // 서버 포트가 8081이라면 여기를 8081로 수정하세요.
+  const API_BASE = "http://localhost:8080/api";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -262,20 +275,24 @@ export default function StudentDashboard() {
         }
         const headers = { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" };
 
-        const [lessonRes, vidRes, attRes, examRes, assignRes, progRes] = await Promise.all([
+        // 중복되는 /lessons 호출을 제거하고 하나로 통합
+        const [lessonRes, attRes, examRes, assignRes, progRes] = await Promise.all([
           fetch(`${API_BASE}/lessons`, { headers }),
-          fetch(`${API_BASE}/lessons`, { headers }), // LessonVideo가 통합되었으므로 lessons에서 가져옴
           fetch(`${API_BASE}/attendances`, { headers }), 
           fetch(`${API_BASE}/exams`, { headers }),        
           fetch(`${API_BASE}/assignments`, { headers }),
           fetch(`${API_BASE}/progresses/student/${studentId}`, { headers })
         ]);
         
-        if (!lessonRes.ok) throw new Error(`강의 목록 로드 실패 (상태 코드: ${lessonRes.status})`);
-        if (!vidRes.ok) throw new Error(`비디오 목록 로드 실패 (상태 코드: ${vidRes.status})`);
+        if (!lessonRes.ok) {
+          const errText = await lessonRes.text();
+          throw new Error(`강의 로드 실패 (${lessonRes.status}): ${errText.substring(0, 50)}`);
+        }
 
-        setLessons(await lessonRes.json());
-        setVideoList(await vidRes.json());
+        const lessonData = await lessonRes.json();
+        setLessons(lessonData);
+        setVideoList(lessonData); // 통합된 Lesson 데이터를 비디오 리스트로도 사용
+
         if (attRes.ok) setAttendanceData(await attRes.json());
         if (examRes.ok) setExams(await examRes.json());
         if (assignRes.ok) setAssignments(await assignRes.json());
@@ -300,43 +317,111 @@ export default function StudentDashboard() {
     fetchData();
   }, []);
 
-  // 스탑워치 로직: 영상이 재생 중일 때 1초마다 sessionWatched 증가
+  // YouTube IFrame API 스크립트 로드
   useEffect(() => {
-    let interval: NodeJS.Timeout | number;
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    }
+  }, []);
+
+  // 실시간 재생 위치 추적 (1초마다)
+  useEffect(() => {
     if (isPlaying && selectedVideo) {
-      interval = setInterval(() => {
-        setSessionWatched((prev) => prev + 1);
+      trackingInterval.current = setInterval(() => {
+        let time = 0;
+        if (ytPlayerRef.current && ytPlayerRef.current.getCurrentTime) {
+          time = Math.floor(ytPlayerRef.current.getCurrentTime());
+        } else if (videoRef.current) {
+          time = Math.floor(videoRef.current.currentTime);
+        }
+        
+        setCurrentPlayTime(time);
+
+        // 10초마다 서버에 자동 저장 (백업용)
+        if (time > 0 && time % 10 === 0) {
+          saveVideoProgress(time);
+        }
       }, 1000);
     }
-    return () => clearInterval(interval);
-  }, [isPlaying, selectedVideo]);
+    return () => {
+      if (trackingInterval.current) clearInterval(trackingInterval.current);
+    };
+  }, [isPlaying, selectedVideo, studentId]);
 
   const handleVideoSelect = async (video: Video) => {
-    setSessionWatched(0); // 새로운 영상 선택 시 스탑워치 초기화
+    setCurrentPlayTime(0);
     setSelectedVideo(video);
+
+    // 유튜브 영상인 경우 플레이어 초기화 대기
+    const isYoutube = video.fileUrl.includes('youtube.com') || video.fileUrl.includes('youtu.be');
+    
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      const res = await fetch(`${API_BASE}/progresses/student/${studentId}/video/${video.id}`, {
+      const res = await fetch(`${API_BASE}/progresses/student/${studentId}/video/${video.lid}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
+      
+      let lastProgress = 0;
       if (res.ok) {
         const data = await res.json();
-        if (data && videoRef.current) {
-          videoRef.current.currentTime = data.progress; // 마지막 재생 위치로 이동
-        }
+        lastProgress = data.progressed || 0;
+      }
+
+      if (isYoutube) {
+        // API 준비 상태 확인 후 초기화
+        const checkYT = setInterval(() => {
+          if (window.YT && window.YT.Player) {
+            initYoutubePlayer(extractYouTubeId(video.fileUrl) || "", lastProgress);
+            clearInterval(checkYT);
+          }
+        }, 100);
+      } else {
+        if (videoRef.current) videoRef.current.currentTime = lastProgress;
       }
     } catch (e) {
       console.log("기존 진행 정보가 없습니다.");
     }
   };
 
-  const saveVideoProgress = async () => {
-    if (selectedVideo && sessionWatched > 0) {
-      // 현재 재생 위치를 저장 (누적 시청 시간이 아닌 마지막 재생 위치)
-      const currentTime = Math.floor(videoRef.current?.currentTime || 0);
-      
+  const initYoutubePlayer = (videoId: string, startSeconds: number) => {
+    if (ytPlayerRef.current) {
+      ytPlayerRef.current.destroy();
+    }
+
+    ytPlayerRef.current = new window.YT.Player('youtube-player', {
+      videoId: videoId,
+      playerVars: {
+        start: startSeconds,
+        enablejsapi: 1,
+      },
+      events: {
+        onStateChange: (event: any) => {
+          if (event.data === window.YT.PlayerState.PLAYING) {
+            setIsPlaying(true);
+          }
+          else if (event.data === window.YT.PlayerState.PAUSED) {
+            setIsPlaying(false);
+            saveVideoProgress(Math.floor(event.target.getCurrentTime())); 
+          }
+          else if (event.data === window.YT.PlayerState.ENDED) {
+            setIsPlaying(false);
+            saveVideoProgress(Math.floor(event.target.getDuration()));
+          }
+        },
+      },
+    });
+  };
+
+  const saveVideoProgress = async (timeToSave?: number) => {
+    const time = timeToSave ?? currentPlayTime;
+    if (selectedVideo && time > 0) {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      await fetch(`${API_BASE}/progresses/update?studentId=${studentId}&videoId=${selectedVideo.id}&lastTime=${currentTime}`, {
+      const url = `${API_BASE}/progresses/update?studentId=${studentId}&videoId=${selectedVideo.lid}&lastTime=${time}`;
+
+      await fetch(url, {
         method: 'POST',
         headers: { 
           "Authorization": `Bearer ${token}`,
@@ -347,9 +432,8 @@ export default function StudentDashboard() {
       // 로컬 상태 업데이트
       setProgressMap(prev => ({
         ...prev,
-        [selectedVideo.id]: currentTime // progressMap도 마지막 재생 위치로 업데이트
+        [selectedVideo.lid]: time
       }));
-      setSessionWatched(0); // 저장 후 세션 시간 초기화
     }
   };
 
@@ -411,8 +495,8 @@ export default function StudentDashboard() {
             assignments={assignments}
             videoList={videoList}
             progressMap={progressMap}
-            activeVideoId={selectedVideo?.id}
-            currentSessionSeconds={sessionWatched}
+            activeVideoId={selectedVideo?.lid}
+            currentSessionSeconds={currentPlayTime}
             onVideoSelect={handleVideoSelect}
           />
         </section>
@@ -422,7 +506,7 @@ export default function StudentDashboard() {
             <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.25em] text-[#8c6f4d]">재생 중</p>
-                <h2 className="mt-2 text-2xl font-semibold text-[#3d2b1f]">{selectedVideo.title}</h2>
+                <h2 className="mt-2 text-2xl font-semibold text-[#3d2b1f]">{selectedVideo.name}</h2>
               </div>
               <button
                 onClick={() => { saveVideoProgress(); setSelectedVideo(null); }}
@@ -431,26 +515,39 @@ export default function StudentDashboard() {
                 닫기
               </button>
             </div>
-            <video
-              ref={videoRef}
-              controls
-              className="w-full rounded-[24px] bg-black"
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => {
-                setIsPlaying(false);
-                saveVideoProgress();
-              }}
-              onEnded={() => {
-                setIsPlaying(false);
-                saveVideoProgress();
-              }}
-              src={`${API_BASE.replace('/api', '')}${selectedVideo.fileUrl}`}
-            >
-              브라우저가 동영상을 지원하지 않습니다.
-            </video>
+            {selectedVideo.fileUrl.includes('youtube.com') || selectedVideo.fileUrl.includes('youtu.be') ? (
+              <div className="aspect-video w-full overflow-hidden rounded-[24px] bg-black">
+                <div id="youtube-player" className="h-full w-full"></div>
+              </div>
+            ) : (
+              <video
+                ref={videoRef}
+                controls
+                className="w-full rounded-[24px] bg-black"
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => {
+                  setIsPlaying(false);
+                  saveVideoProgress();
+                }}
+                onEnded={() => {
+                  setIsPlaying(false);
+                  saveVideoProgress();
+                }}
+                src={`${API_BASE.replace('/api', '')}${selectedVideo.fileUrl}`}
+              >
+                브라우저가 동영상을 지원하지 않습니다.
+              </video>
+            )}
           </section>
         )}
       </div>
     </main>
   );
+}
+
+// 유튜브 ID 추출을 위한 헬퍼 함수
+function extractYouTubeId(url: string) {
+  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[7].length === 11) ? match[7] : null;
 }

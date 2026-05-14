@@ -1,10 +1,8 @@
 package koreanit.lms.edusys.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
+import java.net.HttpURLConnection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class VideoUtils {
 
@@ -18,114 +16,59 @@ public class VideoUtils {
             return null;
         }
 
-        try {
-            // URL에서 실제 파일 경로로 변환
-            String filePath;
-            if (fileUrl.startsWith("/api/files/videos/")) {
-                String fileName = fileUrl.substring("/api/files/videos/".length());
-                filePath = "uploads/videos/" + fileName;
-            } else {
-                filePath = fileUrl;
-            }
-
-            File videoFile = new File(filePath);
-            if (!videoFile.exists()) {
-                return null;
-            }
-
-            // FFmpeg를 사용하여 duration 추출 시도
-            return getDurationWithFFmpeg(filePath);
-
-        } catch (Exception e) {
-            System.err.println("Failed to get video duration for: " + fileUrl + ", error: " + e.getMessage());
-            // FFmpeg 실패시 기본값 반환 (실제로는 수동 입력 필요)
-            return null;
-        }
-    }
-
-    /**
-     * FFmpeg를 사용하여 영상 길이 추출
-     */
-    private static Integer getDurationWithFFmpeg(String filePath) {
-        try {
-            // FFmpeg 명령어 실행
-            ProcessBuilder processBuilder = new ProcessBuilder(
-                "ffprobe",
-                "-v", "quiet",
-                "-print_format", "json",
-                "-show_format",
-                "-show_streams",
-                filePath
-            );
-
-            Process process = processBuilder.start();
-            String output = new String(process.getInputStream().readAllBytes());
-            String errorOutput = new String(process.getErrorStream().readAllBytes());
-
-            // 프로세스 종료 대기
-            if (process.waitFor(10, TimeUnit.SECONDS)) {
-                // JSON 파싱하여 duration 추출
-                if (output.contains("\"duration\":")) {
-                    int durationIndex = output.indexOf("\"duration\":");
-                    if (durationIndex > 0) {
-                        int startQuote = output.indexOf("\"", durationIndex + 12);
-                        int endQuote = output.indexOf("\"", startQuote + 1);
-                        if (startQuote > 0 && endQuote > startQuote) {
-                            String durationStr = output.substring(startQuote + 1, endQuote);
-                            double duration = Double.parseDouble(durationStr);
-                            return (int) Math.round(duration);
-                        }
-                    }
-                }
-            }
-
-        } catch (Exception e) {
-            // FFmpeg가 설치되지 않았거나 실행 실패
-            System.err.println("FFmpeg not available or failed: " + e.getMessage());
+        if (isYouTubeLink(fileUrl)) {
+            return getYouTubeDuration(fileUrl);
         }
 
         return null;
     }
 
     /**
-     * 파일 경로에서 파일명을 추출
-     * @param fileUrl 파일 URL
-     * @return 파일명
+     * 유튜브 페이지 소스에서 영상 길이(초)를 추출
      */
-    public static String getFileName(String fileUrl) {
-        if (fileUrl == null) return null;
-        return Paths.get(fileUrl).getFileName().toString();
-    }
-
-    /**
-     * 파일명에서 확장자를 추출
-     * @param fileName 파일명
-     * @return 확장자 (소문자)
-     */
-    public static String getFileExtension(String fileName) {
-        if (fileName == null) return "";
-        int lastDotIndex = fileName.lastIndexOf('.');
-        return lastDotIndex > 0 ? fileName.substring(lastDotIndex + 1).toLowerCase() : "";
-    }
-
-    /**
-     * 확장자로부터 Content-Type을 결정
-     * @param extension 파일 확장자
-     * @return Content-Type
-     */
-    public static String getContentTypeFromExtension(String extension) {
-        if (extension == null) return "application/octet-stream";
-
-        switch (extension.toLowerCase()) {
-            case "mp4": return "video/mp4";
-            case "avi": return "video/x-msvideo";
-            case "mov": return "video/quicktime";
-            case "wmv": return "video/x-ms-wmv";
-            case "flv": return "video/x-flv";
-            case "webm": return "video/webm";
-            case "mkv": return "video/x-matroska";
-            case "m4v": return "video/x-m4v";
-            default: return "application/octet-stream";
+    private static Integer getYouTubeDuration(String url) {
+        try {
+            java.net.URL targetUrl = new java.net.URL(url);
+            HttpURLConnection conn = (HttpURLConnection) targetUrl.openConnection();
+            // 유튜브 봇 감지 우회를 위한 User-Agent 설정
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+            
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    // 유튜브 페이지 내부 JSON 데이터에서 lengthSeconds 필드 추출
+                    if (line.contains("\"lengthSeconds\":\"")) {
+                        Pattern pattern = Pattern.compile("\"lengthSeconds\":\"(\\d+)\"");
+                        Matcher matcher = pattern.matcher(line);
+                        if (matcher.find()) {
+                            return Integer.parseInt(matcher.group(1));
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("유튜브 길이 추출 실패 (URL: " + url + "): " + e.getMessage());
         }
+        return 0; // 추출 실패 시 기본값 0 반환
+    }
+
+    /**
+     * 유튜브 링크 여부 확인
+     */
+    public static boolean isYouTubeLink(String url) {
+        return url != null && (url.contains("youtube.com") || url.contains("youtu.be"));
+    }
+
+    /**
+     * 유튜브 영상 ID 추출
+     */
+    public static String getYouTubeId(String url) {
+        String pattern = "(?<=watch\\?v=|/videos/|embed/|youtu.be/|/v/|/e/|watch\\?v%3D|watch\\?feature=player_embedded&v=|%2Fvideos%2F|embed%2F|youtu.be%2F|%2Fv%2F)[^#&?\\n]*";
+        Pattern compiledPattern = Pattern.compile(pattern);
+        Matcher matcher = compiledPattern.matcher(url);
+        if (matcher.find()) {
+            return matcher.group();
+        }
+        return null;
     }
 }

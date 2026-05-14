@@ -9,6 +9,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/attendances")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class AttendanceController {
 
     private final AttendanceService attendanceService;

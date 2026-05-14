@@ -20,21 +20,26 @@ public class ProgressService {
     private final StudentService studentService;
     private final SubjectService subjectService;
     private final LessonService lessonService;
+    private final AttendanceService attendanceService;
 
+    @Transactional(readOnly = true)
     public List<Progress> findAllProgresses() {
         return progressRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Progress> findAllProgressesByStudent(Integer sid) {
-        return progressRepository.findByStudent_Sid(sid);
+        return progressRepository.findByStudentSid(sid);
     }
 
+    @Transactional(readOnly = true)
     public List<Progress> findAllProgressesBySubject(Integer subid) {
-        return progressRepository.findBySubject_Subid(subid);
+        return progressRepository.findByLessonSubjectSubid(subid);
     }
 
+    @Transactional(readOnly = true)
     public List<Progress> findAllProgressesByLesson(Integer lid) {
-        return progressRepository.findByLesson_Lid(lid);
+        return progressRepository.findByLessonLid(lid);
     }
 
     public Optional<Progress> findProgressById(Integer pid) {
@@ -44,25 +49,37 @@ public class ProgressService {
         return progressRepository.findById(pid);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Progress> getProgressByStudentAndLesson(Integer studentId, Integer lessonId) {
-        return progressRepository.findByStudent_SidAndLesson_Lid(studentId, lessonId);
+        return progressRepository.findByStudentSidAndLessonLid(studentId, lessonId);
     }
 
     @Transactional
     public Progress updateProgress(Integer studentId, Integer lessonId, Integer lastTime) {
-        Progress progress = progressRepository.findByStudent_SidAndLesson_Lid(studentId, lessonId)
+        Lesson lesson = lessonService.findLessonById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+
+        Progress progress = progressRepository.findByStudentSidAndLessonLid(studentId, lessonId)
                 .orElse(new Progress());
         
         if (progress.getPid() == null) {
             Student student = studentService.findById(studentId);
-            Lesson lesson = lessonService.findLessonById(lessonId).orElseThrow(() -> new RuntimeException("Lesson not found"));
             progress.setStudent(student);
             progress.setLesson(lesson);
-            progress.setSubject(lesson.getSubject());
         }
         
         progress.setProgressed(lastTime);
-        return progressRepository.save(progress);
+        Progress saved = progressRepository.save(progress);
+
+        // 시청률 계산 및 90% 이상 시 출석 처리
+        Integer duration = lesson.getDuration();
+        if (duration != null && duration > 0) {
+            if ((double) lastTime / duration >= 0.9) {
+                attendanceService.markAsPresent(studentId, lesson.getSubject().getSubid(), lesson.getDate());
+            }
+        }
+        
+        return saved;
     }
 
     public Progress createProgress(Integer sid, Integer subid, Integer lid) {
@@ -81,7 +98,6 @@ public class ProgressService {
         }
         Lesson lesson = optionalLesson.get();
         progress.setStudent(student);
-        progress.setSubject(subject);
         progress.setLesson(lesson);
         return progressRepository.save(progress);
     }
