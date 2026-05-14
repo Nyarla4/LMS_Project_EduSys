@@ -29,6 +29,7 @@ public class Subject {
     private String name;
     private Integer rate;
 
+
     @OneToOne
     @JoinColumn(name = "tid")
     private Teacher teacher;

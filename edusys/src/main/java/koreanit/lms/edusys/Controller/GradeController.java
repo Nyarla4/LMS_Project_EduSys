@@ -1,9 +1,12 @@
 package koreanit.lms.edusys.Controller;
 
 import koreanit.lms.edusys.Entity.Grade;
+import koreanit.lms.edusys.Entity.Teacher;
 import koreanit.lms.edusys.Service.GradeDTO;
 import koreanit.lms.edusys.Service.GradeService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -24,10 +27,24 @@ public class GradeController {
     public GradeDTO getGradeById(@PathVariable Integer id) {
         return gradeService.findGradeById(id);
     }
+    
+    @GetMapping("/student/{sid}")
+    public List<GradeDTO> getGradesByStudentId(@PathVariable Integer sid) {
+        return gradeService.findAllGradesByStudent(sid);
+    }
 
-    @PostMapping
-    public Grade saveGrade(@RequestBody Grade grade) {
-        return gradeService.createGrade(grade);
+    @GetMapping("/subject/{subid}")
+    public List<GradeDTO> getGradesBySubjectId(@PathVariable Integer subid) {
+        return gradeService.findAllGradesBySubject(subid);
+    }
+
+    @PostMapping("/{id}")
+    public ResponseEntity<GradeDTO> saveGrade(@PathVariable Integer id, @RequestBody String grade) {
+        GradeDTO _grade = new GradeDTO(gradeService.saveGrade(id, grade));
+        if (_grade == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(_grade);
     }
 
     @DeleteMapping("/{id}")

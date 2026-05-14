@@ -2,15 +2,18 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { 
-    Menu, 
-    ChevronLeft, 
-    Home, 
-    BookOpen, 
-    PlayCircle, 
-    BarChart3, 
-    Bell, 
-    Users 
+import {
+    Menu,
+    ChevronLeft,
+    Home,
+    BookOpen,
+    PlayCircle,
+    BarChart3,
+    Bell,
+    Users,
+    LogIn,
+    LogOut,
+    User
 } from 'lucide-react';
 import { useUser } from '../userContext';
 
@@ -23,109 +26,98 @@ export default function Sidebar() {
 
     const { user } = useUser();
 
+    const handleLogin = () => {
+        window.location.href = "/login";
+    };
     const handleLogout = () => {
         localStorage.clear();
         window.location.href = "/";
     };
 
     return (
-        <aside style={{
-            width: isCollapsed ? '80px' : '250px',
-            height: '100vh',
-            backgroundColor: '#cecece',
-            padding: '1rem',
-            borderRight: '1px solid #ddd',
-            transition: 'width 0.3s ease',
-            position: 'relative',
-            overflow: 'hidden',
-        }}>
-            <a href={user ? "/mypage" : "/login"}>
-                {user ? (user.user ? user.user.username : user.username) : "로그인"} {!isCollapsed && user && user.user && user.user.usertype === 'S' && ` (${user.grade}학년)`}
-            </a>
-            {user && <button className='btn' onClick={handleLogout} style={{ marginLeft: '1rem' }}>로그아웃</button>}
+        <aside
+            className={`h-screen bg-[#f5f1e8] border-r-2 border-[#d6c2a8] p-4 transition-all duration-300 flex flex-col gap-4 relative overflow-hidden ${isCollapsed ? "w-[90px]" : "w-[200px]"
+                }`}
+        >
+            {/* 사이드바 토글 버튼 */}
             <button
                 onClick={toggleSidebar}
-                style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    marginBottom: '2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: isCollapsed ? 'center' : 'flex-end',
-                    width: '100%'
-                }}>
+                className="bg-transparent border-none cursor-pointer flex items-center w-full text-[#8b5e3c] focus:outline-none"
+                style={{ justifyContent: isCollapsed ? "center" : "flex-end" }}
+            >
                 {isCollapsed ? <Menu size={24} /> : <ChevronLeft size={24} />}
             </button>
-            {user &&
-                <nav>
-                    <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
-                                <Home size={20} />
-                                {!isCollapsed && <span>홈</span>}
-                            </Link>
-                        </li>
-                        {user.user &&
-                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <BookOpen size={20} />
-                                {!isCollapsed && (
-                                    user.user.usertype === 'T' ? 
-                                    <Link href="/register" style={{ textDecoration: 'none', color: 'inherit' }}>수강 등록</Link> : 
-                                    <Link href="/apply" style={{ textDecoration: 'none', color: 'inherit' }}>수강 신청</Link>
-                                )}
-                            </li>
-                        }
-                        {user.user &&
-                        <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Link href={user.user.usertype === 'T' ? "/myClasses" : user.user.usertype === 'S' ? "/student" : "#"} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
-                                <PlayCircle size={20} />
-                                {!isCollapsed && <span>강의 관리</span>}
-                            </Link>
-                        </li>
-                        }{user.user &&
-                        <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Link href={user.user.usertype === 'T' ? "/studentGrades" : user.user.usertype === 'S' ? "/myGrades" : "#"} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
-                                <BarChart3 size={20} />
-                                {!isCollapsed && <span>성적 조회</span>}
-                            </Link>
-                        </li>
-                        }
-                        {user.usertype === 'A' &&
-                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <Link href="/notices" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
-                                    <Bell size={20} />
-                                    {!isCollapsed && <span>공지 사항</span>}
+
+            {/* 4. 큰 제목 스타일을 응용한 사용자 프로필 (인라인 스타일로 파란색 차단) */}
+            {user && (
+                <a
+                    href="/mypage"
+                    className="block text-center text-sm font-bold bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2 truncate px-2"
+                    style={{ color: '#5c4033', textDecoration: 'none' }} // 강제 스타일 지정
+                >
+                    {isCollapsed ? <User size={20}/> : (user.user ? user.user.username : user.username)}
+                    {!isCollapsed && user?.user?.usertype === 'S' && ` (${user.grade}학년)`}
+                </a>
+            )}
+
+            {/* 6. 일반 버튼 스타일의 로그인/로그아웃 버튼 */}
+            <button
+                onClick={user ? handleLogout : handleLogin}
+                className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white w-full py-2 rounded-lg text-sm font-bold flex justify-center items-center transition-colors border-none cursor-pointer"
+            >
+                {user ? (
+                    isCollapsed ? <LogOut size={20} /> : "로그아웃"
+                ) : (
+                    isCollapsed ? <LogIn size={20} /> : "로그인"
+                )}
+            </button>
+
+            {user && (
+                <nav className="mt-4">
+                    <ul className="list-none p-0 flex flex-col gap-3">
+                        {[
+                            { href: "/", icon: <Home size={24} />, text: "홈", show: true },
+                            {
+                                href: user.user?.usertype === 'T' ? "/register" : "/apply",
+                                icon: <BookOpen size={24} />,
+                                text: user.user?.usertype === 'T' ? "수강 등록" : "수강 신청",
+                                show: !!user.user
+                            },
+                            {
+                                href: user.user?.usertype === 'T' ? "/myClasses" : user.user?.usertype === 'S' ? "/student" : "#",
+                                icon: <PlayCircle size={24} />,
+                                text: "강의 관리",
+                                show: !!user.user
+                            },
+                            {
+                                href: user.user?.usertype === 'T' ? "/studentGrades" : user.user?.usertype === 'S' ? "/myGrades" : "#",
+                                icon: <BarChart3 size={24} />,
+                                text: "성적 조회",
+                                show: !!user.user
+                            },
+                            /* 관리자 메뉴 */
+                            { href: "/notices", icon: <Bell size={24} />, text: "공지 사항", show: user.usertype === 'A' },
+                            { href: "/check/classes", icon: <PlayCircle size={24} />, text: "강의 검토", show: user.usertype === 'A' },
+                            { href: "/check/teachers", icon: <Users size={24} />, text: "교사 인증", show: user.usertype === 'A' },
+                            { href: "/users", icon: <Users size={24} />, text: "사용자 관리", show: user.usertype === 'A' },
+                        ].map((menu, idx) => menu.show && (
+                            <li key={idx} className="flex items-center justify-center">
+                                <Link
+                                    href={menu.href}
+                                    className={`w-full flex items-center transition-colors ${isCollapsed
+                                        ? "justify-center py-2 hover:bg-[#dbc7b1] rounded-lg" // 접혔을 때: 박스 제거, 아이콘 중앙 정렬
+                                        : "gap-3 bg-[#fcf7f0] border-[#b89b7a] border-1 rounded-lg p-2 shadow-sm font-bold hover:bg-[#dbc7b1]" // 펼쳐졌을 때: 통합 CSS 3번 박스 형태
+                                        }`}
+                                    style={{ color: '#5c4033', textDecoration: 'none' }} // 파란색/밑줄 방어
+                                >
+                                    <div className="shrink-0">{menu.icon}</div>
+                                    {!isCollapsed && <span className="truncate">{menu.text}</span>}
                                 </Link>
                             </li>
-                        }
-                        {user.usertype === 'A' &&
-                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <Link href="/check/classes" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
-                                    <PlayCircle size={20} />
-                                    {!isCollapsed && <span>강의 검토</span>}
-                                </Link>
-                            </li>
-                        }
-                        {user.usertype === 'A' &&
-                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <Link href="/check/teachers" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
-                                    <Users size={20} />
-                                    {!isCollapsed && <span>교사 인증</span>}
-                                </Link>
-                            </li>
-                        }
-                        {user.usertype === 'A' &&
-                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <Link href="/users" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
-                                    <Users size={20} />
-                                    {!isCollapsed && <span>사용자 관리</span>}
-                                </Link>
-                            </li>
-                        }
+                        ))}
                     </ul>
                 </nav>
-            }
+            )}
         </aside>
     );
 }

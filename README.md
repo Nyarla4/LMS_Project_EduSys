@@ -50,3 +50,49 @@ CREATE USER 'edusys_user'@'localhost' IDENTIFIED BY 'edusys_pw';
 GRANT ALL PRIVILEGES ON edusys_db.* TO 'edusys_user'@'localhost';
 FLUSH PRIVILEGES;
 ```
+
+## 통합CSS 구성(페이지 별 사이즈 조절 필요)
+
+### 1. 전체 영역
+```jsx
+<div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10">
+```
+
+### 2. 내부 전체 영역
+```jsx
+<div className="w-full max-w-6xl flex gap-6 mt-10 px-10">
+```
+
+### 3. 내부 영역 박스(필요시)
+```jsx
+<div className="bg-[#fcf7f0] border-[#b89b7a] border-1 rounded-lg p-3 shadow-sm font-bold">
+```
+
+### 4. 큰 제목
+```jsx
+<p className="text-4xl font-bold text-center mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">
+```
+
+### 5. 선택 버튼
+```jsx
+<button
+  type="button"
+  className={`px-3 py-1 rounded text-sm border-[#b89b7a] border-1 font-bold ${
+    selectedCategory === "선택 버튼"
+      ? "bg-[#8b5e3c] text-white"
+      : "bg-[#dbc7b1] text-[#5c4033]"
+  }`}>
+```
+
+### 6. 일반 버튼'
+```jsx
+<button
+  type="button"
+  className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-3 py-2 rounded text-lg mx-auto block mt-2">
+```
+
+### 7. 라벨 폼
+```jsx
+<label className="text-xl font-bold">라벨</label>
+<input type="text" className="border-[#b89b7a] border-1 rounded px-3 py-2"/>
+```
