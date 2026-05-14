@@ -84,7 +84,7 @@ FLUSH PRIVILEGES;
   }`}>
 ```
 
-### 6. 일반 버튼'
+### 6. 일반 버튼
 ```jsx
 <button
   type="button"
