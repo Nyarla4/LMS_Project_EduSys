@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 
+import koreanit.lms.edusys.Dto.NoticeDTO;
 import koreanit.lms.edusys.Entity.Notice;
-import koreanit.lms.edusys.Service.NoticeDTO;
 import koreanit.lms.edusys.Service.NoticeService;
 import lombok.RequiredArgsConstructor;
 
