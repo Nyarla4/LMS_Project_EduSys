@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import koreanit.lms.edusys.Entity.UserEntity;
+import koreanit.lms.edusys.Entity.UserType;
 import koreanit.lms.edusys.Service.UserService;
 import koreanit.lms.edusys.Service.StudentService;
 import koreanit.lms.edusys.Service.TeacherService;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 @RequiredArgsConstructor
 @RestController
@@ -55,7 +57,7 @@ public class UserController {
         try {
             UserEntity user = userService.create(userCreateForm);
             response.put("message", "회원가입이 완료되었습니다.");
-            
+
             switch (userCreateForm.getUsertype()) {
                 case "S":
                     studentService.create(user);
@@ -82,14 +84,14 @@ public class UserController {
         String loginId = user.get("loginid") != null ? user.get("loginid") : user.get("loginId");
 
         UserEntity member = userService.getUser(loginId);
-        
+
         if (member == null || !passwordEncoder.matches(user.get("password"), member.getPassword())) {
             response.put("message", "아이디 또는 비밀번호가 잘못되었습니다.");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
 
         String token = jwtTokenProvider.createToken(member.getLoginid());
-        
+
         response.put("token", token);
         response.put("username", member.getUsername());
         response.put("loginId", member.getLoginid());
@@ -103,10 +105,31 @@ public class UserController {
         UserDTO user = userService.getUserDto(uid);
         return ResponseEntity.ok(user);
     }
-    
+
     @GetMapping("/entity")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
         List<UserDTO> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
+    }
+
+    @PutMapping("/{loginId}/type")
+    public ResponseEntity<UserDTO> changeUserType(@PathVariable String loginId, @RequestBody UserDTO dto) {
+        UserEntity user = userService.getUser(loginId);
+        if (user == null)
+            return ResponseEntity.notFound().build();
+        UserType newType = dto.getUsertype().contains("S") ? UserType.S : dto.getUsertype().contains("T") ? UserType.T : UserType.A;
+        user.setUsertype(newType);
+        if (newType == UserType.S) {
+            if(studentService.findbyUserId(loginId) == null){
+                studentService.create(user);
+            }
+        }
+        if (newType == UserType.T) {
+            if(teacherService.findbyUserId(loginId) == null){
+                teacherService.create(user);
+            }
+        }
+        userService.changeUser(user);
+        return ResponseEntity.ok(dto);
     }
 }

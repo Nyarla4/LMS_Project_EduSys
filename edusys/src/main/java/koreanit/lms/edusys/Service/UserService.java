@@ -98,4 +98,17 @@ public class UserService {
         }
         return userDTOs;
     }
+
+    public UserDTO changeUser(UserEntity user) {
+        if(user == null) return null;
+        userRepository.save(user);
+        UserDTO dto = new UserDTO();
+        dto.setUserid(user.getUserid());
+        dto.setLoginid(user.getLoginid());
+        dto.setEmail(user.getEmail());
+        dto.setUsername(user.getUsername());
+        dto.setPhonenum(user.getPhonenum());
+        dto.setUsertype(user.getUsertype().name());
+        return dto;
+    }
 }
