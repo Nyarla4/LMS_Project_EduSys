@@ -20,6 +20,7 @@ public class SubjectService {
     private final SubjectRepository subjectRepository;
     private final LessonRepository lessonRepository;
     private final TeacherService teacherService;
+    private final LessonService lessonService;
 
     public List<Subject> findAllSubjects() {
         return subjectRepository.findAll();
@@ -55,8 +56,10 @@ public class SubjectService {
         lesson.setName(request.getLessonName());
         lesson.setFileUrl(request.getFileUrl());
         lesson.setSubject(savedSubject);
+        // Lesson 테이블에 날짜가 있어야 출석 데이터 생성이 가능하므로 과목 시작일을 기본값으로 설정합니다.
+        lesson.setDate(request.getStartDate()); 
 
-        lessonRepository.save(lesson);
+        lessonService.createLesson(lesson);
     }
 
     // 수강신청 페이지에 필요한 정보들을 DTO로 변환 -> 각 엔티티에 없는 내용 때문에

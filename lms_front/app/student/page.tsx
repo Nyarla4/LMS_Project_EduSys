@@ -1,5 +1,5 @@
-import StudentDashboard from "@/components/StudentDashboard";
+import SubjectListPage from "@/components/SubjectListPage";
 
 export default function StudentPage() {
-  return <StudentDashboard />;
+  return <SubjectListPage />;
 }

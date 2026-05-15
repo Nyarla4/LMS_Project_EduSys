@@ -1,8 +1,8 @@
 package koreanit.lms.edusys.Controller;
 
+import koreanit.lms.edusys.Dto.GradeDTO;
 import koreanit.lms.edusys.Entity.Grade;
 import koreanit.lms.edusys.Entity.Teacher;
-import koreanit.lms.edusys.Service.GradeDTO;
 import koreanit.lms.edusys.Service.GradeService;
 import lombok.RequiredArgsConstructor;
 
@@ -13,6 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/grades")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class GradeController {
 
     private final GradeService gradeService;

@@ -33,26 +33,15 @@ public class Lesson {
     @Transient
     private Integer week;
 
-    // 나머지 정보들은 코드에서 계산
+    // 유튜브 API 등을 통해 영상 길이를 실시간으로 가져옴
     @Transient
-    public String getOriginalFileName() {
-        return VideoUtils.getFileName(fileUrl);
-    }
-
-    @Transient
-    public String getContentType() {
-        String extension = getFileExtension();
-        return VideoUtils.getContentTypeFromExtension(extension);
-    }
-
-    @Transient
-    public String getFileExtension() {
-        String fileName = getOriginalFileName();
-        return VideoUtils.getFileExtension(fileName);
-    }
-
-    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("duration")
     public Integer getDuration() {
-        return VideoUtils.getDuration(fileUrl);
+        try {
+            if (fileUrl == null) return 0;
+            return VideoUtils.getDuration(fileUrl);
+        } catch (Exception e) {
+            return 0; // 정보를 가져올 수 없으면 0으로 반환
+        }
     }
 }

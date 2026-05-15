@@ -14,4 +14,6 @@ public interface LessonRepository extends JpaRepository<Lesson, Integer> {
     long countBySubjectSubidAndLidLessThanEqual(Integer subid, Integer lid);
 
     Lesson findBySubject(Subject subject);
+    // 과목 ID로 강의 목록을 찾는 메서드 추가
+    List<Lesson> findBySubjectSubid(Integer subid);
 }

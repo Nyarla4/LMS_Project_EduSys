@@ -1,11 +1,13 @@
 package koreanit.lms.edusys.Controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 
 import koreanit.lms.edusys.Dto.LessonSubDTO;
 import koreanit.lms.edusys.Dto.LessonSubResponseDTO;
+import koreanit.lms.edusys.Dto.SubjectDTO;
 import koreanit.lms.edusys.Entity.Subject;
 import koreanit.lms.edusys.Entity.Teacher;
 import koreanit.lms.edusys.Service.SubjectService;
@@ -30,22 +32,23 @@ public class SubjectController {
 
 
     @GetMapping("/teacher/{tid}")
-    public ResponseEntity<List<Subject>> getSubjectsByTeacherId(@PathVariable Integer tid) {
+    public ResponseEntity<List<SubjectDTO>> getSubjectsByTeacherId(@PathVariable Integer tid) {
         Teacher teacher = teacherService.findTeacherById(tid);
         if (teacher == null) {
             return ResponseEntity.notFound().build();
         }
-        List<Subject> subjects = subjectService.findSubjectsByTeacherId(teacher.getTid());
+        List<SubjectDTO> subjects = subjectService.findSubjectsByTeacherId(teacher.getTid())
+                .stream().map(SubjectDTO::new).collect(Collectors.toList());
         return ResponseEntity.ok(subjects);
     }
 
     @GetMapping("/{suid}")
-    public ResponseEntity<Subject> getSubjectById(@PathVariable Integer suid) {
+    public ResponseEntity<SubjectDTO> getSubjectById(@PathVariable Integer suid) {
         Subject subject = subjectService.findSubjectById(suid);
         if (subject == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(subject);
+        return ResponseEntity.ok(new SubjectDTO(subject));
     }
 
     // 수강신청 페이지 과목 조회 API

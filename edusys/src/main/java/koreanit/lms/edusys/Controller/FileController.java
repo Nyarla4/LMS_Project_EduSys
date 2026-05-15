@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/api/files")
+@CrossOrigin(origins = "http://localhost:3000")
 public class FileController {
 
     private static final String UPLOAD_DIR = "uploads/";
@@ -35,15 +36,37 @@ public class FileController {
     }
 
     @GetMapping("/syllabus.pdf")
-    public ResponseEntity<Resource> getSyllabus() {
+    public ResponseEntity<Resource> getSyllabus(@RequestParam(required = false, defaultValue = "false") boolean download) {
         try {
             Path filePath = Paths.get(UPLOAD_DIR + "syllabus.pdf");
             Resource resource = new UrlResource(filePath.toUri());
 
             if (resource.exists() && resource.isReadable()) {
+                String contentDisposition = download ? "attachment; filename=\"syllabus.pdf\"" : "inline";
                 return ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_PDF)
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"syllabus.pdf\"")
+                        .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // uploads/pdf 폴더 내의 PDF 파일을 반환하는 엔드포인트
+    @GetMapping("/pdf/{filename:.+}")
+    public ResponseEntity<Resource> getPdf(@PathVariable String filename, @RequestParam(required = false, defaultValue = "false") boolean download) {
+        try {
+            Path filePath = Paths.get(UPLOAD_DIR + "pdf/" + filename);
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                String contentDisposition = download ? "attachment; filename=\"" + filename + "\"" : "inline";
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
                         .body(resource);
             } else {
                 return ResponseEntity.notFound().build();

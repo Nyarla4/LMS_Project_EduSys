@@ -29,16 +29,8 @@ public class Progress {
     private Student student;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cid")
-    private Course course;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lid")
     private Lesson lesson;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subid")
-    private Subject subject;
 
     private Integer progressed;
 }

@@ -11,4 +11,5 @@ import koreanit.lms.edusys.Entity.UserEntity;
 public interface TeacherRepository extends JpaRepository<Teacher, Integer> {
     Optional<Teacher> findByUser(UserEntity user);
     List<Teacher> findByApprovedFalse(); // 승인되지 않은 교사 목록 조회
+    List<Teacher> findByApprovedTrue(); // 승인된 교사 목록 조회
 }
