@@ -7,10 +7,11 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class LessonSubDTO {
+public class LessonSubResponseDTO {
     
-    // 강의등록에 필요한 정보들
-    private Integer tid;
+    // 수강신청에 필요한 정보들
+    private Integer subid;
+    private String teacherName;
     private String major;
     // 과목(국,영,수,사,과)
     private String subName;
@@ -20,16 +21,6 @@ public class LessonSubDTO {
     private LocalDate startDate;
     private LocalDate endDate;
     // 세부과목
-    private String lessonName;     
-    // 강의계획서
-    private String planFile; 
-    // 영상 파일 경로(문서 파일은 추후 컬럼추가 고려)
-    private String fileUrl; 
-    
-    
-
-    
-
-
+    private String lessonName;
 
 }

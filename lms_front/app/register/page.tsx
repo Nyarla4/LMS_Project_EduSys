@@ -28,7 +28,7 @@ export default function Page() {
     useEffect(() => {
         if (!loading && user) {
             // 이름이 존재하지 않으면 빈값
-            setTeacherName(user.user?.name || user.username || "");
+            setTeacherName(user.user?.username || user.username || "");
         }
     }, [loading, user]);
 
@@ -36,8 +36,15 @@ export default function Page() {
         e.preventDefault();
 
         const data = {
-            major, subName: subject, lessonName: detailSubject,
-            startDate, endDate, capacity: Number(capacity), planFile, fileUrl
+            tid: user?.tid,
+            major,
+            subName: subject,
+            lessonName: detailSubject,
+            startDate,
+            endDate,
+            capacity: Number(capacity),
+            planFile,
+            fileUrl
         };
 
         const res = await fetch("http://localhost:8080/api/subjects", {

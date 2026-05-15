@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 
 import koreanit.lms.edusys.Dto.LessonSubDTO;
+import koreanit.lms.edusys.Dto.LessonSubResponseDTO;
 import koreanit.lms.edusys.Entity.Subject;
 import koreanit.lms.edusys.Entity.Teacher;
 import koreanit.lms.edusys.Service.SubjectService;
@@ -27,6 +28,7 @@ public class SubjectController {
     private final TeacherService teacherService;
     private final SubjectService subjectService;
 
+
     @GetMapping("/teacher/{tid}")
     public ResponseEntity<List<Subject>> getSubjectsByTeacherId(@PathVariable Integer tid) {
         Teacher teacher = teacherService.findTeacherById(tid);
@@ -45,6 +47,15 @@ public class SubjectController {
         }
         return ResponseEntity.ok(subject);
     }
+
+    // 수강신청 페이지 과목 조회 API
+    @GetMapping("/apply")
+    public ResponseEntity<List<LessonSubResponseDTO>> getApplySubjects() {
+        List<LessonSubResponseDTO> subjects = subjectService.findApplySubjects();
+        return ResponseEntity.ok(subjects);
+    }
+
+
     // 강의등록 버튼으로 API 요청
     @PostMapping
     public ResponseEntity<?> createLesson(@RequestBody LessonSubDTO request) 
@@ -52,4 +63,6 @@ public class SubjectController {
         subjectService.createLesson(request);
         return ResponseEntity.ok().build();
     }
+
+
 }
