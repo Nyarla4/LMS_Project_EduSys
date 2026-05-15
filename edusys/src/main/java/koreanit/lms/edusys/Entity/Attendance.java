@@ -1,7 +1,6 @@
 package koreanit.lms.edusys.Entity;
 
 import jakarta.persistence.Id;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
@@ -19,7 +18,6 @@ import lombok.Setter;
 @Table(name = "attendances")
 @Getter
 @Setter
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Attendance {
 
     @Id

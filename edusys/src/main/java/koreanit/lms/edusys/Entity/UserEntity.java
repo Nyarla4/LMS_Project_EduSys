@@ -2,7 +2,6 @@ package koreanit.lms.edusys.Entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
 @Entity
@@ -12,7 +11,6 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class UserEntity {
 
     @Id

@@ -1,6 +1,5 @@
 package koreanit.lms.edusys.Entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import koreanit.lms.edusys.util.VideoUtils;
 import lombok.*;
@@ -15,7 +14,6 @@ import java.util.Locale;
 @Table(name = "lessons")
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Lesson {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,7 +24,6 @@ public class Lesson {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subid")
-    @JsonIgnoreProperties({"lessons", "teacher", "hibernateLazyInitializer", "handler"})
     private Subject subject;
 
     // 영상 파일 경로만 저장

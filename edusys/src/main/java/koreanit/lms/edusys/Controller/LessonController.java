@@ -1,5 +1,6 @@
 package koreanit.lms.edusys.Controller;
 
+import koreanit.lms.edusys.Dto.LessonDTO;
 import koreanit.lms.edusys.Entity.Lesson;
 import koreanit.lms.edusys.Entity.Progress;
 import koreanit.lms.edusys.Service.LessonService;
@@ -21,6 +22,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 @RestController
@@ -36,20 +38,25 @@ public class LessonController {
 
     @GetMapping
     @Transactional(readOnly = true)
-    public List<Lesson> getAllLessons() {
-        return lessonService.findAllLessons();
+    public List<LessonDTO> getAllLessons() {
+        return lessonService.findAllLessons().stream()
+                .map(LessonDTO::new)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
-    public Lesson getLessonById(@PathVariable Integer id) {
-        return lessonService.findLessonById(id)
-                .orElseThrow(() -> new RuntimeException("Lesson not found with id: " + id));
+    public LessonDTO getLessonById(@PathVariable Integer id) {
+        Lesson lesson = lessonService.findLessonById(id)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+        return new LessonDTO(lesson);
     }
 
     @GetMapping("/subject/{subId}")
-    public List<Lesson> getLessonsBySubject(@PathVariable Integer subId) {
-        return lessonService.findLessonsBySubjectId(subId);
+    public List<LessonDTO> getLessonsBySubject(@PathVariable Integer subId) {
+        return lessonService.findLessonsBySubjectId(subId).stream()
+                .map(LessonDTO::new)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}/student/{studentId}")
@@ -62,7 +69,7 @@ public class LessonController {
         List<Progress> progresses = progressService.findAllProgressesByStudent(studentId);
 
         Map<String, Object> map = new HashMap<>();
-        map.put("lesson", lesson);
+        map.put("lesson", new LessonDTO(lesson));
         
         // Progress 리스트에서 현재 Lesson(lid)에 해당하는 진도 정보 찾기
         Progress progress = progresses.stream()

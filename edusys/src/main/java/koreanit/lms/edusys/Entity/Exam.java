@@ -2,7 +2,6 @@ package koreanit.lms.edusys.Entity;
 
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.ManyToOne;
 
 import jakarta.persistence.Entity;
@@ -19,7 +18,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @Setter
 @NoArgsConstructor
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Exam {
 
     @Id
