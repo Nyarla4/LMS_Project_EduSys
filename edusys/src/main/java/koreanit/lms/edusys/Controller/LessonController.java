@@ -47,6 +47,11 @@ public class LessonController {
                 .orElseThrow(() -> new RuntimeException("Lesson not found with id: " + id));
     }
 
+    @GetMapping("/subject/{subId}")
+    public List<Lesson> getLessonsBySubject(@PathVariable Integer subId) {
+        return lessonService.findLessonsBySubjectId(subId);
+    }
+
     @GetMapping("/{id}/student/{studentId}")
     public Map<String, Object> getLessonWithProgress(
             @PathVariable Integer id,

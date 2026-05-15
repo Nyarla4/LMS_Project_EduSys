@@ -25,6 +25,11 @@ public class AttendanceController {
                 .orElseThrow(() -> new RuntimeException("Attendance not found with id: " + id));
     }
 
+    @GetMapping("/subject/{subId}")
+    public List<Attendance> getAttendancesBySubject(@PathVariable Integer subId) {
+        return attendanceService.findAllAttendancesBySubject(subId);
+    }
+
     @PostMapping
     public Attendance saveAttendance(@RequestBody Attendance attendance) {
         return attendanceService.save(attendance);

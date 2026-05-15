@@ -14,13 +14,19 @@ public class CourseController {
 
     private final CourseService courseService;
 
+    // 상세 조회보다 구체적인 경로를 위로 올립니다.
+    @GetMapping("/student/{sid}")
+    public List<Course> getCoursesByStudentId(@PathVariable("sid") Integer sid) {
+        return courseService.findAllCoursesByStudent(sid);
+    }
+
     @GetMapping
     public List<Course> getAllCourses() {
         return courseService.findAllCourses();
     }
 
     @GetMapping("/{id}")
-    public Course getCourseById(@PathVariable Integer id) {
+    public Course getCourseById(@PathVariable("id") Integer id) {
         return courseService.findCourseById(id)
                 .orElseThrow(() -> new RuntimeException("Course not found with id: " + id));
     }

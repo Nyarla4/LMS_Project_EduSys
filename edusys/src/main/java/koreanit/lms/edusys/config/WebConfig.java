@@ -8,7 +8,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.nio.file.Paths;
 
 @Configuration
-@ComponentScan(basePackages = {"koreanit.lms.edusys.lesson", "koreanit.lms.edusys.progress"})
 public class WebConfig implements WebMvcConfigurer {
 
     @Override

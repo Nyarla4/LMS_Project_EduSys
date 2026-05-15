@@ -25,6 +25,11 @@ public class ExamController {
                 .orElseThrow(() -> new RuntimeException("Exam not found with id: " + id));
     }
 
+    @GetMapping("/subject/{subId}")
+    public List<Exam> getExamsBySubject(@PathVariable Integer subId) {
+        return examService.findAllExamsBySubject(subId);
+    }
+
     @PostMapping
     public Exam saveExam(@RequestBody Exam exam) {
         return examService.createExam(exam);

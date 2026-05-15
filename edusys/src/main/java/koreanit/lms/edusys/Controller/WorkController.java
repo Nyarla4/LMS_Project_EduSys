@@ -25,6 +25,11 @@ public class WorkController {
                 .orElseThrow(() -> new RuntimeException("Work not found with id: " + id));
     }
 
+    @GetMapping("/subject/{subId}")
+    public List<Work> getWorksBySubject(@PathVariable Integer subId) {
+        return workService.findAllWorksBySubject(subId);
+    }
+
     @PostMapping
     public Work saveWork(@RequestBody Work work) {
         return workService.createWork(work);

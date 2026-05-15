@@ -99,9 +99,12 @@ function TabPanel({
     // toolbar=0: 상단바 숨김, navpanes=0: 사이드바 숨김, view=FitH: 가로 맞춤
     const pdfParams = "#toolbar=0&navpanes=0&view=FitH";
     
-    const syllabusUrl = (planFile 
+    const baseSyllabusUrl = planFile 
       ? `${apiBase}/files/pdf/${planFile}` 
-      : `${apiBase}/files/syllabus.pdf`) + pdfParams;
+      : `${apiBase}/files/syllabus.pdf`;
+
+    const syllabusViewUrl = baseSyllabusUrl + "?download=false" + pdfParams;
+    const syllabusDownloadUrl = baseSyllabusUrl + "?download=true";
 
     return (
       <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
@@ -111,7 +114,7 @@ function TabPanel({
             <p className="mt-2 text-sm text-[#7b6346]">과목별 수업 계획서를 내려받거나 바로 확인할 수 있습니다.</p>
           </div>
           <a 
-            href={syllabusUrl}
+            href={syllabusDownloadUrl}
             target="_blank" // 새 탭에서 열기
             className="inline-flex items-center rounded-full bg-[#8d6a44] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7c5935]"
             download
@@ -121,7 +124,7 @@ function TabPanel({
         </div>
         <div className="aspect-[3/4] w-full overflow-hidden rounded-[28px] border border-[#f1e1c4] bg-[#fbf1e8]">
           <iframe
-            src={syllabusUrl}
+            src={syllabusViewUrl}
             width="100%"
             height="100%"
             title="Syllabus PDF Viewer"
@@ -160,12 +163,24 @@ function TabPanel({
 
                 // 강의 날짜와 일치하는 출석 데이터를 찾습니다.
                 const att = attendanceData.find(a => a.date === lesson.date);
+
+                // 동영상 시청 진도율 확인 (90% 이상이면 출석 인정)
+                const video = videoList.find(v => v.lid === lesson.lid);
+                const savedTime = progressMap[lesson.lid] || 0;
+                // 현재 시청 중인 영상이라면 실시간 세션 시간 합산
+                const totalProgress = (activeVideoId === lesson.lid && sessionBaseProgress !== undefined)
+                  ? (sessionBaseProgress + currentSessionSeconds)
+                  : savedTime;
+                const isPresentByVideo = video && video.duration > 0 && (totalProgress / video.duration) >= 0.9;
+
                 return (
                 <tr key={lesson.lid} className="hover:bg-[#fff6eb]">
                   <td className="px-4 py-4">{dateRange}</td>
                   <td className="px-4 py-4">{lesson.name}</td>
                   <td className="px-4 py-4">
-                    {att ? (att.whether ? "출석" : "결석") : "결석"}
+                    <span className={(isPresentByVideo || (att && att.whether)) ? "text-blue-600 font-bold" : "text-red-600 font-bold"}>
+                      {isPresentByVideo || (att && att.whether) ? "출석" : "결석"}
+                    </span>
                   </td>
                   <td className="px-4 py-4">-</td>
                 </tr>
@@ -291,7 +306,7 @@ function TabPanel({
   );
 }
 
-export default function StudentDashboard() {
+export default function StudentDashboard({ subjectId }: { subjectId?: number }) {
   const [activeTab, setActiveTab] = useState<Tab>("강의 계획서");
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [attendanceData, setAttendanceData] = useState<Attendance[]>([]);
@@ -326,12 +341,17 @@ export default function StudentDashboard() {
         const headers: any = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        // 중복되는 /lessons 호출을 제거하고 하나로 통합
+        // subjectId가 있으면 필터링된 경로를 사용하고, 없으면 전체 경로를 사용합니다.
+        const lessonUrl = subjectId ? `${API_BASE}/lessons/subject/${subjectId}` : `${API_BASE}/lessons`;
+        const attUrl = subjectId ? `${API_BASE}/attendances/subject/${subjectId}` : `${API_BASE}/attendances`;
+        const examUrl = subjectId ? `${API_BASE}/exams/subject/${subjectId}` : `${API_BASE}/exams`;
+        const assignUrl = subjectId ? `${API_BASE}/works/subject/${subjectId}` : `${API_BASE}/works`;
+
         const [lessonRes, attRes, examRes, assignRes, progRes] = await Promise.all([
-          fetch(`${API_BASE}/lessons`, { headers }),
-          fetch(`${API_BASE}/attendances`, { headers }), 
-          fetch(`${API_BASE}/exams`, { headers }),        
-          fetch(`${API_BASE}/assignments`, { headers }),
+          fetch(lessonUrl, { headers }),
+          fetch(attUrl, { headers }), 
+          fetch(examUrl, { headers }),        
+          fetch(assignUrl, { headers }),
           fetch(`${API_BASE}/progresses/student/${studentId}`, { headers })
         ]);
         

@@ -1,6 +1,7 @@
 package koreanit.lms.edusys.Service;
 
 import koreanit.lms.edusys.Entity.Lesson;
+import koreanit.lms.edusys.Entity.Subject; // Subject 엔티티 import 추가
 import koreanit.lms.edusys.Repository.LessonRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,13 @@ public class LessonService {
             calculateAndSetWeek(lesson);
             return lesson;
         });
+    }
+
+    @Transactional(readOnly = true)
+    public List<Lesson> findLessonsBySubjectId(Integer subid) {
+        List<Lesson> lessons = lessonRepository.findBySubjectSubid(subid);
+        lessons.forEach(this::calculateAndSetWeek);
+        return lessons;
     }
 
     /**

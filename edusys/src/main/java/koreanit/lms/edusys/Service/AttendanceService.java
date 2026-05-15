@@ -7,11 +7,15 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import koreanit.lms.edusys.Entity.Student;
+import koreanit.lms.edusys.Entity.Subject;
 import koreanit.lms.edusys.Entity.Attendance;
 import koreanit.lms.edusys.Entity.Course;
 import koreanit.lms.edusys.Entity.Lesson;
 import koreanit.lms.edusys.Repository.AttendanceRepository;
 import koreanit.lms.edusys.Repository.CourseRepository;
+import koreanit.lms.edusys.Repository.StudentRepository;
+import koreanit.lms.edusys.Repository.SubjectRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -19,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 public class AttendanceService {
     private final AttendanceRepository attendanceRepository;
     private final CourseRepository courseRepository;
+    private final StudentRepository studentRepository;
+    private final SubjectRepository subjectRepository;
 
     @Transactional(readOnly = true)
     public List<Attendance> findAllAttendances() {
@@ -85,10 +91,20 @@ public class AttendanceService {
 
     @Transactional
     public void markAsPresent(Integer sid, Integer subid, LocalDate date) {
-        attendanceRepository.findByStudentSidAndSubjectSubidAndDate(sid, subid, date)
-            .ifPresent(attendance -> {
-                attendance.setWhether(true);
-                attendanceRepository.save(attendance);
-            });
+        Optional<Attendance> existing = attendanceRepository.findByStudentSidAndSubjectSubidAndDate(sid, subid, date);
+        
+        if (existing.isPresent()) {
+            Attendance attendance = existing.get();
+            attendance.setWhether(true);
+            attendanceRepository.save(attendance);
+        } else {
+            // 레코드가 없다면(직접 더미데이터를 넣었을 경우 등) 새로 생성하며 출석 처리
+            Attendance attendance = new Attendance();
+            studentRepository.findById(sid).ifPresent(attendance::setStudent);
+            subjectRepository.findById(subid).ifPresent(attendance::setSubject);
+            attendance.setDate(date);
+            attendance.setWhether(true);
+            attendanceRepository.save(attendance);
+        }
     }
 }
