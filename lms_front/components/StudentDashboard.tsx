@@ -95,10 +95,13 @@ function TabPanel({
     // 첫 번째 강의의 과목 정보에서 planFile 파일명을 가져옵니다.
     const planFile = lessons.length > 0 ? lessons[0].subject?.planFile : null;
     
-    // 하드코딩된 localhost:8080 대신 apiBase를 사용합니다.
-    const syllabusUrl = planFile 
+    // PDF 뷰어의 도구 모음을 숨기고 가로 폭에 맞게 꽉 채우는 파라미터 추가
+    // toolbar=0: 상단바 숨김, navpanes=0: 사이드바 숨김, view=FitH: 가로 맞춤
+    const pdfParams = "#toolbar=0&navpanes=0&view=FitH";
+    
+    const syllabusUrl = (planFile 
       ? `${apiBase}/files/pdf/${planFile}` 
-      : `${apiBase}/files/syllabus.pdf`;
+      : `${apiBase}/files/syllabus.pdf`) + pdfParams;
 
     return (
       <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
@@ -109,6 +112,7 @@ function TabPanel({
           </div>
           <a 
             href={syllabusUrl}
+            target="_blank" // 새 탭에서 열기
             className="inline-flex items-center rounded-full bg-[#8d6a44] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7c5935]"
             download
           >

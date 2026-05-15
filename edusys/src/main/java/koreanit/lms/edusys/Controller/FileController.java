@@ -43,7 +43,7 @@ public class FileController {
             if (resource.exists() && resource.isReadable()) {
                 return ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_PDF)
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"syllabus.pdf\"")
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"syllabus.pdf\"")
                         .body(resource);
             } else {
                 return ResponseEntity.notFound().build();
@@ -63,7 +63,7 @@ public class FileController {
             if (resource.exists() && resource.isReadable()) {
                 return ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_PDF)
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                         .body(resource);
             } else {
                 return ResponseEntity.notFound().build();
