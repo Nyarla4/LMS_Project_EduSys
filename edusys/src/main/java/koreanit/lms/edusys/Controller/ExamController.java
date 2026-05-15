@@ -9,6 +9,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/exams")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class ExamController {
 
     private final ExamService examService;
@@ -22,6 +23,11 @@ public class ExamController {
     public Exam getExamById(@PathVariable Integer id) {
         return examService.findExamById(id)
                 .orElseThrow(() -> new RuntimeException("Exam not found with id: " + id));
+    }
+
+    @GetMapping("/subject/{subId}")
+    public List<Exam> getExamsBySubject(@PathVariable Integer subId) {
+        return examService.findAllExamsBySubject(subId);
     }
 
     @PostMapping

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import koreanit.lms.edusys.Entity.Lesson;
 import koreanit.lms.edusys.Entity.Progress;
@@ -19,28 +20,69 @@ public class ProgressService {
     private final StudentService studentService;
     private final SubjectService subjectService;
     private final LessonService lessonService;
+    private final AttendanceService attendanceService;
 
+    @Transactional(readOnly = true)
     public List<Progress> findAllProgresses() {
         return progressRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Progress> findAllProgressesByStudent(Integer sid) {
         return progressRepository.findByStudentSid(sid);
     }
 
+    @Transactional(readOnly = true)
     public List<Progress> findAllProgressesBySubject(Integer subid) {
-        return progressRepository.findBySubjectSubid(subid);
+        return progressRepository.findByLessonSubjectSubid(subid);
     }
 
+    @Transactional(readOnly = true)
     public List<Progress> findAllProgressesByLesson(Integer lid) {
         return progressRepository.findByLessonLid(lid);
     }
 
     public Optional<Progress> findProgressById(Integer pid) {
         if(pid == null) {
-            return null;
+            return Optional.empty();
         }
         return progressRepository.findById(pid);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Progress> getProgressByStudentAndLesson(Integer studentId, Integer lessonId) {
+        return progressRepository.findByStudentSidAndLessonLid(studentId, lessonId);
+    }
+
+    @Transactional
+    public Progress updateProgress(Integer studentId, Integer lessonId, Integer lastTime) {
+        Lesson lesson = lessonService.findLessonById(lessonId)
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+
+        Progress progress = progressRepository.findByStudentSidAndLessonLid(studentId, lessonId)
+                .orElse(new Progress());
+        
+        if (progress.getPid() == null) {
+            Student student = studentService.findById(studentId);
+            progress.setStudent(student);
+            progress.setLesson(lesson);
+        }
+        
+        progress.setProgressed(lastTime);
+        Progress saved = progressRepository.save(progress);
+
+        // 시청률 계산 및 90% 이상 시 출석 처리
+        Integer duration = lesson.getDuration();
+        if (duration != null && duration > 0) {
+            double ratio = (double) lastTime / duration;
+            if (ratio >= 0.9) {
+                if (lesson.getSubject() != null) {
+                    attendanceService.markAsPresent(studentId, lesson.getSubject().getSubid(), lesson.getDate());
+                }
+            }
+        }
+        
+        return saved;
     }
 
     public Progress createProgress(Integer sid, Integer subid, Integer lid) {
@@ -59,7 +101,6 @@ public class ProgressService {
         }
         Lesson lesson = optionalLesson.get();
         progress.setStudent(student);
-        progress.setSubject(subject);
         progress.setLesson(lesson);
         return progressRepository.save(progress);
     }
@@ -75,13 +116,6 @@ public class ProgressService {
         if(pid == null) {
             return;
         }
-        Optional<Progress> optionalProgress = progressRepository.findById(pid);
-        if(optionalProgress.isEmpty()) {
-            return;
-        }
-        Progress progress = optionalProgress.get();
-        if(optionalProgress.isPresent()) {
-            progressRepository.delete(progress);
-        }
+        progressRepository.findById(pid).ifPresent(progressRepository::delete);
     }
 }

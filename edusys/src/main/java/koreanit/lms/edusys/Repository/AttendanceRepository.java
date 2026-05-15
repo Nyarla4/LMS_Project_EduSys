@@ -2,6 +2,7 @@ package koreanit.lms.edusys.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,4 +12,5 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Integer>
     List<Attendance> findByStudentSid(Integer sid);
     List<Attendance> findBySubjectSubid(Integer subid);
     List<Attendance> findByDate(LocalDate date);
+    Optional<Attendance> findByStudentSidAndSubjectSubidAndDate(Integer sid, Integer subid, LocalDate date);
 }

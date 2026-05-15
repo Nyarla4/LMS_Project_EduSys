@@ -9,6 +9,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/works")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class WorkController {
 
     private final WorkService workService;
@@ -22,6 +23,11 @@ public class WorkController {
     public Work getWorkById(@PathVariable Integer id) {
         return workService.findWorkById(id)
                 .orElseThrow(() -> new RuntimeException("Work not found with id: " + id));
+    }
+
+    @GetMapping("/subject/{subId}")
+    public List<Work> getWorksBySubject(@PathVariable Integer subId) {
+        return workService.findAllWorksBySubject(subId);
     }
 
     @PostMapping

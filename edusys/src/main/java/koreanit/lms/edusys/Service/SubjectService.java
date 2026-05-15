@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import koreanit.lms.edusys.Dto.LessonSubDTO;
 import koreanit.lms.edusys.Entity.Lesson;
 import koreanit.lms.edusys.Entity.Subject;
-import koreanit.lms.edusys.Repository.LessonRepository;
 import koreanit.lms.edusys.Repository.SubjectRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -15,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SubjectService {
     private final SubjectRepository subjectRepository;
-    private final LessonRepository lessonRepository;
+    private final LessonService lessonService;
 
     public List<Subject> findAllSubjects() {
         return subjectRepository.findAll();
@@ -51,7 +50,9 @@ public class SubjectService {
         lesson.setName(request.getLessonName());
         lesson.setFileUrl(request.getFileUrl());
         lesson.setSubject(savedSubject);
+        // Lesson 테이블에 날짜가 있어야 출석 데이터 생성이 가능하므로 과목 시작일을 기본값으로 설정합니다.
+        lesson.setDate(request.getStartDate()); 
 
-        lessonRepository.save(lesson);
+        lessonService.createLesson(lesson);
     }
 }

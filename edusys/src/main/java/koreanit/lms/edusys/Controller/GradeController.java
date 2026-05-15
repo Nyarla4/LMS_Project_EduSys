@@ -13,6 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/grades")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class GradeController {
 
     private final GradeService gradeService;

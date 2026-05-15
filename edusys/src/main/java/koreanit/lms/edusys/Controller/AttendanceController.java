@@ -9,6 +9,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/attendances")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:3000")
 public class AttendanceController {
 
     private final AttendanceService attendanceService;
@@ -22,6 +23,11 @@ public class AttendanceController {
     public Attendance getAttendanceById(@PathVariable Integer id) {
         return attendanceService.findAttendanceById(id)
                 .orElseThrow(() -> new RuntimeException("Attendance not found with id: " + id));
+    }
+
+    @GetMapping("/subject/{subId}")
+    public List<Attendance> getAttendancesBySubject(@PathVariable Integer subId) {
+        return attendanceService.findAllAttendancesBySubject(subId);
     }
 
     @PostMapping
