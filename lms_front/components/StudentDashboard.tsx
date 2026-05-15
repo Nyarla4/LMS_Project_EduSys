@@ -91,6 +91,11 @@ function TabPanel({
   currentSessionSeconds: number;
   onVideoSelect: (video: Video) => void;
 }) {
+  const { user } = useUser();
+  // 데이터 구조를 변수로 뽑아 가독성 높임 (학생/교사 객체 내의 user 또는 관리자 객체 자체)
+  const profile = user?.user || user;
+  const isTeacher = profile?.usertype === 'T';
+
   if (activeTab === "강의 계획서") {
     // 첫 번째 강의의 과목 정보에서 planFile 파일명을 가져옵니다.
     const planFile = lessons.length > 0 ? lessons[0].subject?.planFile : null;
@@ -133,6 +138,15 @@ function TabPanel({
             이 브라우저는 iframe을 지원하지 않습니다.
           </iframe>
         </div>
+        
+        {/* 교사 전용 관리 영역 */}
+        {isTeacher && (
+          <div className="mt-6 flex justify-end gap-3 border-t border-[#e6d1a7] pt-6">
+            <button className="rounded-full bg-[#3d2b1f] px-6 py-2 text-sm font-semibold text-white hover:bg-black">
+              계획서 파일 교체
+            </button>
+          </div>
+        )}
       </section>
     );
   }
@@ -140,7 +154,14 @@ function TabPanel({
   if (activeTab === "출석 현황") {
     return (
       <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
-        <h2 className="mb-4 text-2xl font-semibold text-[#3d2b1f]">출석 현황</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-[#3d2b1f]">출석 현황</h2>
+          {isTeacher && (
+            <button className="rounded-full bg-[#8d6a44] px-4 py-2 text-xs font-bold text-white hover:bg-[#7c5935]">
+              출석부 일괄 수정
+            </button>
+          )}
+        </div>
         <div className="overflow-x-auto rounded-[28px] border border-[#f0debe] bg-white shadow-sm">
           <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
             <thead className="bg-[#f7ecd9] text-[#6d5b46]">
@@ -178,9 +199,13 @@ function TabPanel({
                   <td className="px-4 py-4">{dateRange}</td>
                   <td className="px-4 py-4">{lesson.name}</td>
                   <td className="px-4 py-4">
-                    <span className={(isPresentByVideo || (att && att.whether)) ? "text-blue-600 font-bold" : "text-red-600 font-bold"}>
+                    {isTeacher ? (
+                      <span className="text-gray-400 italic text-xs">수강생 전용 정보</span>
+                    ) : (
+                      <span className={(isPresentByVideo || (att && att.whether)) ? "text-blue-600 font-bold" : "text-red-600 font-bold"}>
                       {isPresentByVideo || (att && att.whether) ? "출석" : "결석"}
-                    </span>
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-4">-</td>
                 </tr>
@@ -196,7 +221,14 @@ function TabPanel({
   if (activeTab === "동영상 강의") {
     return (
       <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
-        <h2 className="mb-4 text-2xl font-semibold text-[#3d2b1f]">동영상 강의</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-[#3d2b1f]">동영상 강의</h2>
+          {isTeacher && (
+            <button className="rounded-full bg-[#8d6a44] px-4 py-2 text-xs font-bold text-white hover:bg-[#7c5935]">
+              + 영상 추가 업로드
+            </button>
+          )}
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {videoList.length > 0 ? (
             videoList.map((video) => {
@@ -325,10 +357,18 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   const ytPlayerRef = useRef<any>(null); // 유튜브 플레이어 인스턴스 저장용
   const trackingInterval = useRef<NodeJS.Timeout | null>(null);
 
-  const { user } = useUser();
-  const studentId = user?.sid || user?.id; // UserContext에서 학생 ID 추출
+  const { user, loading: userLoading } = useUser();
+
+  // 컴포넌트 메인 로직에서도 동일하게 단순화된 변수 사용
+  const profile = user?.user || user;
+  const usertype = profile?.usertype;
+  // 학생일 경우에만 studentId를 가져오고, 교사일 경우 null로 설정하여 학생 전용 API 호출 방지
+  const studentId = usertype === 'S' ? (user?.sid || profile?.userid || profile?.id) : null;
+  // 교사일 경우 teacherId를 가져옴 (현재는 사용되지 않지만 확장성을 위해 유지)
+  const teacherId = usertype === 'T' ? (user?.tid || profile?.userid || profile?.id) : null;
 
   const API_BASE = "http://localhost:8080/api";
+  const isTeacher = usertype === 'T';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -341,20 +381,30 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         const headers: any = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        // subjectId가 있으면 필터링된 경로를 사용하고, 없으면 전체 경로를 사용합니다.
+        // 모든 사용자 유형에 공통적으로 필요한 강의 목록 API
         const lessonUrl = subjectId ? `${API_BASE}/lessons/subject/${subjectId}` : `${API_BASE}/lessons`;
-        const attUrl = subjectId ? `${API_BASE}/attendances/subject/${subjectId}` : `${API_BASE}/attendances`;
-        const examUrl = subjectId ? `${API_BASE}/exams/subject/${subjectId}` : `${API_BASE}/exams`;
-        const assignUrl = subjectId ? `${API_BASE}/works/subject/${subjectId}` : `${API_BASE}/works`;
 
-        const [lessonRes, attRes, examRes, assignRes, progRes] = await Promise.all([
-          fetch(lessonUrl, { headers }),
-          fetch(attUrl, { headers }), 
-          fetch(examUrl, { headers }),        
-          fetch(assignUrl, { headers }),
-          fetch(`${API_BASE}/progresses/student/${studentId}`, { headers })
-        ]);
-        
+        const fetches: Promise<Response>[] = [fetch(lessonUrl, { headers })];
+        let attRes: Response | null = null;
+        let examRes: Response | null = null;
+        let assignRes: Response | null = null;
+        let progRes: Response | null = null;
+
+        // 학생일 경우에만 학생 관련 데이터 페칭을 추가
+        if (!isTeacher && studentId) {
+          const attUrl = subjectId ? `${API_BASE}/attendances/subject/${subjectId}` : `${API_BASE}/attendances`;
+          const examUrl = subjectId ? `${API_BASE}/exams/subject/${subjectId}` : `${API_BASE}/exams`;
+          const assignUrl = subjectId ? `${API_BASE}/works/subject/${subjectId}` : `${API_BASE}/works`;
+
+          fetches.push(fetch(attUrl, { headers }));
+          fetches.push(fetch(examUrl, { headers }));
+          fetches.push(fetch(assignUrl, { headers }));
+          fetches.push(fetch(`${API_BASE}/progresses/student/${studentId}`, { headers }));
+        }
+
+        const responses = await Promise.all(fetches);
+        const lessonRes = responses[0];
+
         if (!lessonRes.ok) {
           const errText = await lessonRes.text();
           throw new Error(`강의 로드 실패 (${lessonRes.status}): ${errText.substring(0, 50)}`);
@@ -364,21 +414,27 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         setLessons(lessonData);
         setVideoList(lessonData); // 통합된 Lesson 데이터를 비디오 리스트로도 사용
 
-        if (attRes.ok) setAttendanceData(await attRes.json());
-        if (examRes.ok) setExams(await examRes.json());
-        if (assignRes.ok) setAssignments(await assignRes.json());
-        
-        if (progRes.ok) {
-          const progs = await progRes.json();
-          const map: Record<number, number> = {};
-          progs.forEach((p: any) => { 
-            // ProgressController에서 "progress"라는 키로 데이터를 보내고 있으므로 이를 우선적으로 확인합니다.
-            const lid = p.lesson?.lid || p.lid || p.videoId || p.lessonId;
-            if (lid) {
-              map[lid] = p.progress ?? p.progressed ?? 0;
-            }
-          });
-          setProgressMap(map);
+        // 학생일 경우에만 나머지 데이터 파싱
+        if (!isTeacher && studentId) {
+          attRes = responses[1];
+          examRes = responses[2];
+          assignRes = responses[3];
+          progRes = responses[4];
+
+          if (attRes?.ok) setAttendanceData(await attRes.json());
+          if (examRes?.ok) setExams(await examRes.json());
+          if (assignRes?.ok) setAssignments(await assignRes.json());
+          if (progRes?.ok) {
+            const progs = await progRes.json();
+            const map: Record<number, number> = {};
+            progs.forEach((p: any) => {
+              const lid = p.lesson?.lid || p.lid || p.videoId || p.lessonId;
+              if (lid) {
+                map[lid] = p.progress ?? p.progressed ?? 0;
+              }
+            });
+            setProgressMap(map);
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -389,7 +445,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     };
 
     fetchData();
-  }, [studentId]); // studentId가 결정되면 데이터를 불러옴
+  }, [subjectId, studentId, isTeacher, userLoading, user]); // 의존성 보강
 
   // YouTube IFrame API 스크립트 로드
   useEffect(() => {

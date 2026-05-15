@@ -37,7 +37,16 @@ public class SecurityConfig {
             // iframe 내에서 PDF 뷰어를 띄우기 위해 필요
             .headers(headers -> headers.frameOptions(frame -> frame.disable()))
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/user/login", "/user/signup", "/api/notices/**", "/api/subjects/**", "/api/lessons/video/**", "/api/files/**", "/api/courses/**").permitAll()
+                // 로그인, 회원가입, 공지사항, 파일 스트리밍은 누구나 접근 가능
+                .requestMatchers(
+                    "/user/login", 
+                    "/user/signup", 
+                    "/api/notices/**", 
+                    "/api/files/**",
+                    "/api/lessons/video/**"
+                ).permitAll()
+                // 그 외 모든 /api/** 요청은 로그인(JWT)이 필요함
+                .requestMatchers("/api/**").authenticated()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form.disable())
