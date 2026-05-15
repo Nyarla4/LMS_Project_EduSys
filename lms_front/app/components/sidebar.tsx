@@ -36,8 +36,8 @@ export default function Sidebar() {
 
     return (
         <aside
-            className={`sticky top-0 bg-[#f5f1e8] border-r-2 border-[#d6c2a8] p-4 transition-all duration-300 flex flex-col gap-4 relative overflow-hidden ${isCollapsed ? "w-[90px]" : "w-[200px]"
-                }`}
+            className={`sticky top-0 bg-[#f5f1e8] border-r-2 border-[#d6c2a8] p-4 transition-all duration-300 flex flex-col gap-4 relative overflow-hidden ${isCollapsed ? "w-[90px]" : "w-[200px]"}`}
+            style={{ height: '100vh' }}
         >
             {/* 사이드바 토글 버튼 */}
             <button
