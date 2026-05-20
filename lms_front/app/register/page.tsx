@@ -14,7 +14,8 @@ export default function Page() {
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [planFile, setPlanFile] = useState("");
-
+    const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
+    const [showPdfPreview, setShowPdfPreview] = useState(false);
 
     const subjectOptions = {
         국어: ["화법과 작문", "독서", "언어와매체", "문학"],
@@ -32,8 +33,47 @@ export default function Page() {
         }
     }, [loading, user]);
 
+    useEffect(() => {
+        return () => {
+            if (pdfPreviewUrl) {
+                URL.revokeObjectURL(pdfPreviewUrl);
+            }
+        };
+    }, [pdfPreviewUrl]);
+
+    const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.type !== "application/pdf") {
+            alert("PDF 파일만 등록 가능");
+            e.target.value = "";
+            setPlanFile("");
+            setShowPdfPreview(false);
+
+            if (pdfPreviewUrl) {
+                URL.revokeObjectURL(pdfPreviewUrl);
+            }
+
+            setPdfPreviewUrl("");
+            return;
+        }
+
+        if (pdfPreviewUrl) {
+            URL.revokeObjectURL(pdfPreviewUrl);
+        }
+
+        setPlanFile(file.name);
+        setPdfPreviewUrl(URL.createObjectURL(file));
+        setShowPdfPreview(false);
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (!confirm("강의를 등록하시겠습니까?")) {
+            alert("등록이 취소되었습니다.");
+            return;
+        }
 
         const data = {
             tid: user?.tid,
@@ -63,14 +103,14 @@ export default function Page() {
     };
 
     return (
-        // 전체 페이지 영역 
+        // 전체 페이지 영역
         <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10">
             {/* 내부 div 전체 영역 */}
             <div className="w-full max-w-6xl flex gap-6 mt-10 px-10">
 
                 {/* 강의등록 영역 */}
                 <div className="flex-1 bg-[#fffaf3] border-[#d6c2a8] border-2 rounded-2xl shadow-md p-4">
-                    <p className="text-4xl font-bold text-center mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">강의등록</p>
+                    <p className="text-4xl font-bold text-center mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">강의 등록</p>
 
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         {/* 강사명, 전공 */}
@@ -152,8 +192,24 @@ export default function Page() {
                         </div>
 
                         <label className="text-xl font-bold">강의 계획서</label>
-                        <input type="text" value={planFile} onChange={(e) => setPlanFile(e.target.value)}
-                            className="border-[#b89b7a] border-1 rounded px-3 py-30" />
+                        <input type="file" accept="application/pdf,.pdf"
+                            onChange={handlePdfChange}
+                            className="border-[#b89b7a] border-1 rounded px-3 py-2" />
+                        {planFile && (
+                            <button
+                                type="button"
+                                onClick={() => setShowPdfPreview((prev) => !prev)}
+                                className="w-fit text-lg text-[white] font-bold border-[#b89b7a] border-1 
+                                bg-[#8b5e3c] hover:bg-[#6f4a2f] rounded px-3 py-2"
+                            >
+                                선택한 파일 {showPdfPreview ? "미리보기 닫기" : "미리보기"}
+                            </button>
+                        )}
+                        {pdfPreviewUrl && showPdfPreview && (
+                            <div className="mt-2 border-[#b89b7a] border rounded-lg overflow-hidden">
+                                <iframe title="PDF preview" src={pdfPreviewUrl} className="w-full h-[500px]" />
+                            </div>
+                        )}
 
                         <label className="text-xl font-bold">강의 영상 주소</label>
                         <input type="url" value={fileUrl}
@@ -162,10 +218,12 @@ export default function Page() {
                             className="border-[#b89b7a] border-1 rounded px-3 py-2"
                         />
 
-                        <label className="text-xl font-bold">강의자료(예시:pdf, doc, docx)</label>
-                        <input type="file" accept=".pdf,.doc,.docx" className="border-[#b89b7a] border-1 rounded px-3 py-2" />
+                        {/* <label className="text-xl font-bold">강의자료(예시:pdf, doc, docx)</label>
+                        <input type="file" accept=".pdf,.doc,.docx" className="border-[#b89b7a] border-1 rounded px-3 py-2" /> */}
 
-                        <button type="submit" className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-3 py-2 rounded text-lg">등록</button>
+                        <button type="submit" className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-3 py-2 rounded text-lg font-bold"
+                        >등록하기
+                        </button>
                     </form>
                 </div>
             </div>
