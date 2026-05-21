@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import koreanit.lms.edusys.Dto.LessonSubDTO;
 import koreanit.lms.edusys.Dto.LessonSubResponseDTO;
@@ -39,7 +40,15 @@ public class SubjectService {
         }
         return subjectRepository.findByTeacherTid(tid);
     }
+
+    // 과목 정보 단독 저장/수정 (강의 계획서 업데이트 등)
+    @Transactional
+    public void saveSubject(Subject subject) {
+        subjectRepository.save(subject);
+    }
+
     // 강의 등록시 Subject와 Lesson을 같이 등록
+    @Transactional
     public void createLesson(LessonSubDTO request) {
         Subject subject = new Subject();
         subject.setMajor(request.getMajor());
@@ -82,8 +91,9 @@ public class SubjectService {
                 dto.setTeacherName("미정");
             }
 
-            Lesson lesson = lessonRepository.findBySubject(subject);
-            if (lesson != null) {
+            List<Lesson> lessons = lessonRepository.findBySubjectSubid(subject.getSubid());
+            if (lessons != null && !lessons.isEmpty()) {
+                Lesson lesson = lessons.get(0);
                 dto.setLessonName(lesson.getName());
             } else {
                 dto.setLessonName("미정");
