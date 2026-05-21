@@ -29,8 +29,16 @@ export default function Page() {
     const [cards, setCards] = useState<Lesson[]>([]);
     const [appliedCards, setAppliedCards] = useState<typeof cards>([]);
 
+    
     useEffect(() => {
-        fetch("http://localhost:8080/api/subjects/apply")
+        // 토큰을 로컬 스토리지에서 가져오기
+        const token = localStorage.getItem("token");
+
+        fetch("http://localhost:8080/api/subjects/apply", {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
             .then((res) => {
                 if (!res.ok) {
                     throw new Error(`요청 실패: ${res.status}`);
@@ -99,14 +107,14 @@ export default function Page() {
                     </div>
 
                     {/* 과목 신청 카드 */}
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                         {filteredCards.map((card) => (
                             <div
                                 key={card.id}
                                 className="bg-[#fcf7f0] border-[#b89b7a] border-1 rounded-2xl p-5 shadow-sm hover:shadow-lg transition"
                             >
                                 {/* 과목 */}
-                                <div className="border-b border-[#d8c2a8] pb-3 mb-4">
+                                <div className="border-b border-[#d8c2a8] pb-2 mb-4">
                                     <p className="text-2xl font-bold text-[#5c4033] text-center">
                                         {card.subjectName}
                                     </p>
@@ -120,24 +128,11 @@ export default function Page() {
                                 </div> */}
 
                                 {/* 강의 정보 */}
-                                <div className="bg-[#f3e7d7] rounded-lg px-3 py-2 mt-3 text-sm space-y-1">
-                                    <p>
-                                        <span className="font-bold">수업</span> : {card.lessonName || "미정"}
-                                    </p>
-                                    
-                                    <p>
-                                        <span className="font-bold">교사</span> : {card.teacherName || "미정"}
-                                    </p>
-
-                                    <p>
-                                        <span className="font-bold">기간</span> :{" "}
-                                        {card.schedule || "미정"}
-                                    </p>
-
-                                    <p>
-                                        <span className="font-bold">정원</span> :{" "}
-                                        {card.maxCount}
-                                    </p>
+                                <div className="bg-[#f3e7d7] rounded-lg px-3 pt-2 pb-1 text-sm space-y-1">
+                                    <p><span className="font-bold">수업</span> : {card.lessonName || "미정"}</p>        
+                                    <p><span className="font-bold">교사</span> : {card.teacherName || "미정"}</p>
+                                    <p><span className="font-bold">기간</span> :{" "}{card.schedule || "미정"}</p>
+                                    <p><span className="font-bold">정원</span> :{" "}{card.maxCount}명</p>                                
                                 </div>
 
                                 {/* 버튼 */}
@@ -157,14 +152,15 @@ export default function Page() {
                     <p className="text-xl font-bold text-center bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full mb-4 py-1">
                         신청현황
                     </p>
+                    <p className="font-semibold">신청 과목 수: {appliedCards.length}</p>
 
                     {appliedCards.map((card) => (
                         <div key={card.id} className="bg-[#fcf7f0] border-[#b89b7a] border-1 rounded-lg p-3 mb-3 text-sm font-semibold">
                             <p className="text-xl  text-center mb-2 border-b">{card.subjectName || "미정"}</p>
-                            <p className="text-sm">정원 {card.maxCount}</p>
-                            <div className="flex justify-between text-sm mb-1">
-                                <p>교사 {card.teacherName || "미정"}</p>
-                                <p>기간 {card.schedule || "미정"}</p>
+                            <div className="bg-[#f3e7d7] rounded-lg px-3 py-2 mt-3 text-sm space-y-1">
+                                <p><span className="font-bold">수업</span> : {card.lessonName || "미정"}</p>
+                                <p><span className="font-bold">교사</span> : {card.teacherName || "미정"}</p>
+                                <p><span className="font-bold">정원</span> : {card.maxCount || "미정"}</p>
                             </div>
                             <button type="button"
                                 onClick={() => handleCancel(card.id)}

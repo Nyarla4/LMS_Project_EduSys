@@ -86,15 +86,17 @@ export default function Page() {
             planFile,
             fileUrl
         };
-
+        // 토큰을 로컬 스토리지에서 가져오기
+        const token = localStorage.getItem("token");
         const res = await fetch("http://localhost:8080/api/subjects", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(data),
-            }
-        ); console.log(await res.text()); // 응답 텍스트 확인용
+        });
+
         if (!res.ok) {
             alert("등록 실패하였습니다.");
             return;
