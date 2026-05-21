@@ -38,6 +38,13 @@ public class LessonService {
         return lessons;
     }
 
+    @Transactional(readOnly = true)
+    public List<Lesson> findLessonsByTeacherId(Integer tid) {
+        List<Lesson> lessons = lessonRepository.findBySubjectTeacherTid(tid);
+        lessons.forEach(this::calculateAndSetWeek);
+        return lessons;
+    }
+
     /**
      * 과목 내에서 생성 순서에 따라 주차를 계산하여 설정합니다.
      */

@@ -5,8 +5,6 @@ import koreanit.lms.edusys.util.VideoUtils;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.time.temporal.WeekFields;
-import java.util.Locale;
 
 @Entity
 @Getter

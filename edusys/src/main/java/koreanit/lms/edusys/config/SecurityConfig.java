@@ -42,8 +42,7 @@ public class SecurityConfig {
                     "/user/login", 
                     "/user/signup", 
                     "/api/notices/**", 
-                    "/api/files/**",
-                    "/api/lessons/video/**"
+                    "/api/files/**"
                 ).permitAll()
                 // 그 외 모든 /api/** 요청은 로그인(JWT)이 필요함
                 .requestMatchers("/api/**").authenticated()
