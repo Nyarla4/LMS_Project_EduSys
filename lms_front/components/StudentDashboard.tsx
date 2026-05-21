@@ -688,6 +688,14 @@ function getCookie(name: string) {
                 <p className="text-sm uppercase tracking-[0.25em] text-[#8c6f4d]">재생 중</p>
                 <h2 className="mt-2 text-2xl font-semibold text-[#3d2b1f]">{selectedVideo.name}</h2>
               </div>
+              <span>
+              <button 
+                onClick={() => window.location.href = `/qna/${selectedVideo.lid}`}
+                className="rounded-0 bg-[#8d6a44] px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-[#7c5935]"
+                style={{marginRight:"30px"}}
+              >
+                QnA
+              </button>
               <button
                 onClick={async () => { 
                   setIsPlaying(false); // 인터벌 중단
@@ -698,6 +706,7 @@ function getCookie(name: string) {
               >
                 닫기
               </button>
+              </span>
             </div>
             {selectedVideo.fileUrl.includes('youtube.com') || selectedVideo.fileUrl.includes('youtu.be') ? (
               <div className="aspect-video w-full overflow-hidden rounded-[24px] bg-black">
