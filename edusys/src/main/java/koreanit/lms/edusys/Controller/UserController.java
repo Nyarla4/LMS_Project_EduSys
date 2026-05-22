@@ -132,4 +132,30 @@ public class UserController {
         userService.changeUser(user);
         return ResponseEntity.ok(dto);
     }
+
+@PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @RequestHeader("Authorization") String token,
+            @RequestBody UserDTO dto) {
+        
+        Map<String, String> response = new HashMap<>();
+        
+        try {
+            String jwtToken = token.replace("Bearer ", "").trim();
+            
+            String loginId = jwtTokenProvider.getUserPk(jwtToken); 
+
+            userService.changePassword(loginId, dto.getCurrentPassword(), dto.getNewPassword());
+            
+            response.put("message", "비밀번호가 성공적으로 변경되었습니다.");
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            response.put("message", "비밀번호 변경 중 서버 내부 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }
