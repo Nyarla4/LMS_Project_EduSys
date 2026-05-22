@@ -16,5 +16,7 @@ public class UserDTO {
     private String username;
     private String phonenum;
     private String usertype;
+    private String currentPassword;
+    private String newPassword;
     private MultipartFile proofFile;
 }

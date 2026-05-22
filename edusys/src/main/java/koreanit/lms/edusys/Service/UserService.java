@@ -111,4 +111,16 @@ public class UserService {
         dto.setUsertype(user.getUsertype().name());
         return dto;
     }
+
+    public void changePassword(String loginId, String currentPassword, String newPassword) {
+        UserEntity user = this.getUserOrThrow(loginId);
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+
+        this.userRepository.save(user);
+    }
 }
