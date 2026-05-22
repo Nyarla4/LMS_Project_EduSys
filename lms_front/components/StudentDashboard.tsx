@@ -76,6 +76,8 @@ function TabPanel({
   apiBase,
   sessionBaseProgress,
   currentSessionSeconds,
+  onAssignmentSelect,
+  onAddAssignmentClick,
   onVideoSelect,
   onSyllabusUploadClick,
   onAddVideoClick
@@ -91,6 +93,8 @@ function TabPanel({
   apiBase: string;
   sessionBaseProgress: number;
   currentSessionSeconds: number;
+  onAssignmentSelect: (assignment: Assignment) => void;
+  onAddAssignmentClick?: () => void;
   onVideoSelect: (video: Video) => void;
   onSyllabusUploadClick?: () => void;
   onAddVideoClick?: () => void;
@@ -327,7 +331,17 @@ function TabPanel({
 
   return (
     <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
-      <h2 className="mb-4 text-2xl font-semibold text-[#3d2b1f]">과제 목록</h2>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-[#3d2b1f]">과제 목록</h2>
+        {isTeacher && (
+          <button 
+            onClick={onAddAssignmentClick}
+            className="rounded-full bg-[#8d6a44] px-4 py-2 text-xs font-bold text-white hover:bg-[#7c5935]"
+          >
+            + 새 과제 생성
+          </button>
+        )}
+      </div>
       <div className="overflow-x-auto rounded-[28px] border border-[#f0debe] bg-white shadow-sm">
         <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
           <thead className="bg-[#f7ecd9] text-[#6d5b46]">
@@ -338,13 +352,19 @@ function TabPanel({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e9d7b0] bg-white">
-            {assignments.map((assignment) => (
-              <tr key={assignment.wid} className="hover:bg-[#fff6eb]">
+            {assignments.length > 0 ? assignments.map((assignment) => (
+              <tr key={assignment.wid} className="hover:bg-[#fff6eb] cursor-pointer" onClick={() => onAssignmentSelect(assignment)}>
                 <td className="px-4 py-4">{assignment.form}</td>
                 <td className="px-4 py-4">{assignment.dueDate}</td>
-                <td className="px-4 py-4">{assignment.grade || "제출전"}</td>
+                <td className="px-4 py-4">
+                  {isTeacher ? <span className="text-[#8d6a44] font-bold">현황 보기</span> : (assignment.grade || "제출전")}
+                </td>
               </tr>
-            ))}
+            )) : (
+              <tr>
+                <td colSpan={3} className="px-4 py-8 text-center text-[#7b6346]">등록된 과제가 없습니다.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -360,12 +380,15 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [videoList, setVideoList] = useState<Video[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progressMap, setProgressMap] = useState<Record<number, number>>({});
   const [sessionBaseProgress, setSessionBaseProgress] = useState(0); // 현재 시청 세션 시작 시점의 DB 진도
   const [currentSessionSeconds, setCurrentSessionSeconds] = useState(0); // 현재 세션 순수 시청 시간
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isAddAssignmentModalOpen, setIsAddAssignmentModalOpen] = useState(false);
+  const [newAssignment, setNewAssignment] = useState({ form: '', dueDate: '' });
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const syllabusInputRef = useRef<HTMLInputElement>(null);
@@ -549,6 +572,64 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     } else {
       if (videoRef.current) videoRef.current.currentTime = resumeTime;
     }
+  };
+
+  // 과제 생성 처리
+  const handleAddAssignmentSubmit = async () => {
+    if (!newAssignment.form || !newAssignment.dueDate || !subjectId) {
+      alert("과제 제목과 마감일을 입력해주세요.");
+      return;
+    }
+
+    const payload = {
+      form: newAssignment.form,
+      dueDate: newAssignment.dueDate,
+      subject: { subid: Number(subjectId) }
+    };
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/works`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        alert("과제가 등록되었습니다.");
+        setIsAddAssignmentModalOpen(false);
+        window.location.reload();
+      } else {
+        alert("과제 등록에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 학생용 과제 파일 업로드 처리
+  const handleAssignmentFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedAssignment) return;
+
+    if (!confirm(`'${file.name}' 파일을 제출하시겠습니까?`)) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("wid", selectedAssignment.wid.toString());
+    formData.append("sid", studentId?.toString() || "");
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/works/submit`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (res.ok) alert("과제 파일이 제출되었습니다.");
+      else alert("제출에 실패했습니다.");
+    } catch (err) { console.error(err); }
   };
 
   const initYoutubePlayer = (videoId: string, startSeconds: number) => {
@@ -767,6 +848,8 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
             apiBase={API_BASE}
             sessionBaseProgress={sessionBaseProgress}
             currentSessionSeconds={currentSessionSeconds}
+            onAssignmentSelect={(assignment) => setSelectedAssignment(assignment)}
+            onAddAssignmentClick={() => setIsAddAssignmentModalOpen(true)}
             onVideoSelect={handleVideoSelect}
             onSyllabusUploadClick={() => syllabusInputRef.current?.click()}
             onAddVideoClick={() => setIsAddVideoModalOpen(true)}
@@ -781,6 +864,114 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
           accept="application/pdf,.pdf" // regist 페이지와 동일한 accept 설정
           onChange={handleSyllabusChange}
         />
+
+        {/* 과제 상세 보기 (선택 시 하단에 표시) */}
+        {selectedAssignment && (
+          <section className="mt-6 rounded-[36px] border border-[#d7c2a1] bg-[#fff8ed] p-8 shadow-[0_30px_60px_rgba(95,69,34,0.12)]">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-widest text-[#8d6a44]">과제 상세 정보</p>
+                <h2 className="mt-2 text-3xl font-bold text-[#3d2b1f]">{selectedAssignment.form}</h2>
+                <p className="mt-1 text-red-600 font-semibold">마감기한: {selectedAssignment.dueDate}</p>
+              </div>
+              <button 
+                onClick={() => setSelectedAssignment(null)}
+                className="rounded-full bg-[#8d6a44] px-6 py-2 text-sm font-bold text-white hover:bg-[#7c5935]"
+              >
+                목록으로
+              </button>
+            </div>
+
+            <div className="rounded-2xl bg-white p-6 border border-[#e6d1a7]">
+              {isTeacher ? (
+                <div className="space-y-6">
+                  <h3 className="text-xl font-bold text-[#3d2b1f] border-b pb-2">학생 제출 현황</h3>
+                  <p className="text-sm text-[#7b6346] italic">* 실제 제출된 파일 목록과 점수 입력 기능은 DB 연동 후 활성화됩니다.</p>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm text-left">
+                      <thead className="bg-[#fcf7f0]">
+                        <tr>
+                          <th className="p-3">학생명</th>
+                          <th className="p-3">제출 파일</th>
+                          <th className="p-3">점수</th>
+                          <th className="p-3">관리</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-t">
+                          <td className="p-3">예시 학생</td>
+                          <td className="p-3 text-blue-600 underline cursor-pointer">assignment_v1.pdf</td>
+                          <td className="p-3"><input type="text" placeholder="점수" className="w-16 border rounded p-1" /></td>
+                          <td className="p-3"><button className="text-xs bg-[#3d2b1f] text-white px-2 py-1 rounded">저장</button></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-[#3d2b1f]">내 과제 제출</h3>
+                  <div className="flex flex-col gap-4 p-6 bg-[#fcf7f0] rounded-xl border-2 border-dashed border-[#d6c2a8] items-center">
+                    <p className="text-[#7b6346]">Word, PDF 등 문서 파일을 선택해주세요.</p>
+                    <input 
+                      type="file" 
+                      className="text-sm text-[#8d6a44] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#8d6a44] file:text-white hover:file:bg-[#7c5935]"
+                      onChange={handleAssignmentFileUpload}
+                      accept=".doc,.docx,.pdf"
+                    />
+                  </div>
+                  <div className="mt-4 p-4 bg-white border rounded-lg">
+                    <p className="text-sm">현재 점수: <span className="font-bold text-[#8d6a44]">{selectedAssignment.grade || "평가 전"}</span></p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* 과제 추가 모달 */}
+        {isAddAssignmentModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-[32px] bg-[#fff4e6] p-8 shadow-2xl border-2 border-[#e6d1a7] animate-in fade-in zoom-in duration-200">
+              <h3 className="mb-6 text-2xl font-bold text-[#3d2b1f]">새 과제 생성</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-[#7b6346] mb-1">과제 제목</label>
+                  <input 
+                    type="text" 
+                    placeholder="과제 제목을 입력하세요"
+                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    value={newAssignment.form}
+                    onChange={(e) => setNewAssignment({ ...newAssignment, form: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#7b6346] mb-1">마감 일자</label>
+                  <input 
+                    type="date" 
+                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    value={newAssignment.dueDate}
+                    onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="mt-8 flex justify-end gap-3">
+                <button 
+                  onClick={() => setIsAddAssignmentModalOpen(false)}
+                  className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346] hover:bg-[#f1e1c4]"
+                >
+                  취소
+                </button>
+                <button 
+                  onClick={handleAddAssignmentSubmit}
+                  className="rounded-full bg-[#8d6a44] px-6 py-2 text-sm font-bold text-white hover:bg-[#7c5935] shadow-md"
+                >
+                  생성하기
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 동영상 추가 모달 */}
         {isAddVideoModalOpen && (
