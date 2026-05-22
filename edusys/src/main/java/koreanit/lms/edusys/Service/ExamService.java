@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import koreanit.lms.edusys.Entity.Exam;
-import koreanit.lms.edusys.Entity.Subject;
 import koreanit.lms.edusys.Repository.ExamRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -14,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ExamService {
     private final ExamRepository examRepository;
-    private final SubjectService subjectService;
 
     public List<Exam> findAllExams() {
         return examRepository.findAll();
@@ -31,17 +29,13 @@ public class ExamService {
         return examRepository.findById(eid);
     }
 
-    public Exam createExam(Integer subid) {
-        Exam exam = new Exam();
-        Subject subject = subjectService.findSubjectById(subid);
-        if(subject == null) {
+    public Exam createExam(Exam exam) {
+        if(exam == null)
             return null;
-        }
-        exam.setSubject(subject);
         return examRepository.save(exam);
     }
     
-    public Exam createExam(Exam exam) {
+    public Exam saveExam(Exam exam) {
         if(exam == null) {
             return null;
         }
