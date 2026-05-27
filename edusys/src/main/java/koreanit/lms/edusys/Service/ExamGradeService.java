@@ -58,4 +58,13 @@ public class ExamGradeService {
         examGrade.setAnswer(answer);
         return examGradeRepository.save(examGrade);
     }
+    
+    public ExamGrade gradeExam(Integer egid, String score){
+        Optional<ExamGrade> oExamGrade = findExamGradeById(egid);
+        if(oExamGrade.isEmpty())
+            return null;
+        ExamGrade examGrade = oExamGrade.get();
+        examGrade.setScore(score);
+        return examGradeRepository.save(examGrade);
+    }
 }

@@ -1,8 +1,11 @@
 package koreanit.lms.edusys.Controller;
 
 import koreanit.lms.edusys.Dto.ExamDTO;
+import koreanit.lms.edusys.Dto.ExamGradeDTO;
 import koreanit.lms.edusys.Entity.Exam;
+import koreanit.lms.edusys.Entity.ExamGrade;
 import koreanit.lms.edusys.Entity.Subject;
+import koreanit.lms.edusys.Service.ExamGradeService;
 import koreanit.lms.edusys.Service.ExamService;
 import koreanit.lms.edusys.Service.SubjectService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ import java.util.Optional;
 public class ExamController {
     private final ExamService examService;
     private final SubjectService subjectService;
+    private final ExamGradeService examGradeService;
 
     @GetMapping
     public List<Exam> getAllExams() {
@@ -85,5 +89,25 @@ public class ExamController {
     @DeleteMapping("/{id}")
     public void deleteExam(@PathVariable Integer id) {
         examService.deleteExam(id);
+    }
+
+    @GetMapping("/grading/{eid}")
+    public ResponseEntity<List<ExamGradeDTO>> getExamGradesBySubject(@PathVariable Integer eid) {
+        List<ExamGrade> exams = examGradeService.findAllExamGradesByExam(eid);
+        List<ExamGradeDTO> result = new ArrayList<ExamGradeDTO>();
+        for (ExamGrade examGrade : exams) {
+            result.add(new ExamGradeDTO(examGrade));
+        }
+        return ResponseEntity.ok(result);
+    }
+    
+    @PutMapping("/grading")
+    public ResponseEntity<List<ExamGradeDTO>> saveExamGrades(@RequestBody List<ExamGradeDTO> gradeDtos) {
+        List<ExamGradeDTO> result = new ArrayList<ExamGradeDTO>();
+        for (ExamGradeDTO gradeDto : gradeDtos) {
+            ExamGrade savedGrade = examGradeService.gradeExam(gradeDto.getEgid(), gradeDto.getScore());
+            result.add(new ExamGradeDTO(savedGrade));
+        }
+        return ResponseEntity.ok(result);
     }
 }

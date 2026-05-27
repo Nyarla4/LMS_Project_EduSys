@@ -6,17 +6,6 @@ import { useUser } from "@/app/userContext";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
-interface ExamDto {
-    subid: number;
-    question: string;
-    answer: string;
-    isObjective: boolean;
-    objectiveOption1: string;
-    objectiveOption2: string;
-    objectiveOption3: string;
-    objectiveOption4: string;
-}
-
 export default function CreateExam() {
     const router = useRouter();
     const params = useParams();
@@ -45,10 +34,10 @@ export default function CreateExam() {
                         subid: subid,
                         question: question,
                         answer: answer,
-                        objectiveOption1: objectiveOption1,
-                        objectiveOption2: objectiveOption2,
-                        objectiveOption3: objectiveOption3,
-                        objectiveOption4: objectiveOption4
+                        objectiveOption1: isObjective?objectiveOption1:"",
+                        objectiveOption2: isObjective?objectiveOption2:"",
+                        objectiveOption3: isObjective?objectiveOption3:"",
+                        objectiveOption4: isObjective?objectiveOption4:""
                     }
                 ),
             });
