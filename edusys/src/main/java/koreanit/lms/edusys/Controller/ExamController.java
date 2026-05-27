@@ -76,12 +76,15 @@ public class ExamController {
         Optional<Exam> oExam = examService.findExamById(dto.getEid());
         if(oExam.isEmpty())
             return ResponseEntity.notFound().build();
+        
         Exam exam = oExam.get();
+        exam.setQuestion(dto.getQuestion());
         exam.setAnswer(dto.getAnswer());
         exam.setObjectiveOption1(dto.getObjectiveOption1());
         exam.setObjectiveOption2(dto.getObjectiveOption2());
         exam.setObjectiveOption3(dto.getObjectiveOption3());
         exam.setObjectiveOption4(dto.getObjectiveOption4());
+        
         ExamDTO result = new ExamDTO(examService.saveExam(exam));
         return ResponseEntity.ok(result);
     }

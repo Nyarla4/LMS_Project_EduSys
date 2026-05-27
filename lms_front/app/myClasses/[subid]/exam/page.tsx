@@ -1,5 +1,4 @@
 // 현재 과목의 시험 목록
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -22,6 +21,7 @@ export default function CurrentExams() {
     const subid = params.subid;
     const { user, loading: userLoading } = useUser();
     const [exams, setExams] = useState<Exam[]>([]);
+
     useEffect(() => {
         if (userLoading || !user) {
             return;
@@ -42,7 +42,7 @@ export default function CurrentExams() {
                 console.error("로드 실패:", err);
             });
 
-    }, [user, userLoading]);
+    }, [user, userLoading, subid]);
 
     const profile = user?.user || user;
     const userRole = profile?.usertype;
@@ -60,52 +60,64 @@ export default function CurrentExams() {
             </div>
         );
     }
+
     return (
-        <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10 font-sans text-[#5c4033]">
+        /* 1. 전체 영역 */
+        <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10">
 
-            <div className="w-full max-w-4xl flex flex-col gap-6 mt-10 px-10">
+            {/* 2. 내부 전체 영역 */}
+            <div className="w-full max-w-6xl flex flex-col gap-6 mt-10 px-10">
 
-                <div className="relative">
-                    <p className="text-4xl font-bold text-center mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2 shadow-sm">
-                        시험 목록
-                    </p>
-                </div>
+                {/* 4. 큰 제목 */}
+                <p className="text-4xl font-bold text-center mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">
+                    시험 목록
+                </p>
 
-                {/* 상담 목록 리스트 */}
+                {/* 시험 목록 리스트 영역 */}
                 <div className="flex flex-col gap-4">
                     {exams.length > 0 ? (
                         <ul className="flex flex-col gap-3">
                             {exams.map((exam) => (
+                                /* 3. 내부 영역 박스 */
                                 <li
                                     key={exam.eid}
-                                    className="bg-[#fcf7f0] border-[#b89b7a] border-1 border rounded-lg px-6 py-5 shadow-sm flex justify-between items-center transition-all duration-200 hover:bg-[#f5eee4] hover:shadow-md group"
+                                    className="bg-[#fcf7f0] border-[#b89b7a] border-1 border rounded-lg p-5 shadow-sm font-bold flex justify-between items-center transition-all duration-200 hover:bg-[#f5eee4]"
                                 >
                                     <Link
                                         href={`/myClasses/${subid}/exam/${exam.eid}`}
-                                        className="text-lg font-bold text-[#5c4033] transition-colors group-hover:text-[#8b5e3c] flex-1 flex items-center gap-3"
+                                        className="text-lg font-bold text-[#5c4033] transition-colors hover:text-[#8b5e3c] flex-1 flex items-center gap-3"
                                     >
-                                        {/* 데코레이션 불릿 */}
-                                        <span className="w-1.5 h-1.5 bg-[#b89b7a] rounded-full group-hover:bg-[#8b5e3c]"></span>
+                                        <span className="w-1.5 h-1.5 bg-[#8b5e3c] rounded-full"></span>
                                         {exam.question}
                                     </Link>
 
-                                    <Link href={`/myClasses/${subid}/exam/${exam.eid}/grading`} className="text-[#b89b7a] group-hover:text-[#8b5e3c] transition-colors"
-                                    style={{ color: '#5c4033', textDecoration: 'none' }}>
-                                        채점
+                                    {/* 5. 선택 버튼 (UX 개선: 텍스트 링크를 명확한 버튼 형태로 변경) */}
+                                    <Link href={`/myClasses/${subid}/exam/${exam.eid}/grading`}>
+                                        <button
+                                            type="button"
+                                            className="px-4 py-1.5 rounded text-sm border-[#b89b7a] border-1 border font-bold bg-[#dbc7b1] text-[#5c4033] hover:bg-[#8b5e3c] hover:text-white transition-colors"
+                                        >
+                                            채점하기
+                                        </button>
                                     </Link>
                                 </li>
                             ))}
                         </ul>
                     ) : (
-                        /* 시험이 없을 때 */
-                        <div className="bg-[#fcf7f0] border-[#b89b7a] border-1 border rounded-lg p-20 text-center shadow-sm">
-                            <p className="font-bold text-[#b89b7a]">현재 등록된 시험이 없습니다.</p>
+                        /* 3. 내부 영역 박스 (데이터 공백 레이아웃) */
+                        <div className="bg-[#fcf7f0] border-[#b89b7a] border-1 border rounded-lg p-20 text-center shadow-sm font-bold">
+                            <p className="text-[#b89b7a] text-lg">현재 등록된 시험이 없습니다.</p>
                         </div>
                     )}
                 </div>
+
                 <div className="flex justify-end mt-4">
                     <Link href={`/myClasses/${subid}/exam/create`}>
-                        <button className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-6 py-2 rounded-lg text-lg font-bold shadow-md transition-all">
+                        {/* 6. 일반 버튼 */}
+                        <button 
+                            type="button"
+                            className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-6 py-2.5 rounded text-lg font-bold shadow-md transition-colors"
+                        >
                             시험 작성
                         </button>
                     </Link>
