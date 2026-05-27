@@ -81,3 +81,5 @@ next-env.d.ts
 *.iml
 *.log
 logs/
+/ai/__pycache__
+/ai/chroma_data
