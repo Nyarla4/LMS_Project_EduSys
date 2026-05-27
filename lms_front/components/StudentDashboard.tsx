@@ -56,12 +56,29 @@ interface Assignment {
   status?: string; // UI용
 }
 
+interface Answer {
+  ansid: number;
+  content: string;
+  tid: number;
+  queid: number;
+}
+
+interface Question {
+  queid: number;
+  content: string;
+  lid: number;
+  sid?: number;
+  studentName?: string; // DTO의 studentName 대응
+  answer?: Answer;
+}
+
 interface Video {
   lid: number;
   name: string;
   fileUrl: string;
   duration: number;
   week: number;
+  date?: string;
 }
 
 function TabPanel({ 
@@ -80,7 +97,9 @@ function TabPanel({
   onAddAssignmentClick,
   onVideoSelect,
   onSyllabusUploadClick,
-  onAddVideoClick
+  onAddVideoClick,
+  onDeleteVideo,
+  onEditVideo
 }: { 
   activeTab: Tab; 
   lessons: Lesson[];
@@ -98,6 +117,8 @@ function TabPanel({
   onVideoSelect: (video: Video) => void;
   onSyllabusUploadClick?: () => void;
   onAddVideoClick?: () => void;
+  onDeleteVideo?: (lid: number) => void;
+  onEditVideo?: (video: Video) => void;
 }) {
   const { user } = useUser();
   // 데이터 구조를 변수로 뽑아 가독성 높임 (학생/교사 객체 내의 user 또는 관리자 객체 자체)
@@ -262,16 +283,33 @@ function TabPanel({
               return (
                 <article 
                   key={video.lid} 
-                  className="cursor-pointer rounded-[28px] border border-[#f0debe] bg-[#fff8ef] p-5 transition duration-200 hover:border-[#d6b77a] hover:bg-[#f6e8d6]"
-                  onClick={() => onVideoSelect(video)}
+                  className="rounded-[28px] border border-[#f0debe] bg-[#fff8ef] p-5 transition duration-200 hover:border-[#d6b77a] hover:bg-[#f6e8d6]"
                 >
                   <div className="flex flex-col gap-4">
                     <div className="flex items-start justify-between gap-4">
-                      <div>
+                      <div className="cursor-pointer flex-1" onClick={() => onVideoSelect(video)}>
                         <h3 className="text-base font-semibold text-[#3d2b1f]">{video.name}</h3>
                         <p className="mt-2 text-sm text-[#7b6346]">{video.week}주차 학습 영상</p>
                       </div>
-                      {!isTeacher && <span className="rounded-full bg-[#e8d1a5] px-3 py-1 text-xs font-bold text-[#5c4326]">{percentage}%</span>}
+                      <div className="flex flex-col items-end gap-2">
+                        {!isTeacher && <span className="rounded-full bg-[#e8d1a5] px-3 py-1 text-xs font-bold text-[#5c4326]">{percentage}%</span>}
+                        {isTeacher && (
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); onEditVideo?.(video); }}
+                              className="text-xs font-bold text-blue-600 hover:underline"
+                            >
+                              수정
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); onDeleteVideo?.(video.lid); }}
+                              className="text-xs font-bold text-red-600 hover:underline"
+                            >
+                              삭제
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {!isTeacher && (
                       <div className="space-y-2">
@@ -381,6 +419,12 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   const [videoList, setVideoList] = useState<Video[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [questionList, setQuestionList] = useState<Question[]>([]);
+  const [showVideoQna, setShowVideoQna] = useState(false);
+  const [newQnaContent, setNewQnaContent] = useState('');
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
+  const [teacherAnswer, setTeacherAnswer] = useState('');
+  const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progressMap, setProgressMap] = useState<Record<number, number>>({});
@@ -448,6 +492,13 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
           fetches.push(fetch(`${API_BASE}/progresses/student/${studentId}`, { headers }));
         }
 
+        // 질의응답 목록 페칭
+        if (subjectId) {
+          const qnaRes = await fetch(`${API_BASE}/question/subject/${subjectId}`, { headers });
+          const qData = qnaRes.ok ? await qnaRes.json() : [];
+          setQuestionList(qData);
+        }
+
         const responses = await Promise.all(fetches);
         const lessonRes = responses[0];
 
@@ -474,9 +525,9 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
             const progs = await progRes.json();
             const map: Record<number, number> = {};
             progs.forEach((p: any) => {
-              const lid = p.lesson?.lid || p.lid || p.videoId || p.lessonId;
+              const lid = p.lid; // ProgressDTO의 lid 사용
               if (lid) {
-                map[lid] = p.progress ?? p.progressed ?? 0;
+                map[lid] = p.progressed ?? 0;
               }
             });
             setProgressMap(map);
@@ -502,6 +553,25 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
       firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
     }
   }, []);
+
+  // 현재 선택된 영상에 대해 현재 로그인한 학생이 남긴 질문 찾기
+  const currentStudentQuestion = !isTeacher && selectedVideo 
+    ? questionList.find(q => q.lid === selectedVideo.lid && q.sid === studentId) 
+    : null;
+
+  // 영상 선택 시 학생 질문 내용 동기화
+  useEffect(() => {
+    setNewQnaContent(currentStudentQuestion ? currentStudentQuestion.content : '');
+  }, [selectedVideo, currentStudentQuestion]);
+
+  // 교사가 질문을 선택했을 때, 기존 답변이 있으면 입력창에 동기화
+  useEffect(() => {
+    if (isTeacher && selectedQuestion) {
+      setTeacherAnswer(selectedQuestion.answer ? selectedQuestion.answer.content : "");
+    } else if (isTeacher && !selectedQuestion) {
+      setTeacherAnswer("");
+    }
+  }, [selectedQuestion, isTeacher]);
 
   // 실시간 시청 시간 누적 스탑워치 (1초마다)
   useEffect(() => {
@@ -702,6 +772,122 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     }
   };
 
+  // 학생 질문 저장/수정 처리
+  const handleSaveStudentQuestion = async () => {
+    if (!selectedVideo || !studentId) {
+      alert("질문 내용을 입력해주세요.");
+      return;
+    }
+
+    const isUpdate = !!currentStudentQuestion;
+    const url = isUpdate 
+      ? `${API_BASE}/question/${currentStudentQuestion.queid}` 
+      : `${API_BASE}/question`;
+    const method = isUpdate ? "PUT" : "POST";
+    
+    const payload = isUpdate 
+      ? { content: newQnaContent } 
+      : { sid: studentId, lid: selectedVideo.lid, content: newQnaContent };
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(url, {
+        method: method,
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        alert("질문 내용이 저장되었습니다.");
+        // 목록 새로고침하여 상태 반영
+        const qnaRes = await fetch(`${API_BASE}/question/subject/${subjectId}`, { 
+          headers: { "Authorization": `Bearer ${token}` } 
+        });
+        if (qnaRes.ok) setQuestionList(await qnaRes.json());
+      } else {
+        alert("저장 실패");
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  // 교사 답변 등록 처리
+  const handleAnswerSubmit = async (qid: number, lid: number) => {
+    if (!teacherAnswer) {
+      alert("답변 내용을 입력해주세요.");
+      return;
+    }
+
+    const isUpdate = !!selectedQuestion?.answer;
+    const url = isUpdate 
+      ? `${API_BASE}/answer/${selectedQuestion?.answer?.ansid}` 
+      : `${API_BASE}/answer`;
+    const method = isUpdate ? "PUT" : "POST";
+
+    const payload = isUpdate
+      ? { ansid: selectedQuestion?.answer?.ansid, queid: qid, tid: teacherId, content: teacherAnswer }
+      : { queid: qid, tid: teacherId, content: teacherAnswer };
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(url, {
+        method: method,
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        alert(isUpdate ? "답변이 수정되었습니다." : "답변이 등록되었습니다.");
+        // 답변 등록 후 '과목 전체' 목록 새로고침하여 카드 상태 즉시 반영
+        const qnaRes = await fetch(`${API_BASE}/question/subject/${subjectId}`, { 
+          headers: { "Authorization": `Bearer ${token}` } 
+        });
+        if (qnaRes.ok) setQuestionList(await qnaRes.json());
+        
+        setTeacherAnswer('');
+        setSelectedQuestion(null);
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  // 동영상 강의 수정 처리
+  const handleEditVideoSubmit = async () => {
+    if (!editingVideo || !editingVideo.name || !editingVideo.fileUrl || !editingVideo.date) {
+      alert("모든 정보를 입력해주세요.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/lessons/${editingVideo.lid}`, {
+        method: "PUT",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(editingVideo),
+      });
+
+      if (res.ok) {
+        alert("수정되었습니다.");
+        setEditingVideo(null);
+        window.location.reload();
+      } else {
+        alert("수정 실패: " + await res.text());
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  // 동영상 강의 삭제 처리
+  const handleDeleteVideo = async (lid: number) => {
+    if (!confirm("정말로 이 강의를 삭제하시겠습니까? 관련 데이터가 모두 삭제됩니다.")) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/lessons/${lid}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) window.location.reload();
+      else alert("삭제 실패");
+    } catch (err) { console.error(err); }
+  };
+
   // 강의 계획서 업로드 처리
   const handleSyllabusChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -853,6 +1039,8 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
             onVideoSelect={handleVideoSelect}
             onSyllabusUploadClick={() => syllabusInputRef.current?.click()}
             onAddVideoClick={() => setIsAddVideoModalOpen(true)}
+            onDeleteVideo={handleDeleteVideo}
+            onEditVideo={(video) => setEditingVideo(video)}
           />
         </section>
 
@@ -973,6 +1161,58 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
           </div>
         )}
 
+        {/* 동영상 수정 모달 */}
+        {editingVideo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-[32px] bg-[#fff4e6] p-8 shadow-2xl border-2 border-[#e6d1a7] animate-in fade-in zoom-in duration-200">
+              <h3 className="mb-6 text-2xl font-bold text-[#3d2b1f]">동영상 강의 수정</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-[#7b6346] mb-1">강의명</label>
+                  <input 
+                    type="text" 
+                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    value={editingVideo.name}
+                    onChange={(e) => setEditingVideo({ ...editingVideo, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#7b6346] mb-1">강의 일자</label>
+                  <input 
+                    type="date" 
+                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    value={editingVideo.date || ''}
+                    onChange={(e) => setEditingVideo({ ...editingVideo, date: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#7b6346] mb-1">유튜브 URL</label>
+                  <input 
+                    type="text" 
+                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    value={editingVideo.fileUrl}
+                    onChange={(e) => setEditingVideo({ ...editingVideo, fileUrl: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="mt-8 flex justify-end gap-3">
+                <button 
+                  onClick={() => setEditingVideo(null)}
+                  className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346] hover:bg-[#f1e1c4]"
+                >
+                  취소
+                </button>
+                <button 
+                  onClick={handleEditVideoSubmit}
+                  className="rounded-full bg-[#8d6a44] px-6 py-2 text-sm font-bold text-white hover:bg-[#7c5935] shadow-md"
+                >
+                  수정하기
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 동영상 추가 모달 */}
         {isAddVideoModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
@@ -1036,7 +1276,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
               </div>
               <span>
               <button 
-                onClick={() => window.location.href = `/qna/${selectedVideo.lid}`}
+                onClick={() => setShowVideoQna(!showVideoQna)}
                 className="rounded-0 bg-[#8d6a44] px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-[#7c5935]"
                 style={{marginRight:"30px"}}
               >
@@ -1076,6 +1316,98 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
               >
                 브라우저가 동영상을 지원하지 않습니다.
               </video>
+            )}
+
+            {/* 동영상 하단 QnA 섹션 */}
+            {showVideoQna && (
+              <div className="mt-6 rounded-2xl bg-white p-6 border border-[#e6d1a7] shadow-inner animate-in slide-in-from-top duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-[#3d2b1f]">강의 QnA</h3>
+                  {isTeacher && selectedQuestion && (
+                    <button onClick={() => setSelectedQuestion(null)} className="text-sm text-[#8d6a44] font-bold hover:underline">
+                      ← 학생 목록으로
+                    </button>
+                  )}
+                </div>
+
+                {isTeacher ? (
+                  /* 교사 화면 */
+                  selectedQuestion ? (
+                    <div className="space-y-4">
+                      <div className="bg-[#fcf7f0] p-6 rounded-2xl border border-[#ecd6b7] shadow-sm">
+                        <p className="text-xs font-bold text-[#8d6a44] mb-2">{selectedQuestion.studentName} 학생의 질문 (수정 불가)</p>
+                        <div className="text-[#3d2b1f] text-lg leading-relaxed whitespace-pre-wrap">{selectedQuestion.content}</div>
+                      </div>
+                      <div className="bg-white p-4 rounded-xl border border-[#e6d1a7]">
+                        <textarea 
+                          placeholder={selectedQuestion.answer ? "기존 답변을 수정합니다..." : "답변을 입력하세요 (작은 박스)"}
+                          rows={3}
+                          className="w-full rounded-lg border-none p-2 text-sm focus:ring-0 resize-none"
+                          value={teacherAnswer}
+                          onChange={(e) => setTeacherAnswer(e.target.value)}
+                        />
+                        <div className="flex justify-end mt-2">
+                          <button 
+                            onClick={() => handleAnswerSubmit(selectedQuestion.queid, selectedVideo.lid)}
+                            className="rounded-full bg-[#3d2b1f] px-4 py-2 text-xs font-bold text-white hover:bg-black"
+                          >
+                            {selectedQuestion.answer ? "답변 수정" : "답변 저장"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {questionList.filter(q => q.lid === selectedVideo.lid).length > 0 ? (
+                        questionList.filter(q => q.lid === selectedVideo.lid).map((qna) => (
+                          <div 
+                            key={qna.queid} 
+                            onClick={() => setSelectedQuestion(qna)}
+                            className="relative cursor-pointer rounded-2xl border border-[#f0debe] bg-[#fdfaf5] p-4 text-center transition hover:border-[#8d6a44] hover:shadow-md"
+                          >
+                            {qna.answer && <span className="absolute top-2 right-2 bg-green-500 text-white text-[8px] px-1.5 py-0.5 rounded-full">답변완료</span>}
+                            <div className="text-2xl mb-1">👤</div>
+                            <div className="font-bold text-[#3d2b1f] text-sm">{qna.studentName || "익명 학생"}</div>
+                            <div className="text-[10px] text-[#7b6346] mt-1 truncate">{qna.content}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="col-span-full text-center py-8 text-[#7b6346] italic">아직 도착한 질문이 없습니다.</p>
+                      )}
+                    </div>
+                  )
+                ) : (
+                  /* 학생 화면 */
+                  <div className="space-y-6">
+                    <div className="bg-[#fcf7f0] p-6 rounded-2xl border-2 border-[#8d6a44] shadow-md">
+                      <label className="block text-xs font-bold text-[#8d6a44] mb-2">질문 및 메모 (수정 후 저장 버튼을 누르세요)</label>
+                      <textarea 
+                        placeholder="강의에 대해 궁금한 점이나 메모를 남겨주세요."
+                        rows={8}
+                        className="w-full bg-transparent border-none text-[#3d2b1f] placeholder-[#a68d71] text-lg focus:ring-0 resize-none"
+                        value={newQnaContent}
+                        onChange={(e) => setNewQnaContent(e.target.value)}
+                      />
+                      <div className="flex justify-end mt-4">
+                        <button 
+                          onClick={handleSaveStudentQuestion}
+                          className="rounded-full bg-[#8d6a44] px-8 py-3 text-sm font-bold text-white hover:bg-[#7c5935] shadow-lg transition-transform active:scale-95"
+                        >
+                          질문 저장하기
+                        </button>
+                      </div>
+                    </div>
+                    {currentStudentQuestion?.answer && (
+                      <div className="bg-white p-4 rounded-xl border border-[#e6d1a7] shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                        <label className="block text-[10px] font-bold text-[#8d6a44] mb-1">선생님 답변 (수정 불가)</label>
+                        <div className="text-sm text-[#3d2b1f] p-3 bg-[#fcf7f0] rounded-lg border border-[#f0debe] whitespace-pre-wrap">
+                          {currentStudentQuestion.answer.content}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </section>
         )}

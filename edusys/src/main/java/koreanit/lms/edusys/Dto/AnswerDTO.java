@@ -15,9 +15,10 @@ public class AnswerDTO {
     private String content;
     
     public AnswerDTO(Answer answer) {
+        if (answer == null) return;
         this.ansid = answer.getAnsid();
-        this.queid = answer.getQuestion().getQueid();
-        this.tid = answer.getTeacher().getTid();
+        this.queid = answer.getQuestion() != null ? answer.getQuestion().getQueid() : null;
+        this.tid = answer.getTeacher() != null ? answer.getTeacher().getTid() : null;
         this.content = answer.getContent();
     }
 }

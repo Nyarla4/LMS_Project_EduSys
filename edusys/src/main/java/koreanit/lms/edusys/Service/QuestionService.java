@@ -32,6 +32,10 @@ public class QuestionService {
         return questionRepository.findByLessonLid(lid);
     }
 
+    public List<Question> findAllBySubject(Integer subid) {
+        return questionRepository.findByLessonSubjectSubid(subid);
+    }
+
     public Optional<Question> findQuestionById(Integer qid) {
         if(qid == null) {
             return null;

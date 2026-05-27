@@ -76,4 +76,15 @@ public class LessonService {
             lessonRepository.deleteById(id);
         }
     }
+
+    @Transactional
+    public Lesson updateLesson(Integer id, Lesson lessonDetails) {
+        Lesson lesson = lessonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Lesson not found with id: " + id));
+        lesson.setName(lessonDetails.getName());
+        lesson.setDate(lessonDetails.getDate());
+        lesson.setFileUrl(lessonDetails.getFileUrl());
+        calculateAndSetWeek(lesson); // 날짜 변경 등에 대비해 주차 정보 갱신
+        return lessonRepository.save(lesson);
+    }
 }

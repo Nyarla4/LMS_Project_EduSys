@@ -97,4 +97,9 @@ public class LessonController {
     public void deleteLesson(@PathVariable Integer id) {
         lessonService.deleteLesson(id);
     }
+
+    @PutMapping("/{id}")
+    public Lesson updateLesson(@PathVariable Integer id, @RequestBody Lesson lesson) {
+        return lessonService.updateLesson(id, lesson);
+    }
 }
