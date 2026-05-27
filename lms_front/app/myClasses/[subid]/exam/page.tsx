@@ -89,9 +89,10 @@ export default function CurrentExams() {
                                         {exam.question}
                                     </Link>
 
-                                    <span className="text-[#b89b7a] group-hover:text-[#8b5e3c] transition-colors">
+                                    <Link href={`/myClasses/${subid}/exam/${exam.eid}/grading`} className="text-[#b89b7a] group-hover:text-[#8b5e3c] transition-colors"
+                                    style={{ color: '#5c4033', textDecoration: 'none' }}>
                                         채점
-                                    </span>
+                                    </Link>
                                 </li>
                             ))}
                         </ul>

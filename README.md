@@ -96,3 +96,60 @@ FLUSH PRIVILEGES;
 <label className="text-xl font-bold">라벨</label>
 <input type="text" className="border-[#b89b7a] border-1 rounded px-3 py-2"/>
 ```
+
+## AI 서비스 (FastAPI) 로컬 환경 가이드
+
+본 프로젝트는 강사의 시험 문제 출제 편의성 개선 및 주관식 채점 보조를 위해 로컬 LLM(Ollama) 및 오픈소스 Vector DB(ChromaDB)를 연동한 RAG 시스템을 내장하고 있습니다.
+로컬 데이터베이스 데이터 유실 방지와 협업 시 충돌 예방을 위해 다음 구동 가이드를 따라주세요.
+
+### 1. 사전 요구사항 (Pre-requisites)
+
+**Python**: 3.10 버전 이상 설치 필수
+
+**Ollama 엔진**: Ollama 공식 홈페이지에서 각 OS 버전에 맞는 클라이언트를 설치 및 실행합니다.
+
+**추론용 LLM 모델 로드**: 터미널(CMD 또는 PowerShell)을 열고 아래 명령어를 실행하여 고효율 한국어 지원 모델을 내려받습니다.
+
+```base
+ollama run qwen2.5:3b
+```
+
+### 2. 가상환경 구성 및 패키지 설치
+
+ai 디렉토리 하위의 독립된 파이썬 가상환경을 구축하고 개선된 의존성 일람을 전역 복원합니다.
+
+```base
+cd ai
+python -m venv venv
+
+# 가상환경 활성화 (Windows PowerShell)
+.\venv\Scripts\Activate.ps1
+
+# 가상환경 활성화 (macOS / Linux)
+source venv/bin/activate
+
+# 필수 패키지 일괄 설치 (FastAPI, ChromaDB, SentenceTransformers, PyMySQL 포함)
+pip install -r requirements.txt
+```
+
+### 3. 로컬 Vector DB 구축 및 초기화 (최초 1회 필수)
+
+Git 추적에서 제외된 chroma_data를 각자의 로컬 MySQL 데이터에 맞춰 동적으로 생성하는 단계입니다.
+
+1. ai/init_vector_db.py 파일을 열어 상단의 DB_CONFIG 접속 정보를 본인의 로컬 MySQL 접속 정보(계정, 비밀번호, DB명)에 맞게 확인합니다.
+
+2. 가상환경이 활성화된 상태에서 아래 스크립트를 최초 1회 실행합니다.
+
+```base
+python init_vector_db.py
+```
+
+(스크립트가 로컬 DB에 적재된 강의 영상 경로를 추적하여 자막을 추출한 뒤, 로컬 경로인 ai/chroma_data/ 하위에 임베딩 벡터 연산 저장을 자동으로 처리합니다.)
+
+### 4. AI API 서버 구동
+
+Spring Boot 백엔드 및 Next.js 프론트엔드와 실시간 API 통신을 수행할 파이썬 API 서버를 기동합니다.
+
+```base
+uvicorn main:app --reload --port 8000
+```

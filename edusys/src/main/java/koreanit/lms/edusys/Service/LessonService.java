@@ -15,6 +15,7 @@ import java.util.Optional;
 public class LessonService {
     private final LessonRepository lessonRepository;
     private final AttendanceService attendanceService;
+    private final AIService aiService;
 
     @Transactional(readOnly = true)
     public List<Lesson> findAllLessons() {
@@ -63,6 +64,10 @@ public class LessonService {
     public Lesson createLesson(Lesson lesson) {
         if (lesson == null) return null;
         Lesson savedLesson = lessonRepository.save(lesson);
+        // 강의 등록 시 해당 강의 내용을 db에 저장
+        if (savedLesson.getSubject() != null && savedLesson.getFileUrl() != null) {
+            aiService.embedLesson(savedLesson.getSubject().getSubid(), savedLesson.getFileUrl());
+        }
         // 새로운 강의 등록 시 해당 날짜의 출석부 미리 생성
         if (savedLesson.getDate() != null && savedLesson.getSubject() != null) {
             attendanceService.createInitialAttendance(savedLesson);

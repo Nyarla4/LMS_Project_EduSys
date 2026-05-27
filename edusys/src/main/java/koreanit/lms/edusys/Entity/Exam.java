@@ -24,6 +24,7 @@ public class Exam {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer eid;
     
+    @Column(columnDefinition = "TEXT")
     private String question;// 시험문제
 
     @Column(nullable = false, length = 100)
@@ -35,6 +36,7 @@ public class Exam {
     @Column(nullable = false, length = 100)
     private String objectiveOption4; // 객관식 선택지 4
     
+    @Column(columnDefinition = "TEXT")
     private String answer;// 정답(객관식인 경우 1,2 등, 주관식인 경우 답안)
     
     @ManyToOne(fetch = FetchType.LAZY)

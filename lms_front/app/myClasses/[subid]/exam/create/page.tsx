@@ -29,6 +29,8 @@ export default function CreateExam() {
     const [objectiveOption2, setObjectiveOption2] = useState("");
     const [objectiveOption3, setObjectiveOption3] = useState("");
     const [objectiveOption4, setObjectiveOption4] = useState("");
+    const [isAiLoading, setIsAiLoading] = useState(false);
+
     const create = async () => {
 
         try {
@@ -75,6 +77,40 @@ export default function CreateExam() {
             </div>
         );
     }
+
+    const handleAiRecommend = async () => {
+        setIsAiLoading(true);
+        try {
+            // [흐름 및 구조 수정] 사용자가 선택한 주관식/객관식 상태(isObjective)를 쿼리 스트링으로 전달
+            const res = await fetch(`http://localhost:8080/api/ai/recommend-exam/${subid}?isObjective=${isObjective}`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
+
+            if (!res.ok) throw new Error("AI 추천 실패");
+            const data = await res.json();
+
+            // AI가 추천해준 데이터로 입력창 업데이트
+            setQuestion(data.question);
+            
+            // [흐름 수정] 하드코딩(setIsObjective(true)) 제거. 사용자가 지정한 폼 상태를 유지함
+            // 만약 주관식이면 아래 옵션값들은 FastAPI 포맷 정책에 의해 빈 문자열("")로 파싱되어 컴포넌트에 매핑됩니다.
+            setObjectiveOption1(data.objectiveOption1 || "");
+            setObjectiveOption2(data.objectiveOption2 || "");
+            setObjectiveOption3(data.objectiveOption3 || "");
+            setObjectiveOption4(data.objectiveOption4 || "");
+            setAnswer(data.answer);
+
+            alert("AI가 추천 문제를 생성했습니다. 내용을 확인해주세요.");
+        } catch (err) {
+            alert("AI 추천 중 오류가 발생했습니다. 학습된 자막이 있는지 확인하세요.");
+        } finally {
+            setIsAiLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10 font-sans text-[#5c4033]">
 
@@ -83,6 +119,14 @@ export default function CreateExam() {
                 <p className="text-4xl font-bold text-center mb-6 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2 shadow-sm">
                     시험 문제 작성
                 </p>
+                <button
+                        type="button"
+                        onClick={handleAiRecommend}
+                        disabled={isAiLoading}
+                        className="ml-4 bg-[#4a6baf] hover:bg-[#3b558d] text-white px-6 py-3 rounded-full font-bold shadow-lg transition-all active:scale-95 disabled:bg-gray-400"
+                    >
+                        {isAiLoading ? "생성 중..." : "✨ AI 문제 추천"}
+                    </button>
 
                 <div className="bg-[#fcf7f0] border-[#b89b7a] border border-1 rounded-lg p-8 shadow-sm flex flex-col gap-8">
                     <div className="flex flex-col gap-2">
@@ -99,19 +143,21 @@ export default function CreateExam() {
                         <input type='radio' id="unObj"
                             name='isObj' value="주관식"
                             onChange={(e) => { setIsObjective(false); }}
-                            defaultChecked />주관식
+                            checked = {!isObjective} />주관식
                     </label>
                     <label key="obj">
                         <input type='radio' id="obj"
                             name='isObj' value="객관식"
-                            onChange={(e) => { setIsObjective(true); }} />객관식
+                            onChange={(e) => { setIsObjective(true); }}
+                            checked = {isObjective} />객관식
                     </label>
                     {isObjective ? (
                         <div className="flex flex-col gap-2">
                             <label className="text-xl font-bold ml-1">1번 답안</label>
                             <input type='radio' id="1"
                                 name='answer' value="1"
-                                onChange={(e) => { setAnswer("1"); }} />
+                                onChange={(e) => { setAnswer("1"); }}
+                                checked={answer == "1"} />
                             <input
                                 type="text"
                                 placeholder="답을 입력하세요"
@@ -122,7 +168,8 @@ export default function CreateExam() {
                             <label className="text-xl font-bold ml-1">2번 답안</label>
                             <input type='radio' id="2"
                                 name='answer' value="2"
-                                onChange={(e) => { setAnswer("2"); }} />
+                                onChange={(e) => { setAnswer("2"); }}
+                                checked={answer == "2"} />
                             <input
                                 type="text"
                                 placeholder="답을 입력하세요"
@@ -133,7 +180,8 @@ export default function CreateExam() {
                             <label className="text-xl font-bold ml-1">3번 답안</label>
                             <input type='radio' id="3"
                                 name='answer' value="3"
-                                onChange={(e) => { setAnswer("3"); }} />
+                                onChange={(e) => { setAnswer("3"); }}
+                                checked={answer == "3"} />
                             <input
                                 type="text"
                                 placeholder="답을 입력하세요"
@@ -144,7 +192,8 @@ export default function CreateExam() {
                             <label className="text-xl font-bold ml-1">4번 답안</label>
                             <input type='radio' id="4"
                                 name='answer' value="4"
-                                onChange={(e) => { setAnswer("4"); }} />
+                                onChange={(e) => { setAnswer("4"); }}
+                                checked={answer == "4"} />
                             <input
                                 type="text"
                                 placeholder="답을 입력하세요"
