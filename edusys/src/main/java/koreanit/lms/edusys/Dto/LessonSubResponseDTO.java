@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 public class LessonSubResponseDTO {
     
-    // 수강신청에 필요한 정보들
+    // 수강신청 카드에 나타낼 정보들
     private Integer subid;
     private String teacherName;
     private String major;
