@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useUser } from "../app/userContext";
 
 // YouTube API 타입을 위한 전역 선언
@@ -40,11 +41,11 @@ interface Attendance {
   whether: boolean;
 }
 
-interface Exam {
-  eid: number;
+interface ExamSet { // Changed from Exam to ExamSet
+  esid: number; // ExamSet ID
   name: string;
-  grade: string;
-  date?: string; // 엔티티엔 없으나 UI용으로 유지
+  subid?: number; // Subject ID (for navigation)
+  examDate?: string; // Use examDate from ExamSet
   status?: string;
 }
 
@@ -92,6 +93,7 @@ function TabPanel({
   activeVideoId,
   apiBase,
   sessionBaseProgress,
+  subjectId,
   currentSessionSeconds,
   onAssignmentSelect,
   onAddAssignmentClick,
@@ -99,18 +101,20 @@ function TabPanel({
   onSyllabusUploadClick,
   onAddVideoClick,
   onDeleteVideo,
+  onAddExamSetClick,
   onEditVideo
 }: { 
   activeTab: Tab; 
   lessons: Lesson[];
   attendanceData: Attendance[];
-  exams: Exam[];
+  exams: ExamSet[];
   assignments: Assignment[];
   videoList: Video[];
   progressMap: Record<number, number>;
   activeVideoId?: number;
   apiBase: string;
   sessionBaseProgress: number;
+  subjectId?: number | string; // subjectId 타입 확장
   currentSessionSeconds: number;
   onAssignmentSelect: (assignment: Assignment) => void;
   onAddAssignmentClick?: () => void;
@@ -118,7 +122,8 @@ function TabPanel({
   onSyllabusUploadClick?: () => void;
   onAddVideoClick?: () => void;
   onDeleteVideo?: (lid: number) => void;
-  onEditVideo?: (video: Video) => void;
+  onAddExamSetClick?: () => void;
+  onEditVideo?: (video: Video) => void; // ExamSet[] 대신 Exam[]으로 변경
 }) {
   const { user } = useUser();
   // 데이터 구조를 변수로 뽑아 가독성 높임 (학생/교사 객체 내의 user 또는 관리자 객체 자체)
@@ -340,7 +345,14 @@ function TabPanel({
   if (activeTab === "시험 정보") {
     return (
       <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
-        <h2 className="mb-4 text-2xl font-semibold text-[#3d2b1f]">시험 정보</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-[#3d2b1f]">시험 정보</h2>
+          {isTeacher && (
+            <button onClick={onAddExamSetClick} className="rounded-full bg-[#8d6a44] px-4 py-2 text-xs font-bold text-white hover:bg-[#7c5935]">
+              + 시험 세트 생성
+            </button>
+          )}
+        </div>
         <div className="overflow-x-auto rounded-[28px] border border-[#f0debe] bg-white shadow-sm">
           <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
             <thead className="bg-[#f7ecd9] text-[#6d5b46]">
@@ -352,14 +364,38 @@ function TabPanel({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e9d7b0] bg-white">
-              {exams.map((exam) => (
-                <tr key={exam.eid} className="hover:bg-[#fff6eb]">
-                  <td className="px-4 py-4">{exam.name}</td>
-                  <td className="px-4 py-4">{exam.date || "-"}</td>
-                  <td className="px-4 py-4">{exam.status || "완료"}</td>
-                  <td className="px-4 py-4">{exam.grade}</td>
+              {exams.length > 0 && lessons.length > 0 ? ( // Ensure lessons are loaded for subid
+                exams.map((examSet) => {
+                  const canAccess = isTeacher || examSet.status === "진행중";
+                  return (
+                  <tr
+                    key={examSet.esid} 
+                    className={`${canAccess ? "hover:bg-[#fff6eb] cursor-pointer" : "opacity-50 cursor-not-allowed"}`}
+                    onClick={() => {
+                      if (canAccess) {
+                        window.location.href = `/myClasses/${subjectId || lessons[0]?.subject?.subid || 'all'}/exam/${examSet.esid}`;
+                      } else {
+                        alert("시험 기간이 아닙니다.");
+                      }
+                    }}
+                  >
+                    <td className="px-4 py-4 font-bold text-[#8d6a44]">{examSet.name || `시험 #${examSet.esid}`}</td>
+                    <td className="px-4 py-4">{examSet.examDate?.toString().replace('T', ' ') || "일정 미정"}</td>
+                    <td className={`px-4 py-4 font-bold ${examSet.status === "진행중" ? "text-blue-600" : examSet.status === "종료" ? "text-red-500" : "text-gray-500"}`}>
+                      {examSet.status}
+                    </td>
+                    <td className="px-4 py-4">
+                      {/* TODO: 여기에 학생의 해당 시험 세트에 대한 최종 점수 표시 로직 추가 */}
+                      -
+                    </td>
+                  </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-[#7b6346]">등록된 시험 정보가 없습니다.</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -414,7 +450,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   const [activeTab, setActiveTab] = useState<Tab>("강의 계획서");
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [attendanceData, setAttendanceData] = useState<Attendance[]>([]);
-  const [exams, setExams] = useState<Exam[]>([]);
+  const [exams, setExams] = useState<ExamSet[]>([]); // Changed to ExamSet[]
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [videoList, setVideoList] = useState<Video[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
@@ -434,12 +470,15 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   const [isAddAssignmentModalOpen, setIsAddAssignmentModalOpen] = useState(false);
   const [newAssignment, setNewAssignment] = useState({ form: '', dueDate: '' });
   
+  const [isAddExamSetModalOpen, setIsAddExamSetModalOpen] = useState(false);
+  const [newExamSet, setNewExamSet] = useState({ name: '', examDate: '' });
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const syllabusInputRef = useRef<HTMLInputElement>(null);
   const [isAddVideoModalOpen, setIsAddVideoModalOpen] = useState(false);
   const [newVideo, setNewVideo] = useState({ name: '', date: '', url: '' });
 
-  const ytPlayerRef = useRef<any>(null); // 유튜브 플레이어 인스턴스 저장용
+  const ytPlayerRef = useRef<any>(null); // 유튜브 플레이어 인스턴스 저장용 // Changed to ExamSet[]
   const trackingInterval = useRef<NodeJS.Timeout | null>(null);
 
   const { user, loading: userLoading } = useUser();
@@ -483,7 +522,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         // 학생일 경우에만 학생 관련 데이터 페칭을 추가
         if (!isTeacher && studentId) {
           const attUrl = subjectId ? `${API_BASE}/attendances/subject/${subjectId}` : `${API_BASE}/attendances`;
-          const examUrl = subjectId ? `${API_BASE}/exams/subject/${subjectId}` : `${API_BASE}/exams`;
+          const examUrl = subjectId ? `${API_BASE}/examsets/subject/${subjectId}` : `${API_BASE}/examsets`;
           const assignUrl = subjectId ? `${API_BASE}/works/subject/${subjectId}` : `${API_BASE}/works`;
 
           fetches.push(fetch(attUrl, { headers }));
@@ -675,6 +714,33 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     } catch (err) {
       console.error(err);
     }
+  };
+
+  // 시험 세트 생성 처리
+  const handleAddExamSetSubmit = async () => {
+    if (!newExamSet.name || !newExamSet.examDate || !subjectId) {
+      alert("시험 이름과 예정 시간을 입력해주세요.");
+      return;
+    }
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/examsets`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newExamSet.name,
+          examDate: newExamSet.examDate,
+          subid: Number(subjectId)
+        }),
+      });
+      if (res.ok) {
+        alert("시험 세트가 생성되었습니다.");
+        setIsAddExamSetModalOpen(false);
+        window.location.reload();
+      } else {
+        alert("생성 실패");
+      }
+    } catch (err) { console.error(err); }
   };
 
   // 학생용 과제 파일 업로드 처리
@@ -1033,12 +1099,14 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
             activeVideoId={selectedVideo?.lid}
             apiBase={API_BASE}
             sessionBaseProgress={sessionBaseProgress}
+            subjectId={subjectId}
             currentSessionSeconds={currentSessionSeconds}
             onAssignmentSelect={(assignment) => setSelectedAssignment(assignment)}
             onAddAssignmentClick={() => setIsAddAssignmentModalOpen(true)}
             onVideoSelect={handleVideoSelect}
             onSyllabusUploadClick={() => syllabusInputRef.current?.click()}
             onAddVideoClick={() => setIsAddVideoModalOpen(true)}
+            onAddExamSetClick={() => setIsAddExamSetModalOpen(true)}
             onDeleteVideo={handleDeleteVideo}
             onEditVideo={(video) => setEditingVideo(video)}
           />
@@ -1156,6 +1224,40 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                 >
                   생성하기
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 시험 세트 추가 모달 */}
+        {isAddExamSetModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-[32px] bg-[#fff4e6] p-8 shadow-2xl border-2 border-[#e6d1a7]">
+              <h3 className="mb-6 text-2xl font-bold text-[#3d2b1f]">새 시험 세트 생성</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-[#7b6346] mb-1">시험 명칭</label>
+                  <input 
+                    type="text" 
+                    placeholder="예: 중간고사, 기말고사"
+                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2"
+                    value={newExamSet.name}
+                    onChange={(e) => setNewExamSet({ ...newExamSet, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#7b6346] mb-1">시험 시작 일시</label>
+                  <input 
+                    type="datetime-local" 
+                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2"
+                    value={newExamSet.examDate}
+                    onChange={(e) => setNewExamSet({ ...newExamSet, examDate: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="mt-8 flex justify-end gap-3">
+                <button onClick={() => setIsAddExamSetModalOpen(false)} className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346]">취소</button>
+                <button onClick={handleAddExamSetSubmit} className="rounded-full bg-[#8d6a44] px-6 py-2 text-sm font-bold text-white shadow-md">생성하기</button>
               </div>
             </div>
           </div>
