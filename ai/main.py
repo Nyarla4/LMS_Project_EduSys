@@ -113,74 +113,67 @@ def generate_exam(request: GenerateExamRequest):
 
     context_text = " ".join(search_results['documents'][0])
 
-    # 2. 프롬프트 내 JSON Key 명세 엄격화
+    # 2. 역할(System)과 제약사항 정의 (구조화)
     if request.is_objective:
-        format_instruction = """
-        제공된 <강의 내용>만을 바탕으로 객관식 4지 선다형 문제를 1개 출제하세요.
-        JSON Key 이름("question", "objectiveOption1", ..., "answer")을 절대 변경하거나 누락하지 마세요.
+        system_instruction = """당신은 시험 출제자입니다. 제공된 <강의 내용>을 바탕으로 객관식 4지 선다형 문제를 1개 새로 생성하세요.
+<강의 내용>의 텍스트를 그대로 복사하여 문제로 출제하지 말고, 핵심 개념을 묻는 질문을 새로 작성해야 합니다.
+반드시 아래 JSON 포맷으로만 응답하세요.
 
-        {
-          "question": "문제 내용",
-          "objectiveOption1": "보기1",
-          "objectiveOption2": "보기2",
-          "objectiveOption3": "보기3",
-          "objectiveOption4": "보기4",
-          "answer": "정답 번호 (1, 2, 3, 4 중 하나)"
-        }
-        """
+{
+  "question": "강의 내용을 바탕으로 새로 출제한 객관식 문제 내용",
+  "objectiveOption1": "보기1",
+  "objectiveOption2": "보기2",
+  "objectiveOption3": "보기3",
+  "objectiveOption4": "보기4",
+  "answer": "정답 번호 (1, 2, 3, 4 중 하나)"
+}"""
     else:
-        format_instruction = """
-        제공된 <강의 내용>만을 바탕으로 단답형 또는 서술형 주관식 문제를 1개 출제하세요.
-        주관식 문제이더라도 구조 유지를 위해 아래 명시된 JSON Key를 반드시 모두 포함해야 합니다. 
-        특히 "answer" Key는 절대로 생략하거나 이름을 바꾸지 마세요.
+        system_instruction = """당신은 시험 출제자입니다. 제공된 <강의 내용>을 바탕으로 단답형 또는 서술형 주관식 문제를 1개 새로 생성하세요.
+
+        [엄격한 제약사항]
+        1. "~문제를 설정하였습니다", "~이해할 수 있게 합니다" 같은 출제 의도, 설명, 메타 발언은 "question" 필드에 절대로 포함하지 마세요.
+        2. "question"에는 오직 학생이 읽고 답을 작성해야 하는 순수한 '질문 문장'(-에 대해 서술하시오, -는 무엇인가?)만 작성하세요.
+        3. 강의 내용에 포함된 인명(예: 롤스)이나 핵심 단어의 오타가 발생하지 않도록 철저히 검증하세요.
+
+        반드시 아래 JSON 포맷으로만 응답하세요.
 
         {
-          "question": "주관식 문제 내용",
+          "question": "강의 내용을 바탕으로 새로 출제한 주관식 질문 문장",
           "objectiveOption1": "",
           "objectiveOption2": "",
           "objectiveOption3": "",
           "objectiveOption4": "",
-          "answer": "반드시 여기에 주관식 정답 및 모범 답안 문장을 작성하세요."
-        }
-        """
-
-    prompt = f"""
-    당신은 꼼꼼한 시험 출제자입니다. 부가적인 설명 없이 오직 요구된 JSON 포맷으로만 답변하세요.
-    {format_instruction}
-
-    <강의 내용>
-    {context_text}
-    """
-
-    # 3. Ollama 호출
-    response = ollama.chat(model='qwen2.5:3b', messages=[
-      {'role': 'user', 'content': prompt}
-    ], options={'temperature': 0.1})
-    
-    result_text = response['message']['content'].strip()
-
-    # 4. 정규식을 통한 텍스트 내 JSON 구조 강제 추출 (앞뒤 노이즈 제거)
-    match = re.search(r'\{.*\}', result_text, re.DOTALL)
-    if match:
-        result_text = match.group(0)
+          "answer": "주관식 정답 및 모범 답안 문장"
+        }"""
 
     try:
+        # 3. Ollama 호출 (System/User 분리 및 format='json' 적용으로 흐름 제어)
+        response = ollama.chat(
+            model='qwen2.5:3b', 
+            messages=[
+                {'role': 'system', 'content': system_instruction},
+                {'role': 'user', 'content': f"<강의 내용>\n{context_text}"}
+            ], 
+            options={'temperature': 0.3},
+            format='json'  # Ollama 구조적 출력 강제
+        )
+        
+        result_text = response['message']['content'].strip()
         parsed_json = json.loads(result_text)
         
-        # 소형 모델이 소문자/대문자 실수를 하거나 필드를 빠뜨렸을 경우를 대비한 안전장치
+        # 안전장치 및 Key 보정
         if "answer" not in parsed_json:
-            # 혹시 한글로 생성했을 경우 구제 흐름
-            if "정답" in parsed_json:
-                parsed_json["answer"] = parsed_json.pop("정답")
-            elif "모범답안" in parsed_json:
-                parsed_json["answer"] = parsed_json.pop("모범답안")
+            for alternative in ["정답", "모범답안", "Answer"]:
+                if alternative in parsed_json:
+                    parsed_json["answer"] = parsed_json.pop(alternative)
+                    break
             else:
                 raise KeyError("answer key가 존재하지 않습니다.")
                 
         return parsed_json
         
     except (json.JSONDecodeError, KeyError, Exception) as e:
-        print(f"[JSON 파싱 에러 출력]: {result_text}")  # 터미널에서 AI 원본 확인용
+        print(f"[에러 발생 - 원본 응답]: {result_text}")
         raise HTTPException(status_code=500, detail=f"LLM 응답 제어 실패: {str(e)}")
     
 # ==========================================
