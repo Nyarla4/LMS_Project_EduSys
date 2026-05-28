@@ -6,6 +6,7 @@ import chromadb
 import ollama
 import json
 import re
+from datetime import date
 
 app = FastAPI()
 
@@ -24,10 +25,12 @@ print("초기화 완료.")
 class EmbedRequest(BaseModel):
     subid: int       # 과목 ID
     fileUrl: str     # 유튜브 영상 링크
+    lessonDate: str # 강의 일자
 
 class GenerateExamRequest(BaseModel):
     subid: int       # 출제할 과목 ID
     is_objective: bool#주관식/객관식 여부
+    examDate: str   # 시험 일자
 
 class GradeRequest(BaseModel):
     question: str          # 문제 내용
@@ -79,7 +82,7 @@ def embed_youtube_subtitle(request: EmbedRequest):
         # 4. 임베딩 및 Vector DB 저장
         embeddings = model.encode(fullText)
         ids = [f"{request.subid}_{video_id}_{i}" for i in range(len(fullText))]
-        metadatas = [{"subid": request.subid, "text": text} for text in fullText]
+        metadatas = [{"subid": request.subid, "text": text, "date": request.lessonDate} for text in fullText]
 
         collection.add(
             documents=fullText,
@@ -101,17 +104,27 @@ def generate_exam(request: GenerateExamRequest):
     query = "시험 출제에 적합한 핵심 개념, 정의, 중요한 설명"
     query_embedding = model.encode(query).tolist()
 
-    # 1. DB 검색
+    # 1. DB 검색 (날짜 필터링을 제외하고 subid로만 검색)
     search_results = collection.query(
         query_embeddings=[query_embedding],
-        n_results=3, 
-        where={"subid": request.subid}
+        n_results=10, # 날짜 필터링을 위해 조금 더 넉넉하게 가져옵니다
+        where={"subid": request.subid} 
     )
-
+    
     if not search_results['documents'] or not search_results['documents'][0]:
         raise HTTPException(status_code=404, detail="해당 과목의 자막 데이터가 없습니다.")
 
-    context_text = " ".join(search_results['documents'][0])
+    # 2. Python에서 날짜 필터링 및 데이터 병합
+    filtered_docs = []
+    # 문자열 날짜 비교는 Python에서 lexicographical(사전식) 비교가 가능하므로 ISO 형식(YYYY-MM-DD...)에서 유효합니다.
+    for doc, meta in zip(search_results['documents'][0], search_results['metadatas'][0]):
+        if meta.get("date") and meta["date"] < str(request.examDate):
+            filtered_docs.append(doc)
+    
+    if not filtered_docs:
+        raise HTTPException(status_code=404, detail="해당 시험 일자 이전의 강의 데이터가 없습니다.")
+
+    context_text = " ".join(filtered_docs)
 
     # 2. 역할(System)과 제약사항 정의 (구조화)
     if request.is_objective:

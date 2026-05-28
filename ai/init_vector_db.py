@@ -28,7 +28,7 @@ def fetch_youtube_lessons():
         with connection.cursor(pymysql.cursors.DictCursor) as cursor:
             # lessons와 subjects 조인하여 subid와 file_url 가져오기
             sql = """
-                SELECT l.subid, l.file_url 
+                SELECT l.subid, l.file_url , l.date
                 FROM lessons l 
                 WHERE l.file_url IS NOT NULL AND l.file_url != ''
             """
@@ -53,6 +53,7 @@ def main():
     for lesson in lessons:
         subid = lesson['subid']
         url = lesson['file_url']
+        date = lesson['date']
         
         # URL에서 Video ID 추출
         video_id = url
@@ -85,7 +86,7 @@ def main():
             # 임베딩 데이터 생성 및 적재
             embeddings = model.encode(full_text)
             ids = [f"{subid}_{video_id}_{i}" for i in range(len(full_text))]
-            metadatas = [{"subid": subid, "text": text} for text in full_text]
+            metadatas = [{"subid": subid, "text": text, "date":str(date)} for text in full_text]
 
             collection.add(
                 documents=full_text,

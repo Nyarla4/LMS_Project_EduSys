@@ -1,5 +1,7 @@
 package koreanit.lms.edusys.Service;
 
+import java.time.LocalDateTime;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import koreanit.lms.edusys.Dto.ExamDTO;
 import koreanit.lms.edusys.Entity.Exam;
 import koreanit.lms.edusys.Entity.ExamSet;
 import koreanit.lms.edusys.Entity.Subject;
@@ -30,7 +33,7 @@ public class AIService {
     private String aiServerUrl;
 
     // [구조 수정] FastAPI 전송 스키마에 객관식 여부 필드 추가
-    private record ExamGenerateRequest(Integer subid, boolean is_objective) {}
+    private record ExamGenerateRequest(Integer subid, boolean is_objective, String examDate) {}
     
     private record ExamGenerateResponse(
         String question, 
@@ -43,7 +46,7 @@ public class AIService {
 
     // [흐름 수정] 매개변수에 Boolean isObjective 추가
     @Transactional
-    public Exam createExamFromAI(Integer esid, Boolean isObjective) {
+    public ExamDTO createExamFromAI(Integer esid, Boolean isObjective) {
         
         // 1. 대상 시험지(ExamSet) 및 과목 검증
         ExamSet examSet = examSetRepository.findById(esid)
@@ -58,12 +61,12 @@ public class AIService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         
         // 구조 바인딩: 넘겨받은 isObjective 플래그 적용
-        ExamGenerateRequest requestBody = new ExamGenerateRequest(subject.getSubid(), isObjective);
+        ExamGenerateRequest requestBody = new ExamGenerateRequest(subject.getSubid(), isObjective, examSet.getExamDate().toString());
         HttpEntity<ExamGenerateRequest> requestEntity = new HttpEntity<>(requestBody, headers);
 
         try {
             // 3. FastAPI 호출 흐름 제어
-            log.info("FastAPI에 문제 출제 요청 중... 과목: {}, 객관식 여부: {}", subject.getName(), isObjective);
+            log.info("FastAPI에 문제 출제 요청 중... 과목: {}, 객관식 여부: {}, 시험 일자: {}", subject.getName(), isObjective, examSet.getExamDate());
             ResponseEntity<ExamGenerateResponse> response = restTemplate.postForEntity(
                 endpoint, 
                 requestEntity, 
@@ -76,14 +79,13 @@ public class AIService {
             }
 
             // 4. 응답 DTO를 엔티티로 변환 (구조 매핑)
-            Exam exam = new Exam();
+            ExamDTO exam = new ExamDTO();
             exam.setQuestion(responseBody.question());
             exam.setObjectiveOption1(responseBody.objectiveOption1());
             exam.setObjectiveOption2(responseBody.objectiveOption2());
             exam.setObjectiveOption3(responseBody.objectiveOption3());
             exam.setObjectiveOption4(responseBody.objectiveOption4());
             exam.setAnswer(responseBody.answer());
-            exam.setExamSet(examSet);
 
             // 5. 반환
             return exam;
