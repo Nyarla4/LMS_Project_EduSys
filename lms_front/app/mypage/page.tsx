@@ -73,7 +73,7 @@ export default function MyPage() {
             href="/change-password" 
             className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-[#8b5e3c] hover:bg-[#6f4a2f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8b5e3c] transition-all text-center shadow-md active:scale-[0.98]"
           >
-            비밀번호 변경하기
+            회원정보 수정하기
           </Link>
         </div>
 
