@@ -186,7 +186,7 @@ export default function Page() {
                 <div className="flex-1 bg-[#fffaf3] border-[#d6c2a8] border-2 rounded-2xl shadow-md p-4">
                     <p className="text-4xl font-bold text-center mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">수강신청</p>
                     <p className="text-xl font-bold text-[#5c4033]">개설과목</p>
-                    <div className="mt-2 flex items-center">
+                    <div className="mt-2 flex items-center border-b-4 border-[#b89b7a] pb-2 mb-4">
                         <button type="button"
                             onClick={() => setSelectedCategory("전체")}
                             className={`px-3 py-1 rounded text-sm border-[#b89b7a] border-1 font-bold ${selectedCategory === "전체" ? "bg-[#8b5e3c] text-white" : "bg-[#dbc7b1] text-[#5c4033]"}`}>전체</button>

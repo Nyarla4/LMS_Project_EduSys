@@ -117,6 +117,18 @@ public class SubjectService {
         }
         Subject subject = subjectRepository.findById(subid)
             .orElseThrow(() -> new RuntimeException("과목이 없습니다."));
+        
+        // 관리자가 반려 할시 승인대기 상태였던 과목 레포에서 바로 삭제
+        if (status == Subject.SubStatus.CANCEL && subject.getSubStatus() == Subject.SubStatus.WAIT) {
+            List<Lesson> lessons = lessonRepository.findBySubjectSubid(subid);
+            // FK 제약 문제를 피하기 위해 Lesson 선삭제 후 Subject 삭제
+            if (lessons != null && !lessons.isEmpty()) {
+                lessonRepository.deleteAll(lessons);
+            }
+            subjectRepository.delete(subject);
+            return;
+        }
+        
         subject.setSubStatus(status);
         subjectRepository.save(subject);
     }
