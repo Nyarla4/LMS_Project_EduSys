@@ -10,6 +10,7 @@ export default function CreateExam() {
     const router = useRouter();
     const params = useParams();
     const subid = params.subid;
+    const esid = params.esid;
     const { user, loading: userLoading } = useUser();
     const [question, setQuestion] = useState("");
     const [answer, setAnswer] = useState("");
@@ -31,7 +32,7 @@ export default function CreateExam() {
                 },
                 body: JSON.stringify(
                     {
-                        subid: subid,
+                        esid: esid,
                         question: question,
                         answer: answer,
                         objectiveOption1: isObjective?objectiveOption1:"",
@@ -45,7 +46,7 @@ export default function CreateExam() {
             if (!res.ok) throw new Error("서버 응답 오류");
 
             alert("시험이 작성되었습니다.");
-            router.push(`/myClasses/${subid}/exam`);
+            router.push(`/myClasses/${subid}/${esid}`);
         } catch (err) {
             alert("등록에 실패했습니다.");
         }
@@ -71,7 +72,7 @@ export default function CreateExam() {
         setIsAiLoading(true);
         try {
             // [흐름 및 구조 수정] 사용자가 선택한 주관식/객관식 상태(isObjective)를 쿼리 스트링으로 전달
-            const res = await fetch(`http://localhost:8080/api/ai/recommend-exam/${subid}?isObjective=${isObjective}`, {
+            const res = await fetch(`http://localhost:8080/api/ai/recommend-exam/${esid}?isObjective=${isObjective}`, {
                 method: "GET",
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -104,6 +105,15 @@ export default function CreateExam() {
         <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10 font-sans text-[#5c4033]">
 
             <div className="w-full max-w-4xl flex flex-col gap-6 mt-10 px-10">
+
+                {/* 뒤로 가기 버튼 추가 */}
+                <button 
+                    onClick={() => router.push(`/myClasses/${subid}/${esid}`)}
+                    className="flex items-center gap-2 text-[#8d6a44] font-bold hover:text-[#3d2b1f] transition-all group w-fit"
+                >
+                    <span className="inline-block transition-transform group-hover:-translate-x-1">←</span> 
+                    시험 목록으로 돌아가기
+                </button>
 
                 <p className="text-4xl font-bold text-center mb-6 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2 shadow-sm">
                     시험 문제 작성

@@ -5,8 +5,10 @@ import koreanit.lms.edusys.Dto.ExamGradeDTO;
 import koreanit.lms.edusys.Entity.Exam;
 import koreanit.lms.edusys.Entity.ExamGrade;
 import koreanit.lms.edusys.Entity.Subject;
+import koreanit.lms.edusys.Entity.ExamSet;
 import koreanit.lms.edusys.Service.ExamGradeService;
 import koreanit.lms.edusys.Service.ExamService;
+import koreanit.lms.edusys.Service.ExamSetService;
 import koreanit.lms.edusys.Service.SubjectService;
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +27,7 @@ import java.util.Optional;
 public class ExamController {
     private final ExamService examService;
     private final SubjectService subjectService;
+    private final ExamSetService examSetService;
     private final ExamGradeService examGradeService;
 
     @GetMapping
@@ -52,16 +55,26 @@ public class ExamController {
         return result;
     }
 
+    @GetMapping("/examset/{esid}")
+    public List<ExamDTO> getExamsByExamSet(@PathVariable Integer esid) {
+        List<Exam> exams = examService.findAllExamsByExamSet(esid);
+        List<ExamDTO> result = new ArrayList<ExamDTO>();
+        for (Exam exam : exams){
+            result.add(new ExamDTO(exam));
+        }
+        return result;
+    }
+
     @PostMapping("/create")
     public ResponseEntity<ExamDTO> createExam(@RequestBody ExamDTO dto) {
-        Subject subject = subjectService.findSubjectById(dto.getSubid());
-        if (subject == null) {
+        Optional<ExamSet> oExamSet = examSetService.findExamSetById(dto.getEsid());
+        if (oExamSet.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         Exam exam = new Exam();
         exam.setQuestion(dto.getQuestion());
         exam.setAnswer(dto.getAnswer());
-        exam.setSubject(subject);
+        exam.setExamSet(oExamSet.get());
         exam.setObjectiveOption1(dto.getObjectiveOption1());
         exam.setObjectiveOption2(dto.getObjectiveOption2());
         exam.setObjectiveOption3(dto.getObjectiveOption3());
@@ -92,6 +105,13 @@ public class ExamController {
     @DeleteMapping("/{id}")
     public void deleteExam(@PathVariable Integer id) {
         examService.deleteExam(id);
+    }
+
+    // 학생이 답안을 제출할 때 호출 (ExamGrade 테이블에 새로운 레코드 생성)
+    @PostMapping("/submit-answer")
+    public ResponseEntity<Void> submitAnswer(@RequestBody ExamGradeDTO dto) {
+        examGradeService.submitAnswer(dto);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/grading/{eid}")

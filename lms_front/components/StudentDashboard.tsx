@@ -102,7 +102,9 @@ function TabPanel({
   onAddVideoClick,
   onDeleteVideo,
   onAddExamSetClick,
-  onEditVideo
+  onEditVideo,
+  onEditExamSet,
+  onDeleteExamSet
 }: { 
   activeTab: Tab; 
   lessons: Lesson[];
@@ -123,7 +125,9 @@ function TabPanel({
   onAddVideoClick?: () => void;
   onDeleteVideo?: (lid: number) => void;
   onAddExamSetClick?: () => void;
-  onEditVideo?: (video: Video) => void; // ExamSet[] 대신 Exam[]으로 변경
+  onEditVideo?: (video: Video) => void;
+  onEditExamSet?: (examSet: ExamSet) => void;
+  onDeleteExamSet?: (esid: number) => void;
 }) {
   const { user } = useUser();
   // 데이터 구조를 변수로 뽑아 가독성 높임 (학생/교사 객체 내의 user 또는 관리자 객체 자체)
@@ -299,16 +303,16 @@ function TabPanel({
                       <div className="flex flex-col items-end gap-2">
                         {!isTeacher && <span className="rounded-full bg-[#e8d1a5] px-3 py-1 text-xs font-bold text-[#5c4326]">{percentage}%</span>}
                         {isTeacher && (
-                          <div className="flex gap-2">
+                          <div className="flex gap-1">
                             <button 
                               onClick={(e) => { e.stopPropagation(); onEditVideo?.(video); }}
-                              className="text-xs font-bold text-blue-600 hover:underline"
+                              className="rounded px-2 py-0.5 text-[10px] font-bold text-white bg-slate-400 hover:bg-[#8d6a44] transition-colors"
                             >
                               수정
                             </button>
                             <button 
                               onClick={(e) => { e.stopPropagation(); onDeleteVideo?.(video.lid); }}
-                              className="text-xs font-bold text-red-600 hover:underline"
+                              className="rounded px-2 py-0.5 text-[10px] font-bold text-slate-600 bg-slate-200 hover:bg-rose-500 hover:text-white transition-colors"
                             >
                               삭제
                             </button>
@@ -364,7 +368,7 @@ function TabPanel({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e9d7b0] bg-white">
-              {exams.length > 0 && lessons.length > 0 ? ( // Ensure lessons are loaded for subid
+              {exams.length > 0 ? (
                 exams.map((examSet) => {
                   const canAccess = isTeacher || examSet.status === "진행중";
                   return (
@@ -373,20 +377,47 @@ function TabPanel({
                     className={`${canAccess ? "hover:bg-[#fff6eb] cursor-pointer" : "opacity-50 cursor-not-allowed"}`}
                     onClick={() => {
                       if (canAccess) {
-                        window.location.href = `/myClasses/${subjectId || lessons[0]?.subject?.subid || 'all'}/exam/${examSet.esid}`;
+                        window.location.href = `/myClasses/${subjectId || lessons[0]?.subject?.subid || 'all'}/${examSet.esid}`;
                       } else {
                         alert("시험 기간이 아닙니다.");
                       }
                     }}
                   >
                     <td className="px-4 py-4 font-bold text-[#8d6a44]">{examSet.name || `시험 #${examSet.esid}`}</td>
-                    <td className="px-4 py-4">{examSet.examDate?.toString().replace('T', ' ') || "일정 미정"}</td>
+                    <td className="px-4 py-4">
+                      {examSet.examDate 
+                        ? new Date(examSet.examDate).toLocaleString('ko-KR', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                          })
+                        : "일정 미정"}
+                    </td>
                     <td className={`px-4 py-4 font-bold ${examSet.status === "진행중" ? "text-blue-600" : examSet.status === "종료" ? "text-red-500" : "text-gray-500"}`}>
                       {examSet.status}
                     </td>
                     <td className="px-4 py-4">
-                      {/* TODO: 여기에 학생의 해당 시험 세트에 대한 최종 점수 표시 로직 추가 */}
-                      -
+                      {isTeacher ? (
+                        <div className="flex gap-1">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); onEditExamSet?.(examSet); }}
+                            className="rounded px-2 py-0.5 text-[10px] font-bold text-white bg-slate-400 hover:bg-[#8d6a44] transition-colors"
+                          >
+                            수정
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); onDeleteExamSet?.(examSet.esid); }}
+                            className="rounded px-2 py-0.5 text-[10px] font-bold text-slate-600 bg-slate-200 hover:bg-rose-500 hover:text-white transition-colors"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      ) : (
+                        "-"
+                      )}
                     </td>
                   </tr>
                   );
@@ -447,6 +478,7 @@ function TabPanel({
 }
 
 export default function StudentDashboard({ subjectId }: { subjectId?: number }) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("강의 계획서");
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [attendanceData, setAttendanceData] = useState<Attendance[]>([]);
@@ -461,6 +493,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [teacherAnswer, setTeacherAnswer] = useState('');
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
+  const [editingExamSet, setEditingExamSet] = useState<ExamSet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progressMap, setProgressMap] = useState<Record<number, number>>({});
@@ -513,22 +546,21 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
               ? `${API_BASE}/lessons/teacher/${teacherId}` 
               : `${API_BASE}/lessons`);
 
-        const fetches: Promise<Response>[] = [fetch(lessonUrl, { headers })];
-        let attRes: Response | null = null;
-        let examRes: Response | null = null;
-        let assignRes: Response | null = null;
-        let progRes: Response | null = null;
+        // 시험 및 과제 목록은 교사와 학생 모두 필요합니다.
+        const examUrl = subjectId ? `${API_BASE}/examsets/subject/${subjectId}` : `${API_BASE}/examsets`;
+        const assignUrl = subjectId ? `${API_BASE}/works/subject/${subjectId}` : `${API_BASE}/works`;
 
-        // 학생일 경우에만 학생 관련 데이터 페칭을 추가
+        const fetches: Promise<Response>[] = [
+          fetch(lessonUrl, { headers }), // index 0
+          fetch(examUrl, { headers }),   // index 1
+          fetch(assignUrl, { headers })    // index 2
+        ];
+
+        // 학생일 경우에만 출석 및 진도 데이터 페칭을 추가
         if (!isTeacher && studentId) {
           const attUrl = subjectId ? `${API_BASE}/attendances/subject/${subjectId}` : `${API_BASE}/attendances`;
-          const examUrl = subjectId ? `${API_BASE}/examsets/subject/${subjectId}` : `${API_BASE}/examsets`;
-          const assignUrl = subjectId ? `${API_BASE}/works/subject/${subjectId}` : `${API_BASE}/works`;
-
-          fetches.push(fetch(attUrl, { headers }));
-          fetches.push(fetch(examUrl, { headers }));
-          fetches.push(fetch(assignUrl, { headers }));
-          fetches.push(fetch(`${API_BASE}/progresses/student/${studentId}`, { headers }));
+          fetches.push(fetch(attUrl, { headers })); // index 3
+          fetches.push(fetch(`${API_BASE}/progresses/student/${studentId}`, { headers })); // index 4
         }
 
         // 질의응답 목록 페칭
@@ -540,6 +572,8 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
 
         const responses = await Promise.all(fetches);
         const lessonRes = responses[0];
+        const examRes = responses[1];
+        const assignRes = responses[2];
 
         if (!lessonRes.ok) {
           const errText = await lessonRes.text();
@@ -550,16 +584,15 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         setLessons(lessonData);
         setVideoList(lessonData); // 통합된 Lesson 데이터를 비디오 리스트로도 사용
 
-        // 학생일 경우에만 나머지 데이터 파싱
+        if (examRes?.ok) setExams(await examRes.json());
+        if (assignRes?.ok) setAssignments(await assignRes.json());
+
+        // 학생일 경우에만 나머지 데이터 파싱 (index 3, 4)
         if (!isTeacher && studentId) {
-          attRes = responses[1];
-          examRes = responses[2];
-          assignRes = responses[3];
-          progRes = responses[4];
+          const attRes = responses[3];
+          const progRes = responses[4];
 
           if (attRes?.ok) setAttendanceData(await attRes.json());
-          if (examRes?.ok) setExams(await examRes.json());
-          if (assignRes?.ok) setAssignments(await assignRes.json());
           if (progRes?.ok) {
             const progs = await progRes.json();
             const map: Record<number, number> = {};
@@ -915,6 +948,54 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     } catch (err) { console.error(err); }
   };
 
+  // 시험 세트 수정 처리
+  const handleEditExamSetSubmit = async () => {
+    if (!editingExamSet || !editingExamSet.name || !editingExamSet.examDate) {
+      alert("모든 정보를 입력해주세요.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/examsets/${editingExamSet.esid}`, {
+        method: "PUT",
+        headers: { 
+          "Authorization": `Bearer ${token}`, 
+          "Content-Type": "application/json" 
+        },
+        body: JSON.stringify({
+          esid: editingExamSet.esid,
+          name: editingExamSet.name,
+          examDate: editingExamSet.examDate,
+          status: editingExamSet.status,
+          subid: subjectId
+        }),
+      });
+
+      if (res.ok) {
+        alert("시험 설정이 수정되었습니다.");
+        setEditingExamSet(null);
+        window.location.reload();
+      } else {
+        alert("수정 실패");
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  // 시험 세트 삭제 처리
+  const handleDeleteExamSet = async (esid: number) => {
+    if (!confirm("정말로 이 시험 세트를 삭제하시겠습니까? 포함된 모든 문제와 성적 데이터가 삭제됩니다.")) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/examsets/${esid}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) window.location.reload();
+      else alert("삭제 실패");
+    } catch (err) { console.error(err); }
+  };
+
   // 동영상 강의 수정 처리
   const handleEditVideoSubmit = async () => {
     if (!editingVideo || !editingVideo.name || !editingVideo.fileUrl || !editingVideo.date) {
@@ -1040,6 +1121,15 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     <main className="min-h-screen bg-[#f3e9d6] px-4 py-8 text-slate-900 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-7xl">
         <section className="rounded-[40px] border border-[#dfc9a2] bg-[#fef7ec] p-8 shadow-[0_30px_70px_rgba(95,69,34,0.08)]">
+          {/* 상단 이동 버튼 추가 */}
+          <button 
+            onClick={() => router.push(isTeacher ? "/myClasses" : "/student")}
+            className="mb-6 flex items-center gap-2 text-[#8d6a44] font-bold hover:text-[#3d2b1f] transition-all group"
+          >
+            <span className="inline-block transition-transform group-hover:-translate-x-1">←</span> 
+            {isTeacher ? "담당 과목 관리로 돌아가기" : "수강 과목 목록으로 돌아가기"}
+          </button>
+
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.28em] text-[#8d6a44]">
@@ -1109,6 +1199,8 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
             onAddExamSetClick={() => setIsAddExamSetModalOpen(true)}
             onDeleteVideo={handleDeleteVideo}
             onEditVideo={(video) => setEditingVideo(video)}
+            onEditExamSet={(examSet) => setEditingExamSet(examSet)}
+            onDeleteExamSet={handleDeleteExamSet}
           />
         </section>
 
@@ -1258,6 +1350,56 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
               <div className="mt-8 flex justify-end gap-3">
                 <button onClick={() => setIsAddExamSetModalOpen(false)} className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346]">취소</button>
                 <button onClick={handleAddExamSetSubmit} className="rounded-full bg-[#8d6a44] px-6 py-2 text-sm font-bold text-white shadow-md">생성하기</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 시험 세트 수정 모달 */}
+        {editingExamSet && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-[32px] bg-[#fff4e6] p-8 shadow-2xl border-2 border-[#e6d1a7] animate-in fade-in zoom-in duration-200">
+              <h3 className="mb-6 text-2xl font-bold text-[#3d2b1f]">시험 세트 수정</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-[#7b6346] mb-1">시험 명칭</label>
+                  <input 
+                    type="text" 
+                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    value={editingExamSet.name}
+                    onChange={(e) => setEditingExamSet({ ...editingExamSet, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#7b6346] mb-1">시험 시작 일시</label>
+                  <input 
+                    type="datetime-local" 
+                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    // 타임존 오프셋을 계산하여 로컬 시간을 datetime-local 포맷(YYYY-MM-DDTHH:mm)으로 변환
+                    value={(() => {
+                      if (!editingExamSet.examDate) return "";
+                      const d = new Date(editingExamSet.examDate);
+                      const offset = d.getTimezoneOffset() * 60000; // 분 단위를 밀리초로 변환
+                      const localISOTime = new Date(d.getTime() - offset).toISOString().slice(0, 16);
+                      return localISOTime;
+                    })()}
+                    onChange={(e) => setEditingExamSet({ ...editingExamSet, examDate: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="mt-8 flex justify-end gap-3">
+                <button 
+                  onClick={() => setEditingExamSet(null)}
+                  className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346] hover:bg-[#f1e1c4]"
+                >
+                  취소
+                </button>
+                <button 
+                  onClick={handleEditExamSetSubmit}
+                  className="rounded-full bg-[#8d6a44] px-6 py-2 text-sm font-bold text-white hover:bg-[#7c5935] shadow-md"
+                >
+                  수정하기
+                </button>
               </div>
             </div>
           </div>

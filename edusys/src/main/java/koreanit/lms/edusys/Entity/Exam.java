@@ -40,6 +40,6 @@ public class Exam {
     private String answer;// 정답(객관식인 경우 1,2 등, 주관식인 경우 답안)
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subid")
-    private Subject subject;
+    @JoinColumn(name = "esid")
+    private ExamSet examSet;
 }

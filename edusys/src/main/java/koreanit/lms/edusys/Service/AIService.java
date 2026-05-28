@@ -10,7 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import koreanit.lms.edusys.Entity.Exam;
+import koreanit.lms.edusys.Entity.ExamSet;
 import koreanit.lms.edusys.Entity.Subject;
+import koreanit.lms.edusys.Repository.ExamSetRepository;
 import koreanit.lms.edusys.Repository.SubjectRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ public class AIService {
     
     private final ExamService examService;
     private final SubjectRepository subjectRepository;
+    private final ExamSetRepository examSetRepository;
     
     @Value("${ai.server.url:http://localhost:8000}")
     private String aiServerUrl;
@@ -40,11 +43,12 @@ public class AIService {
 
     // [흐름 수정] 매개변수에 Boolean isObjective 추가
     @Transactional
-    public Exam createExamFromAI(Integer subid, Boolean isObjective) {
+    public Exam createExamFromAI(Integer esid, Boolean isObjective) {
         
-        // 1. 대상 과목(Subject) 검증
-        Subject subject = subjectRepository.findById(subid)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 과목입니다. ID: " + subid));
+        // 1. 대상 시험지(ExamSet) 및 과목 검증
+        ExamSet examSet = examSetRepository.findById(esid)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 시험지입니다. ID: " + esid));
+        Subject subject = examSet.getSubject();
 
         // 2. FastAPI 서버로 전송할 HTTP 요청 준비
         RestTemplate restTemplate = new RestTemplate();
@@ -54,7 +58,7 @@ public class AIService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         
         // 구조 바인딩: 넘겨받은 isObjective 플래그 적용
-        ExamGenerateRequest requestBody = new ExamGenerateRequest(subid, isObjective);
+        ExamGenerateRequest requestBody = new ExamGenerateRequest(subject.getSubid(), isObjective);
         HttpEntity<ExamGenerateRequest> requestEntity = new HttpEntity<>(requestBody, headers);
 
         try {
@@ -79,7 +83,7 @@ public class AIService {
             exam.setObjectiveOption3(responseBody.objectiveOption3());
             exam.setObjectiveOption4(responseBody.objectiveOption4());
             exam.setAnswer(responseBody.answer());
-            exam.setSubject(subject);
+            exam.setExamSet(examSet);
 
             // 5. 반환
             return exam;

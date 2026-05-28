@@ -7,5 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import koreanit.lms.edusys.Entity.Exam;
 
 public interface ExamRepository extends JpaRepository<Exam, Integer> {
-    List<Exam> findBySubjectSubid(Integer subid);
+    List<Exam> findByExamSetEsid(Integer esid);
+    List<Exam> findByExamSetSubjectSubid(Integer subid);
 }

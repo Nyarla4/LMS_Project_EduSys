@@ -10,7 +10,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ExamDTO {
     private Integer eid;
-    private Integer subid;
+    private Integer esid;
 
     private String question;
     private String answer;
@@ -23,7 +23,7 @@ public class ExamDTO {
         this.eid = exam.getEid();
         this.question = exam.getQuestion();
         this.answer = exam.getAnswer();
-        this.subid = exam.getSubject().getSubid();
+        this.esid = exam.getExamSet() != null ? exam.getExamSet().getEsid() : null;
         this.objectiveOption1 = exam.getObjectiveOption1();
         this.objectiveOption2 = exam.getObjectiveOption2();
         this.objectiveOption3 = exam.getObjectiveOption3();

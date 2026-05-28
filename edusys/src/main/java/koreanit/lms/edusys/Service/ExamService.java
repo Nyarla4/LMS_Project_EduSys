@@ -19,12 +19,16 @@ public class ExamService {
     }
 
     public List<Exam> findAllExamsBySubject(Integer subid) {
-        return examRepository.findBySubjectSubid(subid);
+        return examRepository.findByExamSetSubjectSubid(subid);
+    }
+
+    public List<Exam> findAllExamsByExamSet(Integer esid) {
+        return examRepository.findByExamSetEsid(esid);
     }
 
     public Optional<Exam> findExamById(Integer eid) {
         if(eid == null) {
-            return null;
+            return Optional.empty();
         }
         return examRepository.findById(eid);
     }

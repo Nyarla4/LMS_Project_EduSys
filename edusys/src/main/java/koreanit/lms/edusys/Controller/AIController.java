@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.*;
 public class AIController {
     private final AIService aiService;
 
-    @GetMapping("/recommend-exam/{subid}")
-    public Exam recommendExam(@PathVariable Integer subid, @RequestParam Boolean isObjective) {
+    @GetMapping("/recommend-exam/{esid}")
+    public Exam recommendExam(@PathVariable Integer esid, @RequestParam Boolean isObjective) {
         // DB에 저장하지 않고 생성된 객체만 반환하거나, 
         // 기존 AIService 로직대로 저장 후 반환할 수 있습니다.
-        return aiService.createExamFromAI(subid, isObjective);
+        return aiService.createExamFromAI(esid, isObjective);
     }
 }
