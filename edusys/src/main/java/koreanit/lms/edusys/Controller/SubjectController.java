@@ -133,5 +133,14 @@ public class SubjectController {
             return ResponseEntity.internalServerError().body("파일 저장 중 오류 발생: " + e.getMessage());
         }
     }
+    // 강의등록 상태를 요청
+    @PutMapping("/{subid}/status")
+    public ResponseEntity<?> updateSubjectStatus(
+        @PathVariable Integer subid,
+        @RequestParam Subject.SubStatus status) 
+        {
+            subjectService.updateSubjectStatus(subid, status);
+            return ResponseEntity.ok().build();
+        }
 
 }

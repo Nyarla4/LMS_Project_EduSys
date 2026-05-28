@@ -59,6 +59,8 @@ public class SubjectService {
         subject.setEndDate(request.getEndDate());
         Teacher teacher = teacherService.findTeacherById(request.getTid());
         subject.setTeacher(teacher);
+        // 강의등록 상태 저장용(대기상태를 default 값)
+        subject.setSubStatus(Subject.SubStatus.WAIT);
 
         Subject savedSubject = subjectRepository.save(subject);
         Lesson lesson = new Lesson();
@@ -76,7 +78,12 @@ public class SubjectService {
         List<Subject> subjects = subjectRepository.findAll();
         List<LessonSubResponseDTO> result = new ArrayList<>();
 
+        // 강의등록 상태가 OKAY 인지 확인
         for (Subject subject : subjects) {
+            if (subject.getSubStatus() != Subject.SubStatus.OKAY) {
+                continue;
+            }
+            // OKAY 상태면 아래 정보들 노출
             LessonSubResponseDTO dto = new LessonSubResponseDTO();
             dto.setSubid(subject.getSubid());
             dto.setMajor(subject.getMajor());
@@ -101,5 +108,16 @@ public class SubjectService {
             result.add(dto);
         }
         return result;
+    }
+    // 강의상태 변경
+    @Transactional
+    public void updateSubjectStatus(Integer subid, Subject.SubStatus status) {
+        if (subid == null) {
+            throw new IllegalArgumentException("subid가 null입니다.");
+        }
+        Subject subject = subjectRepository.findById(subid)
+            .orElseThrow(() -> new RuntimeException("과목이 없습니다."));
+        subject.setSubStatus(status);
+        subjectRepository.save(subject);
     }
 }

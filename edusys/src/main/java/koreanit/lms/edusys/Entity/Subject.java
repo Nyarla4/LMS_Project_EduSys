@@ -9,6 +9,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import lombok.Getter;
@@ -37,4 +39,15 @@ public class Subject {
 
     private LocalDate startDate;
     private LocalDate endDate;
+
+    // 강의등록 후 승인여부
+    public enum SubStatus {
+        WAIT,
+        OKAY,
+        CANCEL
+    }
+
+    @Enumerated(EnumType.STRING)
+    private SubStatus subStatus;
+
 }
