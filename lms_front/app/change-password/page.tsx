@@ -1,14 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "../userContext";
 import Link from "next/link";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
+  const { user } = useUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const [email, setEmail] = useState("");
+  const [phonenum, setPhonenum] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setEmail(user.user?.email || user.email || "");
+      setPhonenum(user.user?.phonenum || user.phonenum || "");
+    }
+  }, [user]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -20,44 +32,86 @@ export default function ChangePasswordPage() {
     const newPassword = (form.elements.namedItem("newPassword") as HTMLInputElement).value;
     const confirmPassword = (form.elements.namedItem("confirmPassword") as HTMLInputElement).value;
 
-    if (newPassword.length < 4 || newPassword.length > 16) {
-      setError("새 비밀번호는 4자 이상 16자 이하로 입력해주세요.");
-      return;
-    }
+    const hasPasswordInput = currentPassword || newPassword || confirmPassword;
 
-    if (newPassword !== confirmPassword) {
-      setError("새 비밀번호가 일치하지 않습니다.");
-      return;
+    if (hasPasswordInput) {
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        setError("비밀번호를 변경하려면 현재 비밀번호, 새 비밀번호, 확인란을 모두 입력해야 합니다.");
+        return;
+      }
+      if (newPassword.length < 4 || newPassword.length > 16) {
+        setError("새 비밀번호는 4자 이상 16자 이하로 입력해주세요.");
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setError("새 비밀번호가 일치하지 않습니다.");
+        return;
+      }
     }
 
     setLoading(true);
 
     try {
       const token = localStorage.getItem("token");
-      
-      const res = await fetch("http://localhost:8080/user/change-password", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          ...(token && { "Authorization": `Bearer ${token}` })
-        },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` }),
+      };
 
-      const contentType = res.headers.get("content-type");
-      let data = null;
-      if (contentType?.includes("application/json")) {
-        data = await res.json();
+      let passwordChanged = false;
+      let infoChanged = false;
+
+      if (hasPasswordInput) {
+        const pwRes = await fetch("http://localhost:8080/user/change-password", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ currentPassword, newPassword }),
+        });
+
+        if (!pwRes.ok) {
+          const pwData = pwRes.headers.get("content-type")?.includes("application/json") ? await pwRes.json() : null;
+          setError(pwData?.message || "현재 비밀번호가 일치하지 않거나 변경에 실패했습니다.");
+          setLoading(false);
+          return;
+        }
+        passwordChanged = true;
       }
 
-      if (res.ok) {
+      const initialEmail = user.user?.email || user.email || "";
+      const initialPhone = user.user?.phonenum || user.phonenum || "";
+
+      if (email !== initialEmail || phonenum !== initialPhone) {
+        const infoRes = await fetch("http://localhost:8080/user/update-info", {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({ email, phonenum }),
+        });
+
+        if (!infoRes.ok) {
+          const infoData = infoRes.headers.get("content-type")?.includes("application/json") ? await infoRes.json() : null;
+          setError(infoData?.message || "이메일 또는 휴대폰 번호 수정에 실패했습니다.");
+          setLoading(false);
+          return;
+        }
+        infoChanged = true;
+      }
+
+      if (passwordChanged && infoChanged) {
+        setSuccess("비밀번호와 회원 정보가 성공적으로 변경되었습니다.");
+      } else if (passwordChanged) {
         setSuccess("비밀번호가 성공적으로 변경되었습니다.");
-        setTimeout(() => {
-          router.push("/mypage");
-        }, 1500);
+      } else if (infoChanged) {
+        setSuccess("회원 정보가 성공적으로 변경되었습니다.");
       } else {
-        setError(data?.message || "현재 비밀번호가 일치하지 않거나 변경에 실패했습니다.");
+        setError("변경사항이 없습니다.");
+        setLoading(false);
+        return;
       }
+
+      setTimeout(() => {
+        router.push("/mypage");
+      }, 1500);
+
     } catch (err) {
       setError("서버 연결 오류입니다. 잠시 후 다시 시도해주세요.");
     } finally {
@@ -70,9 +124,9 @@ export default function ChangePasswordPage() {
       <div className="max-w-md w-full space-y-8 bg-[#fcf7f0] border-[#d6c2a8] border-2 rounded-2xl p-10 shadow-sm">
         
         <div className="text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight">비밀번호 변경</h2>
+          <h2 className="text-3xl font-extrabold tracking-tight">회원정보 수정</h2>
           <p className="mt-2 text-sm text-[#8b5e3c]">
-            안전한 정보 보호를 위해 비밀번호를 수정합니다
+            회원정보 수정을 진행합니다
           </p>
         </div>
 
@@ -110,45 +164,66 @@ export default function ChangePasswordPage() {
 
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
-              <label htmlFor="currentPassword" className="block text-sm font-bold mb-1 ml-1">현재 비밀번호</label>
+              <label htmlFor="email" className="block text-sm font-bold mb-1 ml-1">이메일 주소</label>
               <input
-                id="currentPassword"
-                name="currentPassword"
-                type="password"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                className="appearance-none relative block w-full px-4 py-3 border border-[#d6c2a8] placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-[#8b5e3c] focus:border-[#8b5e3c] focus:z-10 sm:text-sm transition-all bg-white/50"
-                placeholder="현재 비밀번호를 입력하세요"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="newPassword" className="block text-sm font-bold mb-1 ml-1">새 비밀번호</label>
-              <input
-                id="newPassword"
-                name="newPassword"
-                type="password"
-                required
-                disabled={loading}
-                minLength={4}
-                maxLength={16}
-                className="appearance-none relative block w-full px-4 py-3 border border-[#d6c2a8] placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-[#8b5e3c] focus:border-[#8b5e3c] focus:z-10 sm:text-sm transition-all bg-white/50"
-                placeholder="새 비밀번호를 입력하세요 (4~16자)"
+                className="appearance-none relative block w-full px-4 py-3 border border-[#d6c2a8] placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-[#8b5e3c] focus:border-[#8b5e3c] sm:text-sm transition-all bg-white/50"
+                placeholder="이메일을 입력하세요"
               />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-bold mb-1 ml-1">새 비밀번호 확인</label>
+              <label htmlFor="phonenum" className="block text-sm font-bold mb-1 ml-1">휴대폰 번호</label>
+              <input
+                id="phonenum"
+                type="text"
+                value={phonenum}
+                onChange={(e) => setPhonenum(e.target.value)}
+                required
+                disabled={loading}
+                className="appearance-none relative block w-full px-4 py-3 border border-[#d6c2a8] placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-[#8b5e3c] focus:border-[#8b5e3c] sm:text-sm transition-all bg-white/50"
+                placeholder="휴대폰 번호를 입력하세요"
+              />
+            </div>
+
+            <div className="border-t border-[#d6c2a8]/40 my-4 pt-4">
+              <label htmlFor="currentPassword" className="block text-sm font-bold mb-1 ml-1 text-[#8b5e3c]">현재 비밀번호</label>
+              <input
+                id="currentPassword"
+                name="currentPassword"
+                type="password"
+                disabled={loading}
+                className="appearance-none relative block w-full px-4 py-3 border border-[#d6c2a8] placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-[#8b5e3c] focus:border-[#8b5e3c] sm:text-sm transition-all bg-white/50"
+                placeholder="비밀번호 변경 시에만 입력하세요"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="newPassword" className="block text-sm font-bold mb-1 ml-1 text-[#8b5e3c]">새 비밀번호</label>
+              <input
+                id="newPassword"
+                name="newPassword"
+                type="password"
+                disabled={loading}
+                className="appearance-none relative block w-full px-4 py-3 border border-[#d6c2a8] placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-[#8b5e3c] focus:border-[#8b5e3c] sm:text-sm transition-all bg-white/50"
+                placeholder="새 비밀번호 (4~16자)"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-bold mb-1 ml-1 text-[#8b5e3c]">새 비밀번호 확인</label>
               <input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
-                required
                 disabled={loading}
-                minLength={4}
-                maxLength={16}
-                className="appearance-none relative block w-full px-4 py-3 border border-[#d6c2a8] placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-[#8b5e3c] focus:border-[#8b5e3c] focus:z-10 sm:text-sm transition-all bg-white/50"
-                placeholder="새 비밀번호를 다시 한번 입력하세요"
+                className="appearance-none relative block w-full px-4 py-3 border border-[#d6c2a8] placeholder-gray-400 text-gray-900 rounded-xl focus:outline-none focus:ring-[#8b5e3c] focus:border-[#8b5e3c] sm:text-sm transition-all bg-white/50"
+                placeholder="새 비밀번호 재입력"
               />
             </div>
           </div>
@@ -159,7 +234,7 @@ export default function ChangePasswordPage() {
               disabled={loading}
               className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white ${loading ? 'bg-[#b89b7a]' : 'bg-[#8b5e3c] hover:bg-[#6f4a2f]'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8b5e3c] transition-all shadow-md active:scale-[0.98]`}
             >
-              {loading ? "변경 중..." : "비밀번호 변경 완료"}
+              {loading ? "수정 중..." : "회원정보 수정 완료"}
             </button>
           </div>
         </form>

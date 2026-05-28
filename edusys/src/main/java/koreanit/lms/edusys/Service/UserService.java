@@ -123,4 +123,17 @@ public class UserService {
 
         this.userRepository.save(user);
     }
+
+    public void updateUserInfo(String loginId, String newEmail, String newPhone) {
+        UserEntity user = this.getUserOrThrow(loginId);
+        
+        if (newEmail != null && !newEmail.isEmpty()) {
+            user.setEmail(newEmail);
+        }
+        if (newPhone != null && !newPhone.isEmpty()) {
+            user.setPhonenum(newPhone);
+        }
+        
+        this.userRepository.save(user);
+    }
 }
