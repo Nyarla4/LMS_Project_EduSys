@@ -15,6 +15,7 @@ import koreanit.lms.edusys.Dto.LessonSubResponseDTO;
 import koreanit.lms.edusys.Dto.SubjectDTO;
 import koreanit.lms.edusys.Entity.Subject;
 import koreanit.lms.edusys.Entity.Teacher;
+import koreanit.lms.edusys.Entity.Subject.SubStatus;
 import koreanit.lms.edusys.Service.SubjectService;
 import koreanit.lms.edusys.Service.TeacherService;
 import lombok.RequiredArgsConstructor;
@@ -142,5 +143,17 @@ public class SubjectController {
             subjectService.updateSubjectStatus(subid, status);
             return ResponseEntity.ok().build();
         }
+    
+    @GetMapping("/wait")
+    public ResponseEntity<List<SubjectDTO>> getWaitedSubjects() {
+        List<Subject> waitSubs = subjectService.findAllSubjects();
+        waitSubs.removeIf(s -> s.getSubStatus()!=SubStatus.WAIT);
+        List<SubjectDTO> result = new java.util.ArrayList<SubjectDTO>();
+        for (Subject subject : waitSubs) {
+            result.add(new SubjectDTO(subject));
+        }
+        return ResponseEntity.ok(result);
+    }
+    
 
 }

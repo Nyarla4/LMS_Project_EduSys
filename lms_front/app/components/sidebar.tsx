@@ -34,6 +34,12 @@ export default function Sidebar() {
         window.location.href = "/";
     };
     
+    useEffect(() => {
+        if (userLoading || !user) {
+            return;
+        }
+    }, [user, userLoading]);
+    
     return (
         <aside
             className={`sticky top-0 bg-[#f5f1e8] border-r-2 border-[#d6c2a8] p-4 transition-all duration-300 flex flex-col gap-4 relative overflow-hidden ${isCollapsed ? "w-[90px]" : "w-[200px]"}`}
@@ -100,8 +106,8 @@ export default function Sidebar() {
                             },
                             /* 관리자 메뉴 */
                             { href: "/notices", icon: <Bell size={24} />, text: "공지 사항", show: user.usertype === 'A' },
-                            { href: "/check/classes", icon: <PlayCircle size={24} />, text: "강의 검토", show: user.usertype === 'A' },
-                            { href: "/check/teachers", icon: <Users size={24} />, text: "교사 인증", show: user.usertype === 'A' },
+                            { href: "/check/classes", icon: <PlayCircle size={24} />, text: "과목 승인", show: user.usertype === 'A' },
+                            { href: "/check/teachers", icon: <Users size={24} />, text: "교사 승인", show: user.usertype === 'A' },
                             { href: "/users", icon: <Users size={24} />, text: "사용자 관리", show: user.usertype === 'A' },
                         ].map((menu, idx) => menu.show && (
                             <li key={idx} className="flex items-center justify-center">
