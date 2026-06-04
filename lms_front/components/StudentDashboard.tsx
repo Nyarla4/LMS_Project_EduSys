@@ -51,10 +51,19 @@ interface ExamSet { // Changed from Exam to ExamSet
 
 interface Assignment {
   wid: number;
-  form: string;
+  title: string;
   dueDate: string;
   grade: string;
   status?: string; // UI용
+}
+
+interface WorkSubmit {
+  wsid: number;
+  wid: number;
+  sid: number;
+  studentName: string;
+  fileName: string;
+  grade: string;
 }
 
 interface Answer {
@@ -86,6 +95,7 @@ function TabPanel({
   activeTab,
   lessons,
   attendanceData,
+  subjectInfo,
   exams,
   assignments,
   videoList,
@@ -116,6 +126,7 @@ function TabPanel({
   activeVideoId?: number;
   apiBase: string;
   sessionBaseProgress: number;
+  subjectInfo?: Subject | null;
   subjectId?: number | string; // subjectId 타입 확장
   currentSessionSeconds: number;
   onAssignmentSelect: (assignment: Assignment) => void;
@@ -137,8 +148,7 @@ function TabPanel({
   const isOnlyAdmin = usertype === 'A'; // 관리자인 경우
 
   if (activeTab === "강의 계획서") {
-    // 첫 번째 강의의 과목 정보에서 planFile 파일명을 가져옵니다.
-    const planFile = lessons.length > 0 ? lessons[0].subject?.planFile : null;
+    const planFile = subjectInfo?.planFile;
     
     // PDF 뷰어의 도구 모음을 숨기고 가로 폭에 맞게 꽉 채우는 파라미터 추가
     // toolbar=0: 상단바 숨김, navpanes=0: 사이드바 숨김, view=FitH: 가로 맞춤
@@ -459,7 +469,7 @@ function TabPanel({
           <tbody className="divide-y divide-[#e9d7b0] bg-white">
             {assignments.length > 0 ? assignments.map((assignment) => (
               <tr key={assignment.wid} className="hover:bg-[#fff6eb] cursor-pointer" onClick={() => onAssignmentSelect(assignment)}>
-                <td className="px-4 py-4">{assignment.form}</td>
+                <td className="px-4 py-4">{assignment.title}</td>
                 <td className="px-4 py-4">{assignment.dueDate}</td>
                 <td className="px-4 py-4">
                   {isTeacher ? <span className="text-[#8d6a44] font-bold">현황 보기</span> : (assignment.grade || "제출전")}
@@ -489,6 +499,9 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [questionList, setQuestionList] = useState<Question[]>([]);
   const [showVideoQna, setShowVideoQna] = useState(false);
+  const [subjectInfo, setSubjectInfo] = useState<Subject | null>(null);
+  const [assignmentSubmissions, setAssignmentSubmissions] = useState<WorkSubmit[]>([]);
+  const [mySubmission, setMySubmission] = useState<WorkSubmit | null>(null);
   const [newQnaContent, setNewQnaContent] = useState('');
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [teacherAnswer, setTeacherAnswer] = useState('');
@@ -501,7 +514,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   const [currentSessionSeconds, setCurrentSessionSeconds] = useState(0); // 현재 세션 순수 시청 시간
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAddAssignmentModalOpen, setIsAddAssignmentModalOpen] = useState(false);
-  const [newAssignment, setNewAssignment] = useState({ form: '', dueDate: '' });
+  const [newAssignment, setNewAssignment] = useState({ title: '', dueDate: '' });
   
   const [isAddExamSetModalOpen, setIsAddExamSetModalOpen] = useState(false);
   const [newExamSet, setNewExamSet] = useState({ name: '', examDate: '' });
@@ -526,6 +539,11 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
 
   const API_BASE = "http://localhost:8080/api";
   const isTeacher = usertype === 'T';
+
+  // 탭 전환 시 과제 상세 정보는 닫도록 설정 (동영상은 유지하여 멀티태스킹 지원)
+  useEffect(() => {
+    setSelectedAssignment(null);
+  }, [activeTab]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -568,6 +586,12 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
           const qnaRes = await fetch(`${API_BASE}/question/subject/${subjectId}`, { headers });
           const qData = qnaRes.ok ? await qnaRes.json() : [];
           setQuestionList(qData);
+        }
+
+        // 과목 상세 정보(강의 계획서 파일명 포함)를 subid로 직접 조회합니다.
+        if (subjectId) {
+          const subRes = await fetch(`${API_BASE}/subjects/${subjectId}`, { headers });
+          if (subRes.ok) setSubjectInfo(await subRes.json());
         }
 
         const responses = await Promise.all(fetches);
@@ -616,6 +640,19 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     fetchData();
   }, [subjectId, studentId, teacherId, isTeacher, userLoading, user]); // teacherId 의존성 추가
 
+  // 과제 목록만 새로고침하는 함수
+  const refreshAssignments = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const headers = { "Authorization": `Bearer ${token}` };
+      const assignUrl = subjectId ? `${API_BASE}/works/subject/${subjectId}` : `${API_BASE}/works`;
+      const res = await fetch(assignUrl, { headers });
+      if (res.ok) setAssignments(await res.json());
+    } catch (err) {
+      console.error("Error refreshing assignments:", err);
+    }
+  };
+
   // YouTube IFrame API 스크립트 로드
   useEffect(() => {
     if (!window.YT) {
@@ -663,10 +700,39 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     };
   }, [isPlaying, selectedVideo]);
 
+  // 과제 제출 내역 가져오기
+  const fetchSubmissions = async (assignment: Assignment) => {
+    try {
+      const token = localStorage.getItem("token");
+      const headers = { "Authorization": `Bearer ${token}` };
+      
+      if (isTeacher) {
+        const res = await fetch(`${API_BASE}/work-submits/work/${assignment.wid}`, { headers });
+        if (res.ok) setAssignmentSubmissions(await res.json());
+      } else if (studentId) {
+        const res = await fetch(`${API_BASE}/work-submits/work/${assignment.wid}/student/${studentId}`, { headers });
+        if (res.status === 200) {
+          setMySubmission(await res.json());
+        } else {
+          setMySubmission(null);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching submissions:", err);
+    }
+  };
+
+  const handleAssignmentSelect = (assignment: Assignment) => {
+    setSelectedAssignment(assignment);
+    fetchSubmissions(assignment);
+  };
+
   const handleVideoSelect = async (video: Video) => {
     setSessionBaseProgress(progressMap[video.lid] || 0); // 초기 진도는 DB 값 사용
     setCurrentSessionSeconds(0); 
     setSelectedVideo(video);
+    setShowVideoQna(false); // 영상을 새로 선택할 때는 QnA 섹션이 닫힌 상태로 시작 (수동 활성화 필요)
+    setSelectedQuestion(null); // 이전 영상에서 선택했던 질문 상태 초기화
 
     // 유튜브 영상인 경우 플레이어 초기화 대기
     const isYoutube = video.fileUrl.includes('youtube.com') || video.fileUrl.includes('youtu.be');
@@ -718,13 +784,13 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
 
   // 과제 생성 처리
   const handleAddAssignmentSubmit = async () => {
-    if (!newAssignment.form || !newAssignment.dueDate || !subjectId) {
+    if (!newAssignment.title || !newAssignment.dueDate || !subjectId) {
       alert("과제 제목과 마감일을 입력해주세요.");
       return;
     }
 
     const payload = {
-      form: newAssignment.form,
+      title: newAssignment.title,
       dueDate: newAssignment.dueDate,
       subject: { subid: Number(subjectId) }
     };
@@ -740,7 +806,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
       if (res.ok) {
         alert("과제가 등록되었습니다.");
         setIsAddAssignmentModalOpen(false);
-        window.location.reload();
+        refreshAssignments(); // 전체 새로고침 대신 목록만 업데이트
       } else {
         alert("과제 등록에 실패했습니다.");
       }
@@ -790,15 +856,41 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE}/works/submit`, {
+      const res = await fetch(`${API_BASE}/work-submits/submit`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` },
         body: formData,
       });
 
-      if (res.ok) alert("과제 파일이 제출되었습니다.");
-      else alert("제출에 실패했습니다.");
+      if (res.ok) {
+        alert("과제 파일이 제출되었습니다.");
+        if (selectedAssignment) fetchSubmissions(selectedAssignment);
+      } else alert("제출에 실패했습니다.");
     } catch (err) { console.error(err); }
+  };
+
+  // 교사용 점수 저장 처리
+  const handleGradeSubmit = async (wsid: number, grade: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/work-submits/${wsid}/grade`, {
+        method: "PUT",
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(grade),
+      });
+
+      if (res.ok) {
+        alert("점수가 저장되었습니다.");
+        if (selectedAssignment) fetchSubmissions(selectedAssignment);
+      } else {
+        alert("저장 실패");
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const initYoutubePlayer = (videoId: string, startSeconds: number) => {
@@ -1070,7 +1162,9 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
 
       if (res.ok) {
         alert("강의 계획서가 성공적으로 변경되었습니다.");
-        window.location.reload();
+        // 상태를 직접 업데이트하여 새로고침 없이 PDF 뷰어에 반영
+        const newFileName = await res.text();
+        setSubjectInfo(prev => prev ? { ...prev, planFile: newFileName } : null);
       } else {
         const errorText = await res.text();
         alert(`업로드에 실패했습니다. (상태 코드: ${res.status})\n${errorText}`);
@@ -1190,8 +1284,9 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
             apiBase={API_BASE}
             sessionBaseProgress={sessionBaseProgress}
             subjectId={subjectId}
+            subjectInfo={subjectInfo}
             currentSessionSeconds={currentSessionSeconds}
-            onAssignmentSelect={(assignment) => setSelectedAssignment(assignment)}
+            onAssignmentSelect={handleAssignmentSelect}
             onAddAssignmentClick={() => setIsAddAssignmentModalOpen(true)}
             onVideoSelect={handleVideoSelect}
             onSyllabusUploadClick={() => syllabusInputRef.current?.click()}
@@ -1219,7 +1314,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <p className="text-sm uppercase tracking-widest text-[#8d6a44]">과제 상세 정보</p>
-                <h2 className="mt-2 text-3xl font-bold text-[#3d2b1f]">{selectedAssignment.form}</h2>
+                <h2 className="mt-2 text-3xl font-bold text-[#3d2b1f]">{selectedAssignment.title}</h2>
                 <p className="mt-1 text-red-600 font-semibold">마감기한: {selectedAssignment.dueDate}</p>
               </div>
               <button 
@@ -1234,7 +1329,6 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
               {isTeacher ? (
                 <div className="space-y-6">
                   <h3 className="text-xl font-bold text-[#3d2b1f] border-b pb-2">학생 제출 현황</h3>
-                  <p className="text-sm text-[#7b6346] italic">* 실제 제출된 파일 목록과 점수 입력 기능은 DB 연동 후 활성화됩니다.</p>
                   <div className="overflow-x-auto">
                     <table className="min-w-full text-sm text-left">
                       <thead className="bg-[#fcf7f0]">
@@ -1246,12 +1340,27 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                         </tr>
                       </thead>
                       <tbody>
-                        <tr className="border-t">
-                          <td className="p-3">예시 학생</td>
-                          <td className="p-3 text-blue-600 underline cursor-pointer">assignment_v1.pdf</td>
-                          <td className="p-3"><input type="text" placeholder="점수" className="w-16 border rounded p-1" /></td>
-                          <td className="p-3"><button className="text-xs bg-[#3d2b1f] text-white px-2 py-1 rounded">저장</button></td>
-                        </tr>
+                        {assignmentSubmissions.length > 0 ? assignmentSubmissions.map((sub) => (
+                          <tr key={sub.wsid} className="border-t">
+                            <td className="p-3">{sub.studentName}</td>
+                            <td className="p-3">
+                              <a href={`${API_BASE}/files/work/${sub.fileName}`} className="text-blue-600 underline" download>
+                                {sub.fileName}
+                              </a>
+                            </td>
+                            <td className="p-3">
+                              <input 
+                                type="text" 
+                                defaultValue={sub.grade || ""} 
+                                onBlur={(e) => handleGradeSubmit(sub.wsid, e.target.value)}
+                                className="w-16 border rounded p-1" 
+                              />
+                            </td>
+                            <td className="p-3"><button onClick={(e) => { const input = (e.target as HTMLElement).parentElement?.previousElementSibling?.querySelector('input'); if(input) handleGradeSubmit(sub.wsid, input.value); }} className="text-xs bg-[#3d2b1f] text-white px-2 py-1 rounded">저장</button></td>
+                          </tr>
+                        )) : (
+                          <tr><td colSpan={4} className="p-4 text-center text-gray-500">제출된 과제가 없습니다.</td></tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -1259,8 +1368,19 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
               ) : (
                 <div className="space-y-4">
                   <h3 className="text-xl font-bold text-[#3d2b1f]">내 과제 제출</h3>
+                  {mySubmission && (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-bold text-blue-800">제출 완료된 파일:</p>
+                        <a href={`${API_BASE}/files/work/${mySubmission.fileName}`} className="text-sm text-blue-600 underline font-medium" download>
+                          {mySubmission.fileName}
+                        </a>
+                      </div>
+                      <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full">제출됨</span>
+                    </div>
+                  )}
                   <div className="flex flex-col gap-4 p-6 bg-[#fcf7f0] rounded-xl border-2 border-dashed border-[#d6c2a8] items-center">
-                    <p className="text-[#7b6346]">Word, PDF 등 문서 파일을 선택해주세요.</p>
+                    <p className="text-[#7b6346]">{mySubmission ? "파일을 다시 선택하면 기존 제출물이 교체됩니다." : "Word, PDF 등 문서 파일을 선택해주세요."}</p>
                     <input 
                       type="file" 
                       className="text-sm text-[#8d6a44] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#8d6a44] file:text-white hover:file:bg-[#7c5935]"
@@ -1269,7 +1389,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                     />
                   </div>
                   <div className="mt-4 p-4 bg-white border rounded-lg">
-                    <p className="text-sm">현재 점수: <span className="font-bold text-[#8d6a44]">{selectedAssignment.grade || "평가 전"}</span></p>
+                    <p className="text-sm">현재 점수: <span className="font-bold text-[#8d6a44]">{mySubmission?.grade || "평가 전"}</span></p>
                   </div>
                 </div>
               )}
@@ -1289,8 +1409,8 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                     type="text" 
                     placeholder="과제 제목을 입력하세요"
                     className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
-                    value={newAssignment.form}
-                    onChange={(e) => setNewAssignment({ ...newAssignment, form: e.target.value })}
+                    value={newAssignment.title}
+                    onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
                   />
                 </div>
                 <div>
@@ -1531,6 +1651,9 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                   setIsPlaying(false); // 인터벌 중단
                   await saveVideoProgress(); // 진행도 계산 및 맵 업데이트 대기
                   setSelectedVideo(null); // 비디오 닫기
+                  setShowVideoQna(false); // QnA 섹션도 함께 종료
+                  setSelectedQuestion(null); // 교사용 질문 선택 상태 초기화
+                  setTeacherAnswer(''); // 답변 입력 필드 초기화
                 }}
                 className="rounded-full bg-[#8d6a44] px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-[#7c5935]"
               >
