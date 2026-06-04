@@ -194,26 +194,45 @@ def generate_exam(request: GenerateExamRequest):
 # ==========================================
 @app.post("/api/exam/grade")
 def grade_subjective(request: GradeRequest):
+    # 1. JSON 출력을 유도하는 프롬프트 작성 (f-string이므로 중괄호 {{ }} 두 번 사용)
     prompt = f"""
     당신은 엄격하고 공정한 채점자입니다.
-    문제와 모범 답안을 기준으로 학생의 답안을 평가하여 0점에서 100점 사이의 정수 점수만 부여하세요.
-    응답은 반드시 숫자만 출력해야 합니다. (예: 50)
+    문제와 모범 답안을 기준으로 학생의 답안을 평가하여 0점에서 100점 사이의 정수 점수와 그에 대한 명확한 채점 근거를 작성하세요.
+    
+    응답은 반드시 아래의 JSON 형식과 동일해야 하며, 다른 부연 설명이나 텍스트는 포함하지 마세요.
+    {{
+        "score": 80,
+        "reason": "채점 근거에 대한 내용을 여기에 작성하세요."
+    }}
 
     문제: {request.question}
     모범 답안: {request.correct_answer}
     학생 답안: {request.student_answer}
     """
 
-    response = ollama.chat(model='qwen2.5:3b', messages=[
-      {'role': 'user', 'content': prompt}
-    ], options={'temperature': 0.0}) # 채점은 일관성이 중요하므로 temperature를 0으로 설정
+    # 2. format='json' 옵션을 추가하여 Ollama가 JSON으로만 응답하도록 강제
+    response = ollama.chat(
+        model='qwen2.5:3b', 
+        messages=[{'role': 'user', 'content': prompt}], 
+        options={'temperature': 0.0},
+        format='json' 
+    )
     
-    score_text = response['message']['content'].strip()
+    response_text = response['message']['content'].strip()
     
-    # 숫자 이외의 문자가 섞였을 경우를 대비한 필터링
-    score = ''.join(filter(str.isdigit, score_text))
+    # 3. JSON 파싱 및 예외 처리
+    try:
+        result = json.loads(response_text)
+        score = int(result.get("score"))
+        reason = result.get("reason", "").strip()
+    except (json.JSONDecodeError, ValueError, TypeError):
+        raise HTTPException(
+            status_code=500, 
+            detail=f"모델의 응답을 파싱하지 못했습니다. 응답 원문: {response_text}"
+        )
     
-    if not score:
-        raise HTTPException(status_code=500, detail="점수를 추출하지 못했습니다.")
-
-    return {"score": score}
+    # 4. 점수와 근거를 함께 반환
+    return {
+        "score": score,
+        "reason": reason
+    }

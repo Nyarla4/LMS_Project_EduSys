@@ -46,7 +46,7 @@ public class AIService {
     
     private record GradeRequest(String question, String correct_answer, String student_answer) {}
     
-    private record ExamGradeResponse(Integer score) {}
+    public record ExamGradeResponse(Integer score, String reason) {}
 
     @Transactional
     public ExamDTO createExamFromAI(Integer esid, Boolean isObjective) {
@@ -114,11 +114,13 @@ public class AIService {
         }
     }
 
-    public Integer gradeExam(Integer eid, String answer) {
+    public ExamGradeResponse gradeExam(Integer eid, String answer) {
         Optional<Exam> examOptional = examService.findExamById(eid);
-        if(examOptional.isEmpty()) {
-            return -1; // 시험이 존재하지 않음
+        if (examOptional.isEmpty()) {
+            // 기존의 -1 반환 대신, 구조에 맞게 에러 응답 객체 반환 (혹은 예외 throw 추천)
+            return new ExamGradeResponse(-1, "해당 시험이 존재하지 않습니다.");
         }
+
         Exam exam = examOptional.get();
         String question = exam.getQuestion();
         String correctAnswer = exam.getAnswer();
@@ -130,30 +132,30 @@ public class AIService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        
-        // 구조 바인딩: 넘겨받은 isObjective 플래그 적용
+
         GradeRequest requestBody = new GradeRequest(question, correctAnswer, submitAnswer);
         HttpEntity<GradeRequest> requestEntity = new HttpEntity<>(requestBody, headers);
 
         try {
             // 3. FastAPI 호출 흐름 제어
             log.info("FastAPI에 문제 채점 요청 중... 문제: {}, 모범 답안: {}, 학생 답안: {}", question, correctAnswer, submitAnswer);
+
+            // 역직렬화 시 ExamGradeResponse에 score와 reason이 함께 매핑됩니다.
             ResponseEntity<ExamGradeResponse> response = restTemplate.postForEntity(
-                endpoint, 
-                requestEntity, 
-                ExamGradeResponse.class
-            );
-            
+                    endpoint,
+                    requestEntity,
+                    ExamGradeResponse.class);
+
             ExamGradeResponse responseBody = response.getBody();
             if (responseBody == null) {
                 throw new RuntimeException("AI 서버로부터 비어있는 응답을 받았습니다.");
             }
 
-            // 4. 응답 DTO를 엔티티로 변환 (구조 매핑)
-            Integer grade = responseBody.score();
+            // 로그에 채점 근거도 함께 남기면 디버깅에 좋습니다.
+            log.info("채점 완료 -> 점수: {}, 근거: {}", responseBody.score(), responseBody.reason());
 
-            // 5. 반환
-            return grade;
+            // 4. 점수와 근거가 모두 담긴 DTO를 그대로 반환
+            return responseBody;
 
         } catch (Exception e) {
             log.error("AI 문제 채점 중 오류 발생: {}", e.getMessage());

@@ -126,31 +126,43 @@ export default function GradingExam() {
         exam.objectiveOption4
     ];
 
-    const handleAiGrade = (eid: number, answer: string, egid: number) => {
+    const handleAiGrade = async (eid: number, answer: string, egid: number) => {
         setIsAiLoading(true);
 
         const url = `http://localhost:8080/api/ai/grade-exam/${eid}`;
 
-        fetch(url, {
-            method: "PUT",
-            headers: {
-                "Authorization": `Bearer ${localStorage.getItem("token")}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ answer: answer }),
-        })
-            .then((res) => {
-                if (res.ok) {
-                    alert("AI가 채점을 완료했습니다.");
-                    return res.json();
-                }
-            })
-            .then((data) => {
-                console.log("AI 채점 결과:", data);
-                handleScoreChange(egid, data.toString());
-            })
-            .catch((err) => console.error("로드 실패:", err))
-            .finally(() => setIsAiLoading(false));
+        try {
+            const res = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ answer }), // 단축 속성명(Shorthand) 적용
+            });
+
+            // 1. HTTP 응답 상태가 정상(2xx)이 아닐 경우 예외 처리
+            if (!res.ok) {
+                throw new Error(`서버 응답 실패 (상태코드: ${res.status})`);
+            }
+
+            // 2. 비동기로 JSON 파싱 완료 후 데이터 확보
+            const data = await res.json(); // 데이터 구조: { score: number, reason: string }
+
+            // 3. 확보된 데이터를 바탕으로 후속 비즈니스 로직 실행
+            alert(`AI가 채점을 완료했습니다. \n\n[채점 근거]\n${data.reason}`);
+            console.log("AI 채점 결과:", data.score, data.reason);
+
+            handleScoreChange(egid, data.score.toString());
+
+        } catch (err) {
+            // 4. 네트워크 에러 및 throw된 에러들을 이곳에서 한 번에 캐치
+            console.error("로딩 실패 또는 채점 오류:", err);
+            alert("AI 채점 중 오류가 발생했습니다. 다시 시도해주세요.");
+        } finally {
+            // 5. 성공/실패 여부와 상관없이 무조건 로딩 상태 해제
+            setIsAiLoading(false);
+        }
     };
 
     return (
@@ -212,7 +224,7 @@ export default function GradingExam() {
                                             key={grade.egid}
                                             className="bg-[#fcf7f0] border-[#b89b7a] border rounded-lg p-5 shadow-sm font-bold flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all duration-200 hover:bg-[#f5eee4]"
                                         >
-                                            <div className="flex flex-col gap-1.5">
+                                            <div className="flex flex-col gap-1.5 max-w-55/100">
                                                 <span className="text-lg font-bold text-[#5c4033] flex items-center gap-2">
                                                     <span className="w-1.5 h-1.5 bg-[#8b5e3c] rounded-full"></span>
                                                     학생: {grade.student}
@@ -236,8 +248,12 @@ export default function GradingExam() {
                                                 {exam.objectiveOption1 === "" && (
                                                     <button
                                                         type="button"
+                                                        disabled={isAiLoading}
                                                         onClick={(e) => handleAiGrade(grade.eid, grade.answer, grade.egid)}
-                                                        className="px-3 py-1 rounded text-sm border-[#b89b7a] border font-bold bg-[#dbc7b1] text-[#5c4033] hover:bg-[#8b5e3c] hover:text-white transition-colors"
+                                                        className={`px-3 py-1 rounded text-sm border-[#b89b7a] border font-bold transition-colors ${isAiLoading
+                                                                ? "bg-[#dbc7b1]/60 text-[#5c4033]/60 cursor-not-allowed" // 로딩 중 스타일 (색상 연해짐)
+                                                                : "bg-[#dbc7b1] text-[#5c4033] hover:bg-[#8b5e3c] hover:text-white cursor-pointer" // 활성화 스타일
+                                                            }`}
                                                     >
                                                         {isAiLoading ? "채점 중..." : "AI 채점"}
                                                     </button>
