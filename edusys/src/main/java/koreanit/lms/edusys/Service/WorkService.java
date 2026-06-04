@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import koreanit.lms.edusys.Entity.Work;
 import koreanit.lms.edusys.Repository.WorkRepository;
@@ -19,10 +21,6 @@ public class WorkService {
         return workRepository.findAll();
     }
 
-    public List<Work> findAllWorksByStudent(Integer sid) {
-        return workRepository.findByStudentSid(sid);
-    }
-
     public List<Work> findAllWorksBySubject(Integer subid) {
         return workRepository.findBySubjectSubid(subid);
     }
@@ -32,9 +30,7 @@ public class WorkService {
     }
 
     public Optional<Work> findWorkById(Integer wid) {
-        if(wid == null) {
-            return null;
-        }
+        if(wid == null) return Optional.empty();
         return workRepository.findById(wid);
     }
 

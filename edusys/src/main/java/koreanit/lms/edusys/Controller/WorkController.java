@@ -5,6 +5,7 @@ import koreanit.lms.edusys.Entity.Work;
 import koreanit.lms.edusys.Service.WorkService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,6 +47,4 @@ public class WorkController {
     public void deleteWork(@PathVariable Integer id) {
         workService.deleteWork(id);
     }
-
-    
 }
