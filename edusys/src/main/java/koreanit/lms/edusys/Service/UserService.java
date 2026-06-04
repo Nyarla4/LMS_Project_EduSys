@@ -136,4 +136,21 @@ public class UserService {
         
         this.userRepository.save(user);
     }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void withdraw(String loginId) {
+        UserEntity user = this.getUserOrThrow(loginId);
+
+        if (user.getProofFilePath() != null) {
+            try {
+                File file = new File(uploadDir, user.getProofFilePath());
+                if (file.exists()) {
+                    file.delete();
+                }
+            } catch (Exception e) {
+                System.err.println("증빙서류 파일 삭제 실패: " + e.getMessage());
+            }
+        }
+        this.userRepository.delete(user);
+    }
 }

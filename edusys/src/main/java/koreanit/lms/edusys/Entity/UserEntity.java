@@ -1,5 +1,7 @@
 package koreanit.lms.edusys.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.*;
@@ -40,5 +42,13 @@ public class UserEntity {
 
     @Column(name = "proof_file_path", length = 255)
     private String proofFilePath;
+
+    @JsonIgnore
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Student student;
+
+    @JsonIgnore
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Teacher teacher;
     
 }

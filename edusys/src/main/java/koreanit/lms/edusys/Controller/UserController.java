@@ -9,6 +9,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import koreanit.lms.edusys.DataNotFoundException;
 import koreanit.lms.edusys.Entity.UserEntity;
 import koreanit.lms.edusys.Entity.UserType;
 import koreanit.lms.edusys.Service.UserService;
@@ -180,6 +181,28 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
             response.put("message", "정보 수정 중 서버 내부 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @DeleteMapping("/withdraw")
+    public ResponseEntity<?> withdrawUser(@RequestHeader("Authorization") String token) {
+        Map<String, String> response = new HashMap<>();
+        
+        try {
+            String jwtToken = token.replace("Bearer ", "").trim();
+            String loginId = jwtTokenProvider.getUserPk(jwtToken); 
+
+            userService.withdraw(loginId);
+            
+            response.put("message", "회원 탈퇴가 안전하게 처리되었습니다.");
+            return ResponseEntity.ok(response);
+            
+        } catch (DataNotFoundException e) {
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (Exception e) {
+            response.put("message", "회원 탈퇴 중 서버 오류가 발생했습니다: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
