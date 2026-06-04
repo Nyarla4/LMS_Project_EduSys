@@ -75,4 +75,24 @@ public class FileController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    // uploads/work 폴더 내의 과제 파일을 반환하는 엔드포인트
+    @GetMapping("/work/{filename:.+}")
+    public ResponseEntity<Resource> getWorkFile(@PathVariable String filename) {
+        try {
+            Path filePath = Paths.get(UPLOAD_DIR + "work/" + filename);
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

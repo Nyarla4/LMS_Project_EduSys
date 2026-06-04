@@ -12,16 +12,14 @@ import lombok.Setter;
 @NoArgsConstructor
 public class WorkDTO {
     private Integer wid;
-    private String form;
+    private String title;
     private LocalDate dueDate;
-    private String grade;
     private Integer subid;
 
     public WorkDTO(Work work) {
         this.wid = work.getWid();
-        this.form = work.getForm();
+        this.title = work.getTitle();
         this.dueDate = work.getDueDate();
-        this.grade = work.getGrade();
         // Subject 엔티티 전체 대신 ID만 가져와서 프록시 문제를 원천 차단합니다.
         this.subid = work.getSubject() != null ? work.getSubject().getSubid() : null;
     }
