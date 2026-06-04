@@ -124,7 +124,7 @@ export default function CreateExam() {
                         disabled={isAiLoading}
                         className="ml-4 bg-[#4a6baf] hover:bg-[#3b558d] text-white px-6 py-3 rounded-full font-bold shadow-lg transition-all active:scale-95 disabled:bg-gray-400"
                     >
-                        {isAiLoading ? "생성 중..." : "✨ AI 문제 추천"}
+                        {isAiLoading ? "생성 중..." : "AI 문제 추천"}
                     </button>
 
                 <div className="bg-[#fcf7f0] border-[#b89b7a] border border-1 rounded-lg p-8 shadow-sm flex flex-col gap-8">

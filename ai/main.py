@@ -196,8 +196,8 @@ def generate_exam(request: GenerateExamRequest):
 def grade_subjective(request: GradeRequest):
     prompt = f"""
     당신은 엄격하고 공정한 채점자입니다.
-    문제와 모범 답안을 기준으로 학생의 답안을 평가하여 0점에서 10점 사이의 정수 점수만 부여하세요.
-    응답은 반드시 숫자만 출력해야 합니다. (예: 8)
+    문제와 모범 답안을 기준으로 학생의 답안을 평가하여 0점에서 100점 사이의 정수 점수만 부여하세요.
+    응답은 반드시 숫자만 출력해야 합니다. (예: 50)
 
     문제: {request.question}
     모범 답안: {request.correct_answer}

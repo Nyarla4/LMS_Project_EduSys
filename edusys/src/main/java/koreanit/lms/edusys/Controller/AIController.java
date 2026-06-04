@@ -5,6 +5,10 @@ import koreanit.lms.edusys.Entity.Exam;
 import koreanit.lms.edusys.Service.AIService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
+
 
 @RestController
 @RequestMapping("/api/ai")
@@ -15,8 +19,15 @@ public class AIController {
 
     @GetMapping("/recommend-exam/{esid}")
     public ExamDTO recommendExam(@PathVariable Integer esid, @RequestParam Boolean isObjective) {
-        // DB에 저장하지 않고 생성된 객체만 반환하거나, 
-        // 기존 AIService 로직대로 저장 후 반환할 수 있습니다.
         return aiService.createExamFromAI(esid, isObjective);
+    }
+
+    @PutMapping("/grade-exam/{eid}")
+    public Integer gradeExam(@PathVariable Integer eid, @RequestBody String answer) {
+        Integer score = aiService.gradeExam(eid, answer);
+        if(score == -1) {
+            throw new IllegalArgumentException("시험이 존재하지 않습니다. ID: " + eid);
+        }
+        return score;
     }
 }

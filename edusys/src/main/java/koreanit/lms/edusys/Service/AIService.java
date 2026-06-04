@@ -1,6 +1,7 @@
 package koreanit.lms.edusys.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -32,9 +33,8 @@ public class AIService {
     @Value("${ai.server.url:http://localhost:8000}")
     private String aiServerUrl;
 
-    // [구조 수정] FastAPI 전송 스키마에 객관식 여부 필드 추가
     private record ExamGenerateRequest(Integer subid, boolean is_objective, String examDate) {}
-    
+
     private record ExamGenerateResponse(
         String question, 
         String objectiveOption1, 
@@ -43,8 +43,11 @@ public class AIService {
         String objectiveOption4, 
         String answer
     ) {}
+    
+    private record GradeRequest(String question, String correct_answer, String student_answer) {}
+    
+    private record ExamGradeResponse(Integer score) {}
 
-    // [흐름 수정] 매개변수에 Boolean isObjective 추가
     @Transactional
     public ExamDTO createExamFromAI(Integer esid, Boolean isObjective) {
         
@@ -108,6 +111,53 @@ public class AIService {
             log.info("AI 자막 임베딩 요청 성공: subid={}, url={}", subid, fileUrl);
         } catch (Exception e) {
             log.error("AI 자막 임베딩 요청 실패: {}", e.getMessage());
+        }
+    }
+
+    public Integer gradeExam(Integer eid, String answer) {
+        Optional<Exam> examOptional = examService.findExamById(eid);
+        if(examOptional.isEmpty()) {
+            return -1; // 시험이 존재하지 않음
+        }
+        Exam exam = examOptional.get();
+        String question = exam.getQuestion();
+        String correctAnswer = exam.getAnswer();
+        String submitAnswer = answer;
+
+        // 2. FastAPI 서버로 전송할 HTTP 요청 준비
+        RestTemplate restTemplate = new RestTemplate();
+        String endpoint = aiServerUrl + "/api/exam/grade";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        // 구조 바인딩: 넘겨받은 isObjective 플래그 적용
+        GradeRequest requestBody = new GradeRequest(question, correctAnswer, submitAnswer);
+        HttpEntity<GradeRequest> requestEntity = new HttpEntity<>(requestBody, headers);
+
+        try {
+            // 3. FastAPI 호출 흐름 제어
+            log.info("FastAPI에 문제 채점 요청 중... 문제: {}, 모범 답안: {}, 학생 답안: {}", question, correctAnswer, submitAnswer);
+            ResponseEntity<ExamGradeResponse> response = restTemplate.postForEntity(
+                endpoint, 
+                requestEntity, 
+                ExamGradeResponse.class
+            );
+            
+            ExamGradeResponse responseBody = response.getBody();
+            if (responseBody == null) {
+                throw new RuntimeException("AI 서버로부터 비어있는 응답을 받았습니다.");
+            }
+
+            // 4. 응답 DTO를 엔티티로 변환 (구조 매핑)
+            Integer grade = responseBody.score();
+
+            // 5. 반환
+            return grade;
+
+        } catch (Exception e) {
+            log.error("AI 문제 채점 중 오류 발생: {}", e.getMessage());
+            throw new RuntimeException("AI 문제 채점 실패", e);
         }
     }
 }

@@ -31,6 +31,7 @@ export default function GradingExam() {
     const { user, loading: userLoading } = useUser();
     const [exam, setExam] = useState<Exam>();
     const [grades, setGrades] = useState<Grade[]>([]);
+    const [isAiLoading, setIsAiLoading] = useState(false);
 
     useEffect(() => {
         if (userLoading || !user) return;
@@ -79,7 +80,7 @@ export default function GradingExam() {
             body: JSON.stringify(grades),
         })
             .then((res) => {
-                if(res.ok){
+                if (res.ok) {
                     alert("점수가 저장되었습니다.");
                     return res.json();
                 }
@@ -125,31 +126,52 @@ export default function GradingExam() {
         exam.objectiveOption4
     ];
 
+    const handleAiGrade = (eid: number, answer: string, egid: number) => {
+        setIsAiLoading(true);
+
+        const url = `http://localhost:8080/api/ai/grade-exam/${eid}`;
+
+        fetch(url, {
+            method: "PUT",
+            headers: {
+                "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ answer: answer }),
+        })
+            .then((res) => {
+                if (res.ok) {
+                    alert("AI가 채점을 완료했습니다.");
+                    return res.json();
+                }
+            })
+            .then((data) => {
+                console.log("AI 채점 결과:", data);
+                handleScoreChange(egid, data.toString());
+            })
+            .catch((err) => console.error("로드 실패:", err))
+            .finally(() => setIsAiLoading(false));
+    };
+
     return (
-        /* 1. 전체 영역 */
         <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10">
-            {/* 내부 정렬을 위한 래퍼 (정렬 및 간격 유지) */}
-            <div className="w-full max-w-6xl flex flex-col gap-6 px-10 mt-10">
-                
-                {/* 4. 큰 제목 */}
+            <div className="w-full max-w-7xl flex flex-col gap-6 px-10 mt-10">
+
                 <p className="text-4xl font-bold text-center mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">
                     시험 채점 관리
                 </p>
 
-                {/* 2. 내부 전체 영역 (UX 개선을 위해 2단 레이아웃 분할 배치) */}
                 <div className="w-full flex flex-col md:flex-row gap-6">
-                    
-                    {/* 좌측 레이아웃: 출제 문제 및 정답 정보 고정 박스 */}
+
                     <div className="w-full md:w-1/3 flex flex-col gap-4">
-                        {/* 3. 내부 영역 박스 */}
-                        <div className="bg-[#fcf7f0] border-[#b89b7a] border-1 border rounded-lg p-5 shadow-sm sticky top-10">
+                        <div className="bg-[#fcf7f0] border-[#b89b7a] border rounded-lg p-5 shadow-sm font-bold sticky top-10">
                             <h3 className="text-lg font-bold text-[#5c4033] mb-3 border-b pb-2 border-[#dbc7b1]">
                                 출제 문제 정보
                             </h3>
                             <p className="text-base text-[#3d2b1f] font-semibold mb-4">
                                 Q. {exam.question}
                             </p>
-                            
+
                             <div className="flex flex-col gap-2">
                                 <span className="text-sm font-bold text-[#7b6346]">정답 가이드:</span>
                                 {exam.objectiveOption1 !== "" ? (
@@ -158,16 +180,14 @@ export default function GradingExam() {
                                             const optionNum = (index + 1).toString();
                                             const isCorrect = exam.answer === optionNum;
                                             return (
-                                                /* 5. 선택 버튼 스타일을 정답 하이라이트에 활용 */
                                                 <button
                                                     key={index}
                                                     type="button"
                                                     disabled
-                                                    className={`px-3 py-2 rounded text-sm border-[#b89b7a] border text-left font-bold transition-colors ${
-                                                        isCorrect
+                                                    className={`px-3 py-1 rounded text-sm border-[#b89b7a] border font-bold text-left transition-colors ${isCorrect
                                                             ? "bg-[#8b5e3c] text-white"
                                                             : "bg-[#dbc7b1] text-[#5c4033] opacity-60"
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {optionNum}. {option}
                                                 </button>
@@ -175,8 +195,7 @@ export default function GradingExam() {
                                         })}
                                     </div>
                                 ) : (
-                                    /* 3. 내부 영역 박스 스타일 적용 */
-                                    <div className="bg-[#f5eee4] border-[#b89b7a] border rounded-lg p-3 text-[#5c4033] font-bold text-center">
+                                    <div className="bg-[#fcf7f0] border-[#b89b7a] border rounded-lg p-3 shadow-sm font-bold text-[#5c4033] text-center">
                                         {exam.answer}
                                     </div>
                                 )}
@@ -184,54 +203,60 @@ export default function GradingExam() {
                         </div>
                     </div>
 
-                    {/* 우측 레이아웃: 학생 제출 답안 목록 및 채점 */}
                     <div className="w-full md:w-2/3">
                         {grades.length > 0 ? (
                             <div className="flex flex-col gap-4">
                                 <ul className="flex flex-col gap-3">
                                     {grades.map((grade) => (
-                                        /* 3. 내부 영역 박스 */
                                         <li
                                             key={grade.egid}
-                                            className="bg-[#fcf7f0] border-[#b89b7a] border-1 border rounded-lg p-5 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all duration-200 hover:bg-[#f5eee4]"
+                                            className="bg-[#fcf7f0] border-[#b89b7a] border rounded-lg p-5 shadow-sm font-bold flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all duration-200 hover:bg-[#f5eee4]"
                                         >
                                             <div className="flex flex-col gap-1.5">
                                                 <span className="text-lg font-bold text-[#5c4033] flex items-center gap-2">
                                                     <span className="w-1.5 h-1.5 bg-[#8b5e3c] rounded-full"></span>
                                                     학생: {grade.student}
                                                 </span>
-                                                <p className="text-sm text-[#7b6346] pl-3.5 bg-[#f5eee4] py-1 px-2 rounded border border-[#dbc7b1] inline-block">
+                                                <p className="text-sm text-[#7b6346] pl-3.5 bg-[#f5eee4] py-1 px-2 rounded border border-[#dbc7b1] inline-block font-normal">
                                                     제출 답안: <span className="font-bold text-[#5c4033]">{grade.answer}</span>
                                                 </p>
                                             </div>
 
-                                            {/* 7. 라벨 폼 */}
-                                            <div className="flex items-center gap-3 self-end sm:self-auto">
-                                                <label className="text-xl font-bold text-[#5c4033]">점수</label>
-                                                <input
-                                                    type="text"
-                                                    className="border-[#b89b7a] border-1 border rounded px-3 py-2 w-24 text-center bg-white font-bold text-[#5c4033]"
-                                                    value={grade.score || ""}
-                                                    onChange={(e) => handleScoreChange(grade.egid, e.target.value)}
-                                                    placeholder="0"
-                                                />
+                                            <div className="flex items-center gap-4 self-end sm:self-auto">
+                                                <div className="flex items-center gap-2">
+                                                    <label className="text-xl font-bold text-[#5c4033]">점수</label>
+                                                    <input
+                                                        type="text"
+                                                        className="border-[#b89b7a] border rounded px-3 py-2 w-20 text-center bg-white font-bold text-[#5c4033]"
+                                                        value={grade.score || ""}
+                                                        onChange={(e) => handleScoreChange(grade.egid, e.target.value)}
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                                {exam.objectiveOption1 === "" && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handleAiGrade(grade.eid, grade.answer, grade.egid)}
+                                                        className="px-3 py-1 rounded text-sm border-[#b89b7a] border font-bold bg-[#dbc7b1] text-[#5c4033] hover:bg-[#8b5e3c] hover:text-white transition-colors"
+                                                    >
+                                                        {isAiLoading ? "채점 중..." : "AI 채점"}
+                                                    </button>
+                                                )}
                                             </div>
                                         </li>
                                     ))}
                                 </ul>
 
-                                {/* 6. 일반 버튼 */}
                                 <button
                                     type="button"
                                     onClick={handleSave}
-                                    className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-6 py-2.5 rounded text-lg mx-auto block mt-4 font-bold shadow-md transition-colors"
+                                    className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-3 py-2 rounded text-lg mx-auto block mt-2 font-bold shadow-md transition-colors"
                                 >
                                     채점 결과 저장하기
                                 </button>
                             </div>
                         ) : (
-                            /* 3. 내부 영역 박스 (데이터 공백 레이아웃) */
-                            <div className="bg-[#fcf7f0] border-[#b89b7a] border-1 border rounded-lg p-20 text-center shadow-sm font-bold">
+                            <div className="bg-[#fcf7f0] border-[#b89b7a] border rounded-lg p-20 text-center shadow-sm font-bold">
                                 <p className="text-[#b89b7a] text-lg">현재 제출된 학생 답안이 없습니다.</p>
                             </div>
                         )}
