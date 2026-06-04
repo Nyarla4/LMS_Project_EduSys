@@ -99,7 +99,7 @@ public class LessonController {
     }
 
     @PutMapping("/{id}")
-    public Lesson updateLesson(@PathVariable Integer id, @RequestBody Lesson lesson) {
-        return lessonService.updateLesson(id, lesson);
+    public void updateLesson(@PathVariable Integer id, @RequestBody Lesson lesson) {
+        lessonService.updateLesson(id, lesson);
     }
 }
