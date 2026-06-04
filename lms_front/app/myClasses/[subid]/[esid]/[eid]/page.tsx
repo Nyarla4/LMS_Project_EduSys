@@ -27,6 +27,7 @@ export default function Exam() {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<Exam | null>(null);
     const [isObjective, setIsObjective] = useState(false);
+    const [submittedGrade, setSubmittedGrade] = useState<{answer: string, score: string} | null>(null);
 
     const profile = user?.user || user;
     const userRole = profile?.usertype;
@@ -49,9 +50,27 @@ export default function Exam() {
                 // 학생인 경우 답안란을 비워서 초기화합니다.
                 setFormData(isTeacher ? data : { ...data, answer: "" });
                 setIsObjective(data.objectiveOption1 !== "");
+
+                // 학생인 경우 본인이 제출한 답안이 있는지 확인
+                if (!isTeacher && studentId) {
+                    fetch(`http://localhost:8080/api/exams/grade/${eid}/student/${studentId}`, {
+                        headers: {
+                            "Authorization": `Bearer ${localStorage.getItem("token")}`
+                        }
+                    })
+                    .then(res => res.ok ? res.json() : null)
+                    .then(gradeData => {
+                        if (gradeData) {
+                            setSubmittedGrade(gradeData);
+                            // 이미 제출한 답안이 있으면 폼에 채워넣음
+                            setFormData(prev => prev ? { ...prev, answer: gradeData.answer } : null);
+                        }
+                    })
+                    .catch(err => console.error("제출 정보 로드 실패:", err));
+                }
             })
             .catch((err) => console.error("로드 실패:", err));
-    }, [user, userLoading, eid, isTeacher]);
+    }, [user, userLoading, eid, isTeacher, studentId]);
 
     // 흐름: 문제 유형 변경 제어 (주관식/객관식)
     const handleTypeChange = (objective: boolean) => {
@@ -122,7 +141,10 @@ export default function Exam() {
         })
         .then(res => {
             alert("답안이 제출되었습니다.");
-            router.push(`/${basePath}/${subid}/${esid}`);
+            // 제출 후 상태 업데이트하여 UI에 즉시 반영
+            if (formData?.answer) {
+                setSubmittedGrade(prev => ({ answer: formData.answer, score: prev?.score || "" }));
+            }
         })
         .catch(err => console.error("제출 실패:", err));
     };

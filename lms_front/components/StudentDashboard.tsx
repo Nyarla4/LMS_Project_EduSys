@@ -47,6 +47,7 @@ interface ExamSet { // Changed from Exam to ExamSet
   subid?: number; // Subject ID (for navigation)
   examDate?: string; // Use examDate from ExamSet
   status?: string;
+  totalScore?: number; // 합산 점수 필드 추가
 }
 
 interface Assignment {
@@ -426,7 +427,11 @@ function TabPanel({
                           </button>
                         </div>
                       ) : (
-                        "-"
+                        <span className="font-bold text-[#8d6a44]">
+                          {examSet.totalScore !== undefined && examSet.totalScore !== null 
+                            ? `${examSet.totalScore}점` 
+                            : "-"}
+                        </span>
                       )}
                     </td>
                   </tr>
@@ -565,7 +570,9 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
               : `${API_BASE}/lessons`);
 
         // 시험 및 과제 목록은 교사와 학생 모두 필요합니다.
-        const examUrl = subjectId ? `${API_BASE}/examsets/subject/${subjectId}` : `${API_BASE}/examsets`;
+        const examUrl = subjectId 
+          ? `${API_BASE}/examsets/subject/${subjectId}${studentId ? `?sid=${studentId}` : ''}` 
+          : `${API_BASE}/examsets`;
         const assignUrl = subjectId ? `${API_BASE}/works/subject/${subjectId}` : `${API_BASE}/works`;
 
         const fetches: Promise<Response>[] = [

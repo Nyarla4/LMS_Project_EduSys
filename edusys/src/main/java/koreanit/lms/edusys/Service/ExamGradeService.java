@@ -34,6 +34,10 @@ public class ExamGradeService {
         return examGradeRepository.findById(egid);
     }
 
+    public Optional<ExamGrade> findExamGradeByExamAndStudent(Integer eid, Integer sid) {
+        return examGradeRepository.findByExamEidAndStudentSid(eid, sid);
+    }
+
     public ExamGrade createExamGrade(Integer eid, Integer sid) {
         Optional<Exam> oExam = examService.findExamById(eid);
         if(oExam.isEmpty())
@@ -57,11 +61,15 @@ public class ExamGradeService {
         
         Student student = studentService.findById(dto.getSid());
         
-        ExamGrade grade = new ExamGrade();
+        // 기존 제출 내역이 있는지 확인 후 있으면 업데이트, 없으면 신규 생성
+        ExamGrade grade = examGradeRepository.findByExamEidAndStudentSid(dto.getEid(), dto.getSid())
+                .orElse(new ExamGrade());
+
         grade.setExam(exam);
         grade.setStudent(student);
         grade.setAnswer(dto.getAnswer());
-        grade.setScore(""); // 초기 점수는 빈 값으로 설정
+        
+        if (grade.getEgid() == null) grade.setScore(""); // 신규 생성시에만 점수 초기화
         
         examGradeRepository.save(grade);
     }
@@ -82,5 +90,20 @@ public class ExamGradeService {
         ExamGrade examGrade = oExamGrade.get();
         examGrade.setScore(score);
         return examGradeRepository.save(examGrade);
+    }
+
+    // 시험 세트 내 모든 문제의 점수를 합산하여 반환
+    public Integer calculateTotalScore(Integer esid, Integer sid) {
+        List<koreanit.lms.edusys.Entity.Exam> exams = examService.findAllExamsByExamSet(esid);
+        int total = 0;
+        for (koreanit.lms.edusys.Entity.Exam exam : exams) {
+            Optional<ExamGrade> grade = findExamGradeByExamAndStudent(exam.getEid(), sid);
+            if (grade.isPresent() && grade.get().getScore() != null && !grade.get().getScore().isEmpty()) {
+                try {
+                    total += Integer.parseInt(grade.get().getScore());
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        return total;
     }
 }

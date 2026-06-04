@@ -114,6 +114,14 @@ public class ExamController {
         return ResponseEntity.ok().build();
     }
 
+    // 학생이 본인의 제출 답안을 확인할 때 호출
+    @GetMapping("/grade/{eid}/student/{sid}")
+    public ResponseEntity<ExamGradeDTO> getStudentExamGrade(@PathVariable Integer eid, @PathVariable Integer sid) {
+        return examGradeService.findExamGradeByExamAndStudent(eid, sid)
+                .map(grade -> ResponseEntity.ok(new ExamGradeDTO(grade)))
+                .orElse(ResponseEntity.noContent().build());
+    }
+
     @GetMapping("/grading/{eid}")
     public ResponseEntity<List<ExamGradeDTO>> getExamGradesBySubject(@PathVariable Integer eid) {
         List<ExamGrade> exams = examGradeService.findAllExamGradesByExam(eid);

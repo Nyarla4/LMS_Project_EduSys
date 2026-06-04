@@ -15,6 +15,7 @@ public class ExamSetDTO {
     private Integer subid;
     private LocalDateTime examDate;
     private String status;
+    private Integer totalScore; // 합산 점수 필드 추가
 
     public ExamSetDTO(ExamSet examSet) {
         if (examSet == null) return;
