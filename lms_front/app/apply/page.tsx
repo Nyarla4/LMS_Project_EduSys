@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useUser } from "../userContext";
+import { BookOpen, User, Users, Clock, Search, Filter, GraduationCap } from 'lucide-react';
 
 type SubjectResponse = {
     subid: number;
@@ -184,79 +185,110 @@ export default function Page() {
         <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10">
             <div className="w-full max-w-6xl flex gap-6 mt-10 px-10">
                 <div className="flex-1 bg-[#fffaf3] border-[#d6c2a8] border-2 rounded-2xl shadow-md p-4">
-                    <p className="text-4xl font-bold text-center mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">수강신청</p>
-                    <p className="text-xl font-bold text-[#5c4033]">개설과목</p>
-                    <div className="mt-2 flex items-center border-b-4 border-[#b89b7a] pb-2 mb-4">
+                    <p className="text-4xl font-bold text-center text-[#5c4033] mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">수강신청</p>
+                    <p className="text-xl font-bold text-[#5c4033] flex items-center gap-2"><Filter size={20} className="text-[#5c4033]"/>개설과목</p>
+                    <div className="mt-2 flex items-center border-b-4 border-[#b89b7a] gap-1 pb-2 mb-4">
                         <button type="button"
                             onClick={() => setSelectedCategory("전체")}
-                            className={`px-3 py-1 rounded text-sm border-[#b89b7a] border-1 font-bold ${selectedCategory === "전체" ? "bg-[#8b5e3c] text-white" : "bg-[#dbc7b1] text-[#5c4033]"}`}>전체</button>
+                            className={`px-3 py-1 rounded text-sm font-bold transition-all duration-200 border-2 ${selectedCategory === "전체" 
+                            ? "bg-gradient-to-r from-[#8b5e3c] to-[#6f4a2f] text-white border-[#8b5e3c] scale-105" 
+                            : "bg-[#dbc7b1] text-[#5c4033] border-[#b89b7a] hover:bg-[#d0bba5] hover:scale-105"}`}>전체</button>
                         <button type="button"
                             onClick={() => setSelectedCategory("이과")}
-                            className={`px-3 py-1 rounded text-sm ml-2 border-[#b89b7a] border-1 font-bold ${selectedCategory === "이과" ? "bg-[#8b5e3c] text-white" : "bg-[#dbc7b1] text-[#5c4033]"}`}>이과</button>
+                            className={`px-3 py-1 rounded text-sm font-bold transition-all duration-200 border-2 ${selectedCategory === "이과" 
+                            ? "bg-gradient-to-r from-[#8b5e3c] to-[#6f4a2f] text-white border-[#8b5e3c] scale-105" 
+                            : "bg-[#dbc7b1] text-[#5c4033] border-[#b89b7a] hover:bg-[#d0bba5] hover:scale-105"}`}>이과</button>
                         <button type="button"
                             onClick={() => setSelectedCategory("문과")}
-                            className={`px-3 py-1 rounded text-sm ml-2 border-[#b89b7a] border-1 font-bold ${selectedCategory === "문과" ? "bg-[#8b5e3c] text-white" : "bg-[#dbc7b1] text-[#5c4033]"}`}>문과</button>
-                        <span className="font-bold ml-auto">
+                            className={`px-3 py-1 rounded text-sm font-bold transition-all duration-200 border-2 ${selectedCategory === "문과" 
+                            ? "bg-gradient-to-r from-[#8b5e3c] to-[#6f4a2f] text-white border-[#8b5e3c] scale-105" 
+                            : "bg-[#dbc7b1] text-[#5c4033] border-[#b89b7a] hover:bg-[#d0bba5] hover:scale-105"}`}>문과</button>
+                        <span className="font-bold ml-auto flex items-center gap-2">
                             <select 
                                 value={searchType}
                                 onChange={(e) => setSearchType(e.target.value)}
-                                className="border-[#d6c2a8] border-2 rounded px-2 py-1 ml-2 text-[#5c4033]">
+                                className="border-[#d6c2a8] border-[2px] rounded px-2 py-1 ml-2 text-[#5c4033]">
                                 <option value="subject">과목</option>
                                 <option value="teacher">교사</option>
                             </select>
                             <input 
                                 type="text" placeholder="검색" value={searchKeyword}
                                 onChange={(e) => setSearchKeyword(e.target.value)}
-                                className="border-[#d6c2a8] border-2 rounded px-2 py-1 ml-2" 
+                                className="border-[#d6c2a8] border-[2px] rounded px-2 py-1 ml-2" 
                             />
                         </span>
                     </div>
 
                     {/* 과목 신청 카드 */}
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[400px]">
-                        {searchedCards.map((card) => (
+                        {searchedCards.map((card) => {
+                            // 신청버튼 변형
+                            const appliedCourse = appliedCards.find((item) => item.id === card.id);
+                            const isApplied = !!appliedCourse;
+
+                            return (
                             <div
                                 key={card.id}
-                                className="bg-[#fcf7f0] border-[#b89b7a] border-1 rounded-2xl p-5 shadow-sm hover:shadow-lg transition"
+                                className="rounded-2xl border-[#b89b7a] border-[1px] bg-[#fcf7f0] p-5
+                                transition-all duration-300 hover:-translate-y-3 hover:shadow-[0_12px_24px_rgba(92,64,51,0.22)]"
                             >
                                 {/* 과목 */}
                                 <div className="border-b border-[#d8c2a8] pb-2 mb-4">
                                     <p className="text-2xl font-bold text-[#5c4033] text-center">
-                                        {card.subjectName}<span className="text-lg">({card.category})</span>
+                                        {card.subjectName}
+                                        <span
+                                            className={`ml-1 inline-block rounded-full px-2 py-0.5 text-sm ${
+                                            card.category === "이과"
+                                                ? "bg-blue-100 text-blue-700"
+                                                : "bg-purple-100 text-purple-700"
+                                            }`}
+                                        >
+                                            {card.category}
+                                        </span>
                                     </p>
                                 </div>
 
                                 {/* 강의 정보 */}
-                                <div className="bg-[#f3e7d7] rounded-lg px-3 pt-2 pb-1 text-sm space-y-1">
-                                    <p><span className="font-bold">수업</span> : {card.lessonName || "미정"}</p>        
-                                    <p><span className="font-bold">교사</span> : {card.teacherName || "미정"}</p>
-                                    <p><span className="font-bold">기간</span> :{" "}{card.schedule || "미정"}</p>
-                                    <p><span className="font-bold">정원</span> :{" "}{card.maxCount}명</p>                                
+                                <div className="bg-[#f3e7d7] rounded-lg px-3 pt-2 pb-1 text-sm space-y-1 shadow-inner">
+                                    <p className="flex items-center gap-2"><BookOpen size={16} className="text-[#5c4033]"/><span className="font-bold">{card.lessonName || "미정"}</span></p>        
+                                    <p className="flex items-center gap-2"><User size={16} className="text-[#5c4033]"/><span className="font-bold">{card.teacherName || "미정"}</span></p>
+                                    <p className="flex items-center gap-2"><Clock size={16} className="text-[#5c4033]"/><span className="font-bold">{" "}{card.schedule || "미정"}</span></p>
+                                    <p className="flex items-center gap-2"><Users size={16} className="text-[#5c4033]"/><span className="font-bold">{" "}{card.maxCount}명</span></p>                                
                                 </div>
 
                                 {/* 버튼 */}
-                                <button 
-                                    type="button"
-                                    key={card.id}
-                                    onClick={() => handleApply(card)}
-                                    className="w-full mt-4 bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white py-2 rounded font-bold transition"
-                                >
+                                {isApplied ? (
+                                    <button
+                                        type="button" onClick={() => handleCancel(appliedCourse?.cid)}
+                                        className="w-full mt-4 bg-red-500 hover:bg-red-600 text-white py-2 rounded font-bold"
+                                    >
+                                        신청취소
+                                    </button>
+                                ) : (
+                                    <button 
+                                        type="button"
+                                        key={card.id}
+                                        onClick={() => handleApply(card)}
+                                        className="w-full mt-4 bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white py-2 rounded font-bold"
+                                    >
                                     신청하기
                                 </button>
+                                )}
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 
-                <div className="w-64 bg-[#fffaf3] border-[#d6c2a8] border-2 rounded-2xl shadow-md p-4">
-                    <p className="text-xl font-bold text-center bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full mb-4 py-1">
+                <div className="w-64 bg-[#fffaf3] border-[#d6c2a8] border-[2px] rounded-2xl shadow-md p-4">
+                    <p className="text-xl font-bold text-center text-[#5c4033] bg-[#e7d7c1] border-[#d6c2a8] border-[2px] rounded-full mb-4 py-1">
                         신청현황
                     </p>
-                    <p className="font-semibold">신청 과목 수: {appliedCards.length}</p>
+                    <p className="font-semibold text-[#5c4033]">신청 과목 수: {appliedCards.length}</p>
 
                     {appliedCards.map((card) => (
-                        <div key={card.id} className="bg-[#fcf7f0] border-[#b89b7a] border-1 rounded-lg p-3 mb-3 text-sm font-semibold">
-                            <p className="text-xl  text-center mb-2 border-b">{card.subjectName || "미정"}<span className="text-sm">({card.category})</span></p>
+                        <div key={card.id} className="bg-[#fcf7f0] border-[#b89b7a] border-[1px] rounded-lg p-3 mb-3 text-sm font-semibold">
+                            <p className="text-xl text-[#5c4033] text-center mb-2 border-b">{card.subjectName || "미정"}<span className="text-sm">({card.category})</span></p>
                             <div className="bg-[#f3e7d7] rounded-lg px-3 py-2 mt-3 text-sm space-y-1">
                                 <p><span className="font-bold">수업</span> : {card.lessonName || "미정"}</p>
                                 <p><span className="font-bold">교사</span> : {card.teacherName || "미정"}</p>

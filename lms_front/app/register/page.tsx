@@ -43,7 +43,17 @@ export default function Page() {
 
     const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+        if (!file) {
+            setPlanFile("");
+            setShowPdfPreview(false);
+
+            if (pdfPreviewUrl) {
+                URL.revokeObjectURL(pdfPreviewUrl);
+            }
+
+            setPdfPreviewUrl("");
+            return;
+        }
 
         if (file.type !== "application/pdf") {
             alert("PDF 파일만 등록 가능");
@@ -112,19 +122,19 @@ export default function Page() {
 
                 {/* 강의등록 영역 */}
                 <div className="flex-1 bg-[#fffaf3] border-[#d6c2a8] border-2 rounded-2xl shadow-md p-4">
-                    <p className="text-4xl font-bold text-center mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">강의 등록</p>
+                    <p className="text-4xl font-bold text-center mb-4 text-[#5c4033] bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">강의 등록</p>
 
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         {/* 강사명, 전공 */}
                         <div className="flex gap-6">
                             <div className="w-1/2 flex flex-col gap-2">
                                 <label className="text-xl font-bold">강사명</label>
-                                <input type="text" value={teacherName} readOnly className="border-[#b89b7a] border-1 rounded px-3 py-2" />
+                                <input type="text" value={teacherName} readOnly className="font-bold border-[#b89b7a] border-[1px] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#d6c2a8] focus:ring-opacity-40" />
                             </div>
                             <div className="w-1/2 flex flex-col gap-2">
                                 <label className="text-xl font-bold">전공</label>
                                 <select value={major} onChange={(e) => setMajor(e.target.value)}
-                                    className="border-[#b89b7a] border-1 rounded px-3 py-2">
+                                    className="font-bold border-[#b89b7a] border-[1px] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#d6c2a8] focus:ring-opacity-40">
                                     <option value="">전공 선택</option>
                                     <option value="science">이과</option>
                                     <option value="arts">문과</option>
@@ -143,7 +153,7 @@ export default function Page() {
                                         // 과목 바꾸면 세부과목 초기화
                                         setDetailSubject("");
                                     }}
-                                    className="border-[#b89b7a] border-1 rounded px-3 py-2"
+                                    className="font-bold border-[#b89b7a] border-[1px] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#d6c2a8] focus:ring-opacity-40"
                                 >
                                     <option value="">과목 선택</option>
                                     {Object.keys(subjectOptions).map((item) => (
@@ -159,7 +169,7 @@ export default function Page() {
                                     value={detailSubject}
                                     onChange={(e) => setDetailSubject(e.target.value)}
                                     disabled={!subject}
-                                    className="border-[#b89b7a] border-1 rounded px-3 py-2 disabled:bg-gray-100"
+                                    className="font-bold border-[#b89b7a] border-[1px] rounded px-3 py-2 disabled:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#d6c2a8] focus:ring-opacity-40"
                                 >
                                     <option value="">세부 과목 선택</option>
 
@@ -179,29 +189,29 @@ export default function Page() {
                                 <label className="text-xl font-bold">강의 개설 기간</label>
                                 <div className="flex gap-2">
                                     <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                                        className="border-[#b89b7a] border-1 rounded px-3 py-2" />
+                                        className="font-bold border-[#b89b7a] border-[1px] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#d6c2a8] focus:ring-opacity-40" />
                                     <span>~</span>
                                     <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-                                        className="border-[#b89b7a] border-1 rounded px-3 py-2" />
+                                        className="font-bold border-[#b89b7a] border-[1px] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#d6c2a8] focus:ring-opacity-40" />
                                 </div>
                             </div>
 
                             <div className="w-1/2 flex flex-col gap-2">
                                 <label className="text-xl font-bold">신청 최대 인원(최대 32명)</label>
                                 <input type="number" value={capacity} onChange={(e) => setCapacity(e.target.value)}
-                                    max={32} min={1} className="border-[#b89b7a] border-1 rounded px-3 py-2" />
+                                    max={32} min={1} className="border-[#b89b7a] border-[1px] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#d6c2a8] focus:ring-opacity-40" />
                             </div>
                         </div>
 
                         <label className="text-xl font-bold">강의 계획서</label>
                         <input type="file" accept="application/pdf,.pdf"
                             onChange={handlePdfChange}
-                            className="border-[#b89b7a] border-1 rounded px-3 py-2" />
+                            className="border-[#b89b7a] border-[1px] rounded px-3 py-2" />
                         {planFile && (
                             <button
                                 type="button"
                                 onClick={() => setShowPdfPreview((prev) => !prev)}
-                                className="w-fit text-lg text-[white] font-bold border-[#b89b7a] border-1 
+                                className="w-fit text-lg text-[white] font-bold border-[#b89b7a] border-[1px] 
                                 bg-[#8b5e3c] hover:bg-[#6f4a2f] rounded px-3 py-2"
                             >
                                 선택한 파일 {showPdfPreview ? "미리보기 닫기" : "미리보기"}
@@ -217,12 +227,8 @@ export default function Page() {
                         <input type="url" value={fileUrl}
                             onChange={(e) => setFileUrl(e.target.value)}
                             placeholder="https://xxx.com"
-                            className="border-[#b89b7a] border-1 rounded px-3 py-2"
+                            className="border-[#b89b7a] border-[1px] rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#d6c2a8] focus:ring-opacity-40"
                         />
-
-                        {/* <label className="text-xl font-bold">강의자료(예시:pdf, doc, docx)</label>
-                        <input type="file" accept=".pdf,.doc,.docx" className="border-[#b89b7a] border-1 rounded px-3 py-2" /> */}
-
                         <button type="submit" className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-3 py-2 rounded text-lg font-bold"
                         >등록하기
                         </button>
