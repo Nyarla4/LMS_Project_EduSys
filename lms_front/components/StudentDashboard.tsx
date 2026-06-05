@@ -521,6 +521,15 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   const [isAddAssignmentModalOpen, setIsAddAssignmentModalOpen] = useState(false);
   const [newAssignment, setNewAssignment] = useState({ title: '', dueDate: '' });
   
+  // 실시간 진도 추적을 위한 Refs (언마운트/종료 시점의 최신값 보장용)
+  const sessionBaseProgressRef = useRef(0);
+  const currentSessionSecondsRef = useRef(0);
+  const selectedVideoRef = useRef<Video | null>(null);
+
+  useEffect(() => { sessionBaseProgressRef.current = sessionBaseProgress; }, [sessionBaseProgress]);
+  useEffect(() => { currentSessionSecondsRef.current = currentSessionSeconds; }, [currentSessionSeconds]);
+  useEffect(() => { selectedVideoRef.current = selectedVideo; }, [selectedVideo]);
+
   const [isAddExamSetModalOpen, setIsAddExamSetModalOpen] = useState(false);
   const [newExamSet, setNewExamSet] = useState({ name: '', examDate: '' });
 
@@ -628,9 +637,12 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
             const progs = await progRes.json();
             const map: Record<number, number> = {};
             progs.forEach((p: any) => {
-              const lid = p.lid; // ProgressDTO의 lid 사용
+              const lid = p.lid || p.lesson?.lid;
               if (lid) {
-                map[lid] = p.progressed ?? 0;
+                // DB 진도와 로컬 스토리지 백업 중 더 큰 값을 선택하여 반영
+                const dbVal = p.progressed ?? 0;
+                const localVal = parseInt(localStorage.getItem(`video_progress_${lid}`) || "0");
+                map[lid] = Math.max(dbVal, localVal);
               }
             });
             setProgressMap(map);
@@ -689,14 +701,55 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     }
   }, [selectedQuestion, isTeacher]);
 
+  // 실시간 진도 영구 저장 함수 (fetch keepalive 사용)
+  const persistProgress = (video: Video, base: number, current: number) => {
+    if (isTeacher || !studentId || current <= 0) return;
+
+    const totalTime = base + current;
+
+    // 1. 로컬 스토리지에 즉시 백업 (네트워크 지연 시 fetchData에서 보정용)
+    localStorage.setItem(`video_progress_${video.lid}`, totalTime.toString());
+
+    // 2. UI 상태 즉시 업데이트 (리스트의 % 바와 텍스트에 즉시 반영)
+    setProgressMap(prev => ({
+      ...prev,
+      [video.lid]: totalTime
+    }));
+
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const url = `${API_BASE}/progresses/update?studentId=${studentId}&videoId=${video.lid}&lastTime=${totalTime}`;
+
+    // keepalive: true 옵션으로 페이지 이동이나 탭 종료 시에도 요청이 서버에 도달함을 보장합니다.
+    fetch(url, {
+      method: 'POST',
+      headers: { 
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      keepalive: true
+    }).catch(err => console.error("진도 자동 저장 실패:", err));
+
+    // 물리적 재생 위치 저장 (LocalStorage는 동기적이므로 안전함)
+    let physicalTime = 0;
+    if (ytPlayerRef.current?.getCurrentTime) {
+      physicalTime = Math.floor(ytPlayerRef.current.getCurrentTime());
+    } else if (videoRef.current) {
+      physicalTime = Math.floor(videoRef.current.currentTime);
+    }
+    if (physicalTime > 0) {
+      localStorage.setItem(`video_resume_${video.lid}`, physicalTime.toString());
+    }
+  };
+
   // 실시간 시청 시간 누적 스탑워치 (1초마다)
   useEffect(() => {
     if (isPlaying && selectedVideo && !isTeacher) {
       trackingInterval.current = setInterval(() => {
         setCurrentSessionSeconds((prev) => {
           const next = prev + 1;
+          currentSessionSecondsRef.current = next; // Ref 즉시 동기화
           if (next > 0 && next % 15 === 0) {
-            saveVideoProgress(next); // 15초마다 자동 누적 저장
+            persistProgress(selectedVideo, sessionBaseProgress, next); // 15초마다 자동 누적 저장
           }
           return next;
         });
@@ -706,6 +759,46 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
       if (trackingInterval.current) clearInterval(trackingInterval.current);
     };
   }, [isPlaying, selectedVideo]);
+
+  // 페이지 라우팅 이동 및 컴포넌트 언마운트 시 자동 저장
+  useEffect(() => {
+    return () => {
+      if (selectedVideoRef.current) {
+        persistProgress(
+          selectedVideoRef.current, 
+          sessionBaseProgressRef.current, 
+          currentSessionSecondsRef.current
+        );
+      }
+    };
+  }, [selectedVideo]); // 영상이 바뀌거나 대시보드를 떠날 때 실행
+
+  // 브라우저 새로고침/탭 닫기 대응
+  useEffect(() => {
+    const handleUnload = () => {
+      if (selectedVideoRef.current) {
+        persistProgress(
+          selectedVideoRef.current, 
+          sessionBaseProgressRef.current, 
+          currentSessionSecondsRef.current
+        );
+      }
+    };
+    window.addEventListener("beforeunload", handleUnload);
+    return () => window.removeEventListener("beforeunload", handleUnload);
+  }, []);
+
+  // 기존 수동 저장 함수를 persistProgress 기반으로 단순화
+  const saveVideoProgress = (sessionTime?: number) => {
+    const currentSession = sessionTime ?? currentSessionSeconds;
+    if (selectedVideo) {
+      persistProgress(selectedVideo, sessionBaseProgress, currentSession);
+      setProgressMap(prev => ({ 
+        ...prev, 
+        [selectedVideo.lid]: sessionBaseProgress + currentSession 
+      }));
+    }
+  };
 
   // 과제 제출 내역 가져오기
   const fetchSubmissions = async (assignment: Assignment) => {
@@ -735,7 +828,18 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   };
 
   const handleVideoSelect = async (video: Video) => {
-    setSessionBaseProgress(progressMap[video.lid] || 0); // 초기 진도는 DB 값 사용
+    if (selectedVideo?.lid === video.lid) return;
+
+    // 1. 기존 영상이 재생 중이었다면 즉시 저장 후 재생 상태 초기화
+    if (selectedVideo && isPlaying) {
+      saveVideoProgress();
+    }
+    setIsPlaying(false);
+
+    // 로컬 맵에서 최신 진도 가져오기 (이미 localStorage와 동기화된 상태)
+    const initialProgress = progressMap[video.lid] || 0;
+    
+    setSessionBaseProgress(initialProgress);
     setCurrentSessionSeconds(0); 
     setSelectedVideo(video);
     setShowVideoQna(false); // 영상을 새로 선택할 때는 QnA 섹션이 닫힌 상태로 시작 (수동 활성화 필요)
@@ -756,7 +860,10 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         if (res.ok) {
           const data = await res.json();
           // 엔티티 직접 반환 시에는 progressed 필드를 사용합니다.
-          const latestProgress = data.progressed ?? data.progress ?? 0;
+          const dbProgress = data.progressed ?? data.progress ?? 0;
+          const localVal = parseInt(localStorage.getItem(`video_progress_${video.lid}`) || "0");
+          const latestProgress = Math.max(dbProgress, localVal);
+          
           setSessionBaseProgress(latestProgress);
           // 개별 진도 조회 시에도 전체 맵을 최신화하여 리스트의 진행률 표시와 동기화합니다.
           setProgressMap(prev => ({ ...prev, [video.lid]: latestProgress }));
@@ -927,47 +1034,6 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         },
       },
     });
-  };
-
-  const saveVideoProgress = async (sessionTime?: number) => {
-    const currentSession = sessionTime ?? currentSessionSeconds;
-    
-    if (selectedVideo && !isTeacher && (currentSession > 0 || sessionTime === undefined)) {
-      const newTotalTime = sessionBaseProgress + currentSession;
-      
-      // 1. 즉시 로컬 UI 상태를 업데이트하여 목록에서의 '점프' 현상 방지
-      setProgressMap(prev => ({
-        ...prev,
-        [selectedVideo.lid]: newTotalTime
-      }));
-
-      // 2. DB에는 실시간으로 흐른 누적 시간(Stopwatch) 저장 (출결용)
-      if (currentSession > 0) {
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-        const url = `${API_BASE}/progresses/update?studentId=${studentId}&videoId=${selectedVideo.lid}&lastTime=${newTotalTime}`;
-
-        // DB 저장은 비동기로 처리하되 에러 로그만 남깁니다.
-        fetch(url, {
-          method: 'POST',
-          headers: { 
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        }).catch(err => console.error("진도 저장 실패:", err));
-      }
-
-      // 3. localStorage에는 영상의 실제 물리적 재생 위치(Seek point) 저장 (이어보기용)
-      let physicalTime = 0;
-      if (ytPlayerRef.current && ytPlayerRef.current.getCurrentTime) {
-        physicalTime = Math.floor(ytPlayerRef.current.getCurrentTime());
-      } else if (videoRef.current) {
-        physicalTime = Math.floor(videoRef.current.currentTime);
-      }
-      
-      if (physicalTime > 0 && typeof window !== "undefined") {
-        localStorage.setItem(`video_resume_${selectedVideo.lid}`, physicalTime.toString());
-      }
-    }
   };
 
   // 학생 질문 저장/수정 처리

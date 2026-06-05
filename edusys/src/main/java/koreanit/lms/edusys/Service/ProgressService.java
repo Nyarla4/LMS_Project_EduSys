@@ -68,6 +68,11 @@ public class ProgressService {
             progress.setLesson(lesson);
         }
         
+        // 이미 더 높은 진도가 기록되어 있다면 업데이트 무시 (역전 방지 로직)
+        if (progress.getProgressed() != null && progress.getProgressed() > lastTime) {
+            return progress;
+        }
+
         progress.setProgressed(lastTime);
         Progress saved = progressRepository.save(progress);
 

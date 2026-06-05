@@ -119,7 +119,7 @@ public class ExamController {
     public ResponseEntity<ExamGradeDTO> getStudentExamGrade(@PathVariable Integer eid, @PathVariable Integer sid) {
         return examGradeService.findExamGradeByExamAndStudent(eid, sid)
                 .map(grade -> ResponseEntity.ok(new ExamGradeDTO(grade)))
-                .orElse(ResponseEntity.noContent().build());
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/grading/{eid}")
