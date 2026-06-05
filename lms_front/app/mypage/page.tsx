@@ -59,10 +59,12 @@ export default function MyPage() {
           const progs = await progressRes.json();
           
           progs.forEach((p: any) => {
-            const lid = p.lid || p.id || p.lesson?.lid || p.lesson?.id;
-            const progressedTime = p.progressed ?? p.progress ?? 0;
+            const lid = p.lid || p.lesson?.lid || p.id || p.lesson?.id;
+            const dbVal = p.progressed ?? p.progress ?? 0;
+            
             if (lid) {
-              dbProgressMap[lid] = progressedTime; 
+              const localVal = parseInt(localStorage.getItem(`video_progress_${lid}`) || "0", 10);
+              dbProgressMap[lid] = Math.max(dbVal, localVal); 
             }
           });
         }
@@ -99,6 +101,7 @@ export default function MyPage() {
             for (const lesson of lessons) {
               const lid = lesson.lid || lesson.id;
               const duration = lesson.duration || lesson.totalTime || 0;
+              
               const savedTime = dbProgressMap[lid] || 0; 
 
               totalDuration += duration;
@@ -369,7 +372,7 @@ export default function MyPage() {
           </Link>
         </div>
 
-        {/* <div className="text-center pt-4 border-t border-[#d6c2a8]/30">
+        <div className="text-center pt-4 border-t border-[#d6c2a8]/30">
           <button 
             onClick={handleDeleteAccount}
             disabled={isDeleting}
@@ -377,7 +380,7 @@ export default function MyPage() {
           >
             {isDeleting ? "탈퇴 처리 진행 중..." : "서비스 탈퇴하기"}
           </button>
-        </div> */}
+        </div>
 
       </div>
     </div>

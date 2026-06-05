@@ -151,6 +151,8 @@ public class UserService {
                 System.err.println("증빙서류 파일 삭제 실패: " + e.getMessage());
             }
         }
-        this.userRepository.delete(user);
+        user.setLoginid(null);
+        user.setEmail(null);
+        user.setProofFilePath(null);
     }
 }

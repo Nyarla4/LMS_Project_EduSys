@@ -20,11 +20,11 @@ public class UserEntity {
     @Column(name = "user_id", nullable = false, unique = true)
     private Long userid;
 
-    @Column(name = "login_id", nullable = false, unique = true, length = 50)
+    @Column(name = "login_id", nullable = true, unique = true, length = 50)
     private String loginid;
 
     @Email
-    @Column(name = "email", nullable = false, unique = true, length = 100)
+    @Column(name = "email", nullable = true, unique = true, length = 100)
     private String email;
 
     @Column(name = "password", nullable = false, length = 255)
@@ -42,13 +42,5 @@ public class UserEntity {
 
     @Column(name = "proof_file_path", length = 255)
     private String proofFilePath;
-
-    @JsonIgnore
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Student student;
-
-    @JsonIgnore
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Teacher teacher;
     
 }
