@@ -50,11 +50,13 @@ interface ExamSet { // Changed from Exam to ExamSet
   totalScore?: number; // 합산 점수 필드 추가
 }
 
-interface Assignment {
+// 백엔드에서 Work(과제 정보)와 WorkSubmit(제출/점수 정보)을 합쳐서 보내주는 DTO 구조
+interface AssignmentDTO {
   wid: number;
   title: string;
   dueDate: string;
-  grade: string;
+  grade?: string;     // WorkSubmit에서 옴
+  fileName?: string;  // WorkSubmit에서 옴
   status?: string; // UI용
 }
 
@@ -121,7 +123,7 @@ function TabPanel({
   lessons: Lesson[];
   attendanceData: Attendance[];
   exams: ExamSet[];
-  assignments: Assignment[];
+  assignments: AssignmentDTO[];
   videoList: Video[];
   progressMap: Record<number, number>;
   activeVideoId?: number;
@@ -130,7 +132,7 @@ function TabPanel({
   subjectInfo?: Subject | null;
   subjectId?: number | string; // subjectId 타입 확장
   currentSessionSeconds: number;
-  onAssignmentSelect: (assignment: Assignment) => void;
+  onAssignmentSelect: (assignment: AssignmentDTO) => void;
   onAddAssignmentClick?: () => void;
   onVideoSelect: (video: Video) => void;
   onSyllabusUploadClick?: () => void;
@@ -147,6 +149,10 @@ function TabPanel({
   const isTeacher = profile?.usertype === 'T';
   const usertype = profile?.usertype;
   const isOnlyAdmin = usertype === 'A'; // 관리자인 경우
+
+  // 오늘 날짜 문자열 (YYYY-MM-DD) - 과제 마감 기한 및 상태 체크용
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   if (activeTab === "강의 계획서") {
     const planFile = subjectInfo?.planFile;
@@ -381,11 +387,11 @@ function TabPanel({
             <tbody className="divide-y divide-[#e9d7b0] bg-white">
               {exams.length > 0 ? (
                 exams.map((examSet) => {
-                  const canAccess = isTeacher || examSet.status === "진행중";
+                  const canAccess = isTeacher || examSet.status === "진행중" || examSet.status === "종료";
                   return (
                   <tr
                     key={examSet.esid} 
-                    className={`${canAccess ? "hover:bg-[#fff6eb] cursor-pointer" : "opacity-50 cursor-not-allowed"}`}
+                    className={`${canAccess ? "hover:bg-[#fff6eb] cursor-pointer" : "opacity-50 cursor-not-allowed"} ${!isTeacher && examSet.status === "종료" ? "opacity-50" : ""}`}
                     onClick={() => {
                       if (canAccess) {
                         window.location.href = `/myClasses/${subjectId || lessons[0]?.subject?.subid || 'all'}/${examSet.esid}`;
@@ -427,11 +433,13 @@ function TabPanel({
                           </button>
                         </div>
                       ) : (
-                        <span className="font-bold text-[#8d6a44]">
-                          {examSet.totalScore !== undefined && examSet.totalScore !== null 
-                            ? `${examSet.totalScore}점` 
-                            : "-"}
-                        </span>
+                          <span className="font-bold text-[#8d6a44]">
+                            {examSet.status === "종료"
+                              ? `${examSet.totalScore ?? 0}점`
+                              : examSet.totalScore !== undefined && examSet.totalScore !== null
+                                ? `${examSet.totalScore}점`
+                                : "-"}
+                          </span>
                       )}
                     </td>
                   </tr>
@@ -472,15 +480,32 @@ function TabPanel({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e9d7b0] bg-white">
-            {assignments.length > 0 ? assignments.map((assignment) => (
-              <tr key={assignment.wid} className="hover:bg-[#fff6eb] cursor-pointer" onClick={() => onAssignmentSelect(assignment)}>
+            {assignments.length > 0 ? assignments.map((assignment) => {
+              const isDeadlinePassed = !isTeacher && assignment.dueDate < todayStr;
+              return (
+              <tr 
+                key={assignment.wid} 
+                className={`hover:bg-[#fff6eb] cursor-pointer ${isDeadlinePassed ? "opacity-50" : ""}`} 
+                onClick={() => onAssignmentSelect(assignment)}
+              >
                 <td className="px-4 py-4">{assignment.title}</td>
                 <td className="px-4 py-4">{assignment.dueDate}</td>
                 <td className="px-4 py-4">
-                  {isTeacher ? <span className="text-[#8d6a44] font-bold">현황 보기</span> : (assignment.grade || "제출전")}
+                  {isTeacher ? (
+                    <span className="text-[#8d6a44] font-bold">현황 보기</span>
+                  ) : (
+                    assignment.status
+                      ? assignment.status
+                      : assignment.grade && assignment.grade !== ""
+                        ? "채점완료"
+                        : assignment.fileName && assignment.fileName !== ""
+                          ? "제출완료"
+                          : "제출전"
+                  )}
                 </td>
               </tr>
-            )) : (
+            );
+          }) : (
               <tr>
                 <td colSpan={3} className="px-4 py-8 text-center text-[#7b6346]">등록된 과제가 없습니다.</td>
               </tr>
@@ -498,10 +523,10 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [attendanceData, setAttendanceData] = useState<Attendance[]>([]);
   const [exams, setExams] = useState<ExamSet[]>([]); // Changed to ExamSet[]
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [assignments, setAssignments] = useState<AssignmentDTO[]>([]);
   const [videoList, setVideoList] = useState<Video[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<AssignmentDTO | null>(null);
   const [questionList, setQuestionList] = useState<Question[]>([]);
   const [showVideoQna, setShowVideoQna] = useState(false);
   const [subjectInfo, setSubjectInfo] = useState<Subject | null>(null);
@@ -514,6 +539,8 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   const [editingExamSet, setEditingExamSet] = useState<ExamSet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreatingQuestion, setIsCreatingQuestion] = useState(false); // 학생 질문 작성 모드 상태
+  const [isEditingQuestion, setIsEditingQuestion] = useState(false); // 기존 질문 수정 모드 상태
   const [progressMap, setProgressMap] = useState<Record<number, number>>({});
   const [sessionBaseProgress, setSessionBaseProgress] = useState(0); // 현재 시청 세션 시작 시점의 DB 진도
   const [currentSessionSeconds, setCurrentSessionSeconds] = useState(0); // 현재 세션 순수 시청 시간
@@ -553,6 +580,56 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
 
   const API_BASE = "http://localhost:8080/api";
   const isTeacher = usertype === 'T';
+
+  const enrichAssignmentsWithStatus = async (works: AssignmentDTO[]) => {
+    if (isTeacher || !studentId || works.length === 0) return works;
+
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const headers = {
+        "Authorization": token ? `Bearer ${token}` : "",
+        "Content-Type": "application/json"
+      };
+
+      const enriched = await Promise.all(
+        works.map(async (assignment) => {
+          try {
+            const res = await fetch(`${API_BASE}/work-submits/work/${assignment.wid}/student/${studentId}`, { headers });
+
+            if (res.ok) {
+              const submission = await res.json();
+              const status = submission.grade && submission.grade !== ""
+                ? "채점완료"
+                : submission.fileName && submission.fileName !== ""
+                  ? "제출완료"
+                  : "제출전";
+
+              return {
+                ...assignment,
+                fileName: submission.fileName ?? "",
+                grade: submission.grade ?? "",
+                status,
+              };
+            }
+          } catch (err) {
+            console.error(`과제 상태 조회 실패 (wid=${assignment.wid}):`, err);
+          }
+
+          return {
+            ...assignment,
+            fileName: "",
+            grade: "",
+            status: "제출전",
+          };
+        })
+      );
+
+      return enriched;
+    } catch (err) {
+      console.error("과제 상태 보강 실패:", err);
+      return works;
+    }
+  };
 
   // 탭 전환 시 과제 상세 정보는 닫도록 설정 (동영상은 유지하여 멀티태스킹 지원)
   useEffect(() => {
@@ -625,7 +702,10 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         setVideoList(lessonData); // 통합된 Lesson 데이터를 비디오 리스트로도 사용
 
         if (examRes?.ok) setExams(await examRes.json());
-        if (assignRes?.ok) setAssignments(await assignRes.json());
+        if (assignRes?.ok) {
+          const works = await assignRes.json();
+          setAssignments(await enrichAssignmentsWithStatus(works));
+        }
 
         // 학생일 경우에만 나머지 데이터 파싱 (index 3, 4)
         if (!isTeacher && studentId) {
@@ -666,7 +746,10 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
       const headers = { "Authorization": `Bearer ${token}` };
       const assignUrl = subjectId ? `${API_BASE}/works/subject/${subjectId}` : `${API_BASE}/works`;
       const res = await fetch(assignUrl, { headers });
-      if (res.ok) setAssignments(await res.json());
+      if (res.ok) {
+        const works = await res.json();
+        setAssignments(await enrichAssignmentsWithStatus(works));
+      }
     } catch (err) {
       console.error("Error refreshing assignments:", err);
     }
@@ -801,7 +884,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   };
 
   // 과제 제출 내역 가져오기
-  const fetchSubmissions = async (assignment: Assignment) => {
+  const fetchSubmissions = async (assignment: AssignmentDTO) => {
     try {
       const token = localStorage.getItem("token");
       const headers = { "Authorization": `Bearer ${token}` };
@@ -822,7 +905,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     }
   };
 
-  const handleAssignmentSelect = (assignment: Assignment) => {
+  const handleAssignmentSelect = (assignment: AssignmentDTO) => {
     setSelectedAssignment(assignment);
     fetchSubmissions(assignment);
   };
@@ -842,7 +925,10 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     setSessionBaseProgress(initialProgress);
     setCurrentSessionSeconds(0); 
     setSelectedVideo(video);
-    setShowVideoQna(false); // 영상을 새로 선택할 때는 QnA 섹션이 닫힌 상태로 시작 (수동 활성화 필요)
+    setShowVideoQna(false);
+    setIsCreatingQuestion(false);
+    setIsEditingQuestion(false);
+    setNewQnaContent('');
     setSelectedQuestion(null); // 이전 영상에서 선택했던 질문 상태 초기화
 
     // 유튜브 영상인 경우 플레이어 초기화 대기
@@ -961,6 +1047,14 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     const file = e.target.files?.[0];
     if (!file || !selectedAssignment) return;
 
+    // 마감 기한 체크 (클라이언트단 2차 보안 방어)
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    if (selectedAssignment.dueDate < todayStr) {
+      alert("마감 기한이 지나 더 이상 과제를 제출할 수 없습니다.");
+      return;
+    }
+
     if (!confirm(`'${file.name}' 파일을 제출하시겠습니까?`)) return;
 
     const formData = new FormData();
@@ -978,7 +1072,10 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
 
       if (res.ok) {
         alert("과제 파일이 제출되었습니다.");
-        if (selectedAssignment) fetchSubmissions(selectedAssignment);
+        if (selectedAssignment) {
+          fetchSubmissions(selectedAssignment);
+          await refreshAssignments();
+        }
       } else alert("제출에 실패했습니다.");
     } catch (err) { console.error(err); }
   };
@@ -998,7 +1095,10 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
 
       if (res.ok) {
         alert("점수가 저장되었습니다.");
-        if (selectedAssignment) fetchSubmissions(selectedAssignment);
+        if (selectedAssignment) {
+          fetchSubmissions(selectedAssignment);
+          await refreshAssignments();
+        }
       } else {
         alert("저장 실패");
       }
@@ -1042,32 +1142,68 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
       alert("질문 내용을 입력해주세요.");
       return;
     }
-
-    const isUpdate = !!currentStudentQuestion;
-    const url = isUpdate 
-      ? `${API_BASE}/question/${currentStudentQuestion.queid}` 
-      : `${API_BASE}/question`;
-    const method = isUpdate ? "PUT" : "POST";
-    
-    const payload = isUpdate 
-      ? { content: newQnaContent } 
-      : { sid: studentId, lid: selectedVideo.lid, content: newQnaContent };
-
+    const payload = { sid: studentId, lid: selectedVideo.lid, content: newQnaContent };
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(url, {
-        method: method,
+      const res = await fetch(`${API_BASE}/question`, {
+        method: "POST",
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
       if (res.ok) {
-        alert("질문 내용이 저장되었습니다.");
+        alert("질문이 등록되었습니다.");
+        const qnaRes = await fetch(`${API_BASE}/question/subject/${subjectId}`, { 
+          headers: { "Authorization": `Bearer ${token}` } 
+        });
+        if (qnaRes.ok) setQuestionList(await qnaRes.json());
+        setIsCreatingQuestion(false);
+        setNewQnaContent('');
+      } else {
+        alert("저장 실패");
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  // 학생 질문 수정 처리
+  const handleUpdateStudentQuestion = async (queid: number) => {
+    if (!newQnaContent.trim()) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/question/${queid}`, {
+        method: "PUT",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newQnaContent }),
+      });
+      if (res.ok) {
+        alert("질문이 수정되었습니다.");
         // 목록 새로고침하여 상태 반영
         const qnaRes = await fetch(`${API_BASE}/question/subject/${subjectId}`, { 
           headers: { "Authorization": `Bearer ${token}` } 
         });
         if (qnaRes.ok) setQuestionList(await qnaRes.json());
+        setIsEditingQuestion(false);
+        setSelectedQuestion(null);
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  // 학생 질문 삭제 처리
+  const handleDeleteQuestion = async (queid: number) => {
+    if (!confirm("질문을 삭제하시겠습니까? 답변도 함께 삭제됩니다.")) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/question/${queid}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        alert("삭제되었습니다.");
+        setSelectedQuestion(null);
+        const qnaRes = await fetch(`${API_BASE}/question/subject/${subjectId}`, { 
+          headers: { "Authorization": `Bearer ${token}` } 
+        });
+        if (qnaRes.ok) setQuestionList(await qnaRes.json());
+        setIsCreatingQuestion(false); // 저장 후 목록으로 돌아감
       } else {
         alert("저장 실패");
       }
@@ -1452,15 +1588,30 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                       <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full">제출됨</span>
                     </div>
                   )}
-                  <div className="flex flex-col gap-4 p-6 bg-[#fcf7f0] rounded-xl border-2 border-dashed border-[#d6c2a8] items-center">
-                    <p className="text-[#7b6346]">{mySubmission ? "파일을 다시 선택하면 기존 제출물이 교체됩니다." : "Word, PDF 등 문서 파일을 선택해주세요."}</p>
-                    <input 
-                      type="file" 
-                      className="text-sm text-[#8d6a44] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#8d6a44] file:text-white hover:file:bg-[#7c5935]"
-                      onChange={handleAssignmentFileUpload}
-                      accept=".doc,.docx,.pdf"
-                    />
-                  </div>
+
+                  {/* 마감 기한 체크 로직: 오늘 날짜가 마감일보다 늦으면 업로드 영역 숨김 */}
+                  {(() => {
+                    const now = new Date();
+                    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    const isDeadlinePassed = selectedAssignment.dueDate < todayStr;
+
+                    return !isDeadlinePassed ? (
+                      <div className="flex flex-col gap-4 p-6 bg-[#fcf7f0] rounded-xl border-2 border-dashed border-[#d6c2a8] items-center">
+                        <p className="text-[#7b6346]">{mySubmission ? "파일을 다시 선택하면 기존 제출물이 교체됩니다." : "Word, PDF 등 문서 파일을 선택해주세요."}</p>
+                        <input 
+                          type="file" 
+                          className="text-sm text-[#8d6a44] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#8d6a44] file:text-white hover:file:bg-[#7c5935]"
+                          onChange={handleAssignmentFileUpload}
+                          accept=".doc,.docx,.pdf"
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-6 bg-gray-100 rounded-xl border border-gray-300 text-center">
+                        <p className="text-gray-500 font-bold italic">마감 기한이 지나 더 이상 과제를 제출하거나 수정할 수 없습니다.</p>
+                      </div>
+                    );
+                  })()}
+
                   <div className="mt-4 p-4 bg-white border rounded-lg">
                     <p className="text-sm">현재 점수: <span className="font-bold text-[#8d6a44]">{mySubmission?.grade || "평가 전"}</span></p>
                   </div>
@@ -1763,67 +1914,29 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
               <div className="mt-6 rounded-2xl bg-white p-6 border border-[#e6d1a7] shadow-inner animate-in slide-in-from-top duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-bold text-[#3d2b1f]">강의 QnA</h3>
-                  {isTeacher && selectedQuestion && (
-                    <button onClick={() => setSelectedQuestion(null)} className="text-sm text-[#8d6a44] font-bold hover:underline">
+                  <div className="flex gap-2 items-center">
+                    {!isTeacher && !selectedQuestion && !isCreatingQuestion && !isEditingQuestion && (
+                      <button onClick={() => { setIsCreatingQuestion(true); setNewQnaContent(''); }} className="text-sm bg-[#8d6a44] text-white px-3 py-1 rounded-full font-bold hover:bg-[#7c5935]">
+                        질문하기
+                      </button>
+                    )}
+                    {(selectedQuestion || isCreatingQuestion || isEditingQuestion) && (
+                      <button onClick={() => { setSelectedQuestion(null); setIsCreatingQuestion(false); setIsEditingQuestion(false); }} className="text-sm text-[#8d6a44] font-bold hover:underline">
                       ← 학생 목록으로
-                    </button>
-                  )}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                {isTeacher ? (
-                  /* 교사 화면 */
-                  selectedQuestion ? (
-                    <div className="space-y-4">
-                      <div className="bg-[#fcf7f0] p-6 rounded-2xl border border-[#ecd6b7] shadow-sm">
-                        <p className="text-xs font-bold text-[#8d6a44] mb-2">{selectedQuestion.studentName} 학생의 질문 (수정 불가)</p>
-                        <div className="text-[#3d2b1f] text-lg leading-relaxed whitespace-pre-wrap">{selectedQuestion.content}</div>
-                      </div>
-                      <div className="bg-white p-4 rounded-xl border border-[#e6d1a7]">
-                        <textarea 
-                          placeholder={selectedQuestion.answer ? "기존 답변을 수정합니다..." : "답변을 입력하세요 (작은 박스)"}
-                          rows={3}
-                          className="w-full rounded-lg border-none p-2 text-sm focus:ring-0 resize-none"
-                          value={teacherAnswer}
-                          onChange={(e) => setTeacherAnswer(e.target.value)}
-                        />
-                        <div className="flex justify-end mt-2">
-                          <button 
-                            onClick={() => handleAnswerSubmit(selectedQuestion.queid, selectedVideo.lid)}
-                            className="rounded-full bg-[#3d2b1f] px-4 py-2 text-xs font-bold text-white hover:bg-black"
-                          >
-                            {selectedQuestion.answer ? "답변 수정" : "답변 저장"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {questionList.filter(q => q.lid === selectedVideo.lid).length > 0 ? (
-                        questionList.filter(q => q.lid === selectedVideo.lid).map((qna) => (
-                          <div 
-                            key={qna.queid} 
-                            onClick={() => setSelectedQuestion(qna)}
-                            className="relative cursor-pointer rounded-2xl border border-[#f0debe] bg-[#fdfaf5] p-4 text-center transition hover:border-[#8d6a44] hover:shadow-md"
-                          >
-                            {qna.answer && <span className="absolute top-2 right-2 bg-green-500 text-white text-[8px] px-1.5 py-0.5 rounded-full">답변완료</span>}
-                            <div className="text-2xl mb-1">👤</div>
-                            <div className="font-bold text-[#3d2b1f] text-sm">{qna.studentName || "익명 학생"}</div>
-                            <div className="text-[10px] text-[#7b6346] mt-1 truncate">{qna.content}</div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="col-span-full text-center py-8 text-[#7b6346] italic">아직 도착한 질문이 없습니다.</p>
-                      )}
-                    </div>
-                  )
-                ) : (
-                  /* 학생 화면 */
+                {/* QnA 본문 영역 분기 */}
+                {isCreatingQuestion && !isTeacher ? (
+                  /* 학생: 새 질문 작성/수정 모드 */
                   <div className="space-y-6">
                     <div className="bg-[#fcf7f0] p-6 rounded-2xl border-2 border-[#8d6a44] shadow-md">
-                      <label className="block text-xs font-bold text-[#8d6a44] mb-2">질문 및 메모 (수정 후 저장 버튼을 누르세요)</label>
+                      <label className="block text-xs font-bold text-[#8d6a44] mb-2">질문 및 메모 작성</label>
                       <textarea 
                         placeholder="강의에 대해 궁금한 점이나 메모를 남겨주세요."
-                        rows={8}
+                        rows={6}
                         className="w-full bg-transparent border-none text-[#3d2b1f] placeholder-[#a68d71] text-lg focus:ring-0 resize-none"
                         value={newQnaContent}
                         onChange={(e) => setNewQnaContent(e.target.value)}
@@ -1831,19 +1944,107 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                       <div className="flex justify-end mt-4">
                         <button 
                           onClick={handleSaveStudentQuestion}
-                          className="rounded-full bg-[#8d6a44] px-8 py-3 text-sm font-bold text-white hover:bg-[#7c5935] shadow-lg transition-transform active:scale-95"
+                          className="rounded-full bg-[#8d6a44] px-8 py-2 text-sm font-bold text-white hover:bg-[#7c5935] shadow-lg transition-transform active:scale-95"
                         >
-                          질문 저장하기
+                          저장하기
                         </button>
                       </div>
                     </div>
-                    {currentStudentQuestion?.answer && (
-                      <div className="bg-white p-4 rounded-xl border border-[#e6d1a7] shadow-sm animate-in fade-in slide-in-from-bottom-2">
-                        <label className="block text-[10px] font-bold text-[#8d6a44] mb-1">선생님 답변 (수정 불가)</label>
-                        <div className="text-sm text-[#3d2b1f] p-3 bg-[#fcf7f0] rounded-lg border border-[#f0debe] whitespace-pre-wrap">
-                          {currentStudentQuestion.answer.content}
+                  </div>
+                ) : selectedQuestion ? (
+                  /* 공통: 질문 상세 보기 (교사는 답변 가능) */
+                    <div className="space-y-4">
+                      <div className="bg-[#fcf7f0] p-6 rounded-2xl border border-[#ecd6b7] shadow-sm">
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="text-xs font-bold text-[#8d6a44]">질문 내용 (익명)</p>
+                          {/* 작성자 본인인 경우 수정/삭제 버튼 노출 */}
+                          {!isTeacher && selectedQuestion.sid === studentId && !isEditingQuestion && (
+                            <div className="flex gap-2">
+                              <button 
+                                onClick={() => { setIsEditingQuestion(true); setNewQnaContent(selectedQuestion.content); }}
+                                className="text-[10px] text-blue-600 font-bold hover:underline"
+                              >
+                                수정
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteQuestion(selectedQuestion.queid)}
+                                className="text-[10px] text-red-600 font-bold hover:underline"
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          )}
                         </div>
+                        
+                        {isEditingQuestion ? (
+                          <div className="space-y-2">
+                            <textarea 
+                              className="w-full bg-white border border-[#e6d1a7] rounded-lg p-2 text-sm focus:ring-0 resize-none"
+                              rows={4}
+                              value={newQnaContent}
+                              onChange={(e) => setNewQnaContent(e.target.value)}
+                            />
+                            <div className="flex justify-end">
+                              <button onClick={() => handleUpdateStudentQuestion(selectedQuestion.queid)} className="bg-[#8d6a44] text-white px-3 py-1 rounded text-xs font-bold">
+                                수정 완료
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-[#3d2b1f] text-lg leading-relaxed whitespace-pre-wrap">{selectedQuestion.content}</div>
+                        )}
                       </div>
+                      
+                      {/* 답변 영역 */}
+                      {(selectedQuestion.answer || isTeacher) && (
+                        <div className="bg-white p-4 rounded-xl border border-[#e6d1a7] shadow-sm">
+                          <label className="block text-[10px] font-bold text-[#8d6a44] mb-1">선생님 답변</label>
+                          {isTeacher ? (
+                            <>
+                              <textarea 
+                                placeholder="답변을 입력하세요..."
+                                rows={3}
+                                className="w-full rounded-lg border-none p-2 text-sm focus:ring-0 resize-none bg-[#fcf7f0]"
+                                value={teacherAnswer}
+                                onChange={(e) => setTeacherAnswer(e.target.value)}
+                              />
+                              <div className="flex justify-end mt-2">
+                                <button 
+                                  onClick={() => handleAnswerSubmit(selectedQuestion.queid, selectedVideo.lid)}
+                                  className="rounded-full bg-[#3d2b1f] px-4 py-1.5 text-xs font-bold text-white hover:bg-black"
+                                >
+                                  {selectedQuestion.answer ? "답변 수정" : "답변 저장"}
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-sm text-[#3d2b1f] p-3 bg-[#fcf7f0] rounded-lg border border-[#f0debe] whitespace-pre-wrap">
+                              {selectedQuestion.answer?.content}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                ) : (
+                  /* 공통: 질문 목록 보기 */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {questionList.filter(q => q.lid === selectedVideo.lid).length > 0 ? (
+                      questionList.filter(q => q.lid === selectedVideo.lid).map((qna) => (
+                        <div 
+                          key={qna.queid} 
+                          onClick={() => setSelectedQuestion(qna)}
+                          className="relative cursor-pointer rounded-xl border border-[#f0debe] bg-[#fdfaf5] p-4 transition hover:border-[#8d6a44] hover:shadow-md flex items-center gap-3"
+                        >
+                          {qna.answer && (
+                            <span className="shrink-0 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full">답변완료</span>
+                          )}
+                          <div className="text-sm text-[#7b6346] truncate flex-1">
+                            {qna.content}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="col-span-full text-center py-8 text-[#7b6346] italic">등록된 질문이 없습니다.</p>
                     )}
                   </div>
                 )}

@@ -24,6 +24,8 @@ export default function CurrentExams() {
     const { user, loading: userLoading } = useUser();
     const [exams, setExams] = useState<Exam[]>([]);
     const [examSetName, setExamSetName] = useState<string>("시험 목록");
+    const [examSetStatus, setExamSetStatus] = useState<string>("");
+    const [grades, setGrades] = useState<Record<number, number | null>>({});
 
     useEffect(() => {
         if (userLoading || !user) {
@@ -54,6 +56,7 @@ export default function CurrentExams() {
         })
             .then((res) => res.json())
             .then((data) => {
+                setExamSetStatus(data.status);
                 setExamSetName(data.name);
             })
             .catch((err) => console.error("ExamSet 정보 로드 실패:", err));
@@ -133,7 +136,13 @@ export default function CurrentExams() {
                                             </button>
                                         </Link>
                                     ) : (
-                                        <span className="text-sm text-[#8d6a44] font-medium italic">응시하기</span>
+                                        examSetStatus === "종료" ? (
+                                            <span className="text-sm text-[#8d6a44] font-bold">
+                                                {grades[exam.eid] !== undefined && grades[exam.eid] !== null ? grades[exam.eid] : 0}점
+                                            </span>
+                                        ) : (
+                                            <span className="text-sm text-[#8d6a44] font-medium italic">응시하기</span>
+                                        )
                                     )}
                                 </li>
                             ))}

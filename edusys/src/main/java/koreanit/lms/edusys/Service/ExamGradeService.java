@@ -105,9 +105,13 @@ public class ExamGradeService {
         return examGradeRepository.save(examGrade);
     }
 
-    // 시험 세트 내 모든 문제의 점수를 합산하여 반환
+    // 시험 세트 내 모든 문제의 점수를 합산하여 평균(100점 만점 기준)으로 반환
     public Integer calculateTotalScore(Integer esid, Integer sid) {
         List<koreanit.lms.edusys.Entity.Exam> exams = examService.findAllExamsByExamSet(esid);
+        if (exams == null || exams.isEmpty()) {
+            return 0;
+        }
+
         int total = 0;
         for (koreanit.lms.edusys.Entity.Exam exam : exams) {
             Optional<ExamGrade> grade = findExamGradeByExamAndStudent(exam.getEid(), sid);
@@ -117,6 +121,6 @@ public class ExamGradeService {
                 } catch (NumberFormatException ignored) {}
             }
         }
-        return total;
+        return total / exams.size();
     }
 }
