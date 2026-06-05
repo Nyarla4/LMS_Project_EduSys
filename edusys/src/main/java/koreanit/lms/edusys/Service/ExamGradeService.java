@@ -70,6 +70,19 @@ public class ExamGradeService {
         grade.setAnswer(dto.getAnswer());
         
         if (grade.getEgid() == null) grade.setScore(""); // 신규 생성시에만 점수 초기화
+
+        // 객관식 문제의 경우 제출된 답안과 정답을 비교하여 점수 자동 채점
+        if (exam.getObjectiveOption1() != null && (dto.getAnswer().contains("1"))) {
+            grade.setScore("100");
+        } else if (exam.getObjectiveOption2() != null && (dto.getAnswer().contains("2"))) {
+            grade.setScore("100");
+        } else if (exam.getObjectiveOption3() != null && (dto.getAnswer().contains("3"))) {
+            grade.setScore("100");
+        } else if (exam.getObjectiveOption4() != null && (dto.getAnswer().contains("4"))) {
+            grade.setScore("100");
+        } else {
+            grade.setScore("0");
+        }
         
         examGradeRepository.save(grade);
     }

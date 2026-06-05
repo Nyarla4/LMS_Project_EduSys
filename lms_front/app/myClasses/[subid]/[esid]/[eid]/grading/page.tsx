@@ -32,6 +32,7 @@ export default function GradingExam() {
     const [exam, setExam] = useState<Exam>();
     const [grades, setGrades] = useState<Grade[]>([]);
     const [isAiLoading, setIsAiLoading] = useState(false);
+    const [gradingEgid, setGradingEgid] = useState<number | null>(null);
 
     useEffect(() => {
         if (userLoading || !user) return;
@@ -128,7 +129,7 @@ export default function GradingExam() {
 
     const handleAiGrade = async (eid: number, answer: string, egid: number) => {
         setIsAiLoading(true);
-
+        setGradingEgid(egid); // 채점 중인 답안의 egid 상태 업데이트
         const url = `http://localhost:8080/api/ai/grade-exam/${eid}`;
 
         try {
@@ -251,7 +252,7 @@ export default function GradingExam() {
                                                         disabled={isAiLoading}
                                                         onClick={(e) => handleAiGrade(grade.eid, grade.answer, grade.egid)}
                                                         className={`px-3 py-1 rounded text-sm border-[#b89b7a] border font-bold transition-colors ${isAiLoading
-                                                                ? "bg-[#dbc7b1]/60 text-[#5c4033]/60 cursor-not-allowed" // 로딩 중 스타일 (색상 연해짐)
+                                                                ? "bg-[#dbc7b1]/60 text-[#5c4033]/"+(gradingEgid !== grade.egid ? "60" : "1")+" cursor-not-allowed" // 로딩 중 스타일 (색상 연해짐)
                                                                 : "bg-[#dbc7b1] text-[#5c4033] hover:bg-[#8b5e3c] hover:text-white cursor-pointer" // 활성화 스타일
                                                             }`}
                                                     >
