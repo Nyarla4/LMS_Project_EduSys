@@ -27,6 +27,7 @@ export default function Exam() {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState<Exam | null>(null);
     const [isObjective, setIsObjective] = useState(false);
+    const [isExamSetCompleted, setIsExamSetCompleted] = useState(false);
     const [submittedGrade, setSubmittedGrade] = useState<{answer: string, score: string} | null>(null);
 
     const profile = user?.user || user;
@@ -46,6 +47,19 @@ export default function Exam() {
         })
             .then((res) => res.json())
             .then((data) => {
+
+                fetch(`http://localhost:8080/api/examsets/${data.esid}`, {
+                    headers: {
+                        "Authorization": `Bearer ${localStorage.getItem("token")}`
+                    }
+                })
+                .then((res) => res.json())
+                .then((examSetData) => {
+                    if(examSetData.status === "종료") {
+                        setIsExamSetCompleted(true);
+                    }
+                });
+
                 setExam(data);
                 // 학생인 경우 답안란을 비워서 초기화합니다.
                 setFormData(isTeacher ? data : { ...data, answer: "" });
@@ -260,11 +274,11 @@ export default function Exam() {
                                         {/* 5. 선택 버튼 스타일로 정답 토글 구현 */}
                                         <button
                                             type="button"
-                                            disabled={isTeacher && !isEditing}
+                                            disabled={(isTeacher && !isEditing) || isExamSetCompleted} // 교사는 수정 모드에서만, 학생은 시험 완료 전까지 선택 가능
                                             onClick={() => setFormData({ ...formData, answer: num.toString() })}
                                             className={`px-3 py-1.5 rounded text-sm border-[#b89b7a] border font-bold whitespace-nowrap transition-colors ${
                                                 isSelectedAnswer ? "bg-[#8b5e3c] text-white" : "bg-[#dbc7b1] text-[#5c4033]"
-                                            } ${isTeacher && !isEditing ? "opacity-80" : ""}`}
+                                            } ${((isTeacher && !isEditing) || isExamSetCompleted) ? "opacity-80" : ""}`}
                                         >
                                             {num}번 {isSelectedAnswer ? (isTeacher ? "정답 지정됨" : "선택함") : (isTeacher ? "정답으로 선택" : "선택하기")}
                                         </button>
@@ -288,8 +302,8 @@ export default function Exam() {
                                 placeholder={isTeacher ? "정답기준이 될 주관식 답안 내용을 입력하세요" : "답안을 작성하세요"}
                                 value={formData.answer}
                                 onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
-                                readOnly={isTeacher && !isEditing}
-                                className={`border-[#b89b7a] border rounded px-3 py-2 transition-all h-40 resize-none text-lg focus:outline-none focus:ring-2 focus:ring-[#8b5e3c] ${isTeacher && !isEditing ? "bg-[#f5f1e8]" : "bg-white"}`}
+                                readOnly={(isTeacher && !isEditing) || isExamSetCompleted} // 교사는 수정 모드에서만, 학생은 시험 완료 전까지 수정 가능
+                                className={`border-[#b89b7a] border rounded px-3 py-2 transition-all h-40 resize-none text-lg focus:outline-none focus:ring-2 focus:ring-[#8b5e3c] ${((isTeacher && !isEditing) || isExamSetCompleted) ? "bg-[#f5f1e8]" : "bg-white"}`}
                             />
                         </div>
                     )}
