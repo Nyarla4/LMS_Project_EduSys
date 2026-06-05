@@ -28,6 +28,9 @@ export default function Exam() {
     const [formData, setFormData] = useState<Exam | null>(null);
     const [isObjective, setIsObjective] = useState(false);
     const [isExamSetCompleted, setIsExamSetCompleted] = useState(false);
+    const [isAiLoading, setIsAiLoading] = useState(false);
+    const [showIncorrectNote, setShowIncorrectNote] = useState(false);
+    const [incorrectNote, setIncorrectNote] = useState("");
     const [submittedGrade, setSubmittedGrade] = useState<{answer: string, score: string} | null>(null);
 
     const profile = user?.user || user;
@@ -161,6 +164,43 @@ export default function Exam() {
             }
         })
         .catch(err => console.error("제출 실패:", err));
+    };
+
+    const aiIncorrectNote = async (eid: number) => {
+        setIsAiLoading(true);
+        const url = `http://localhost:8080/api/ai/incorrect-note/${eid}`;
+
+        try {
+            const res = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ answer: formData?.answer }), // 단축 속성명(Shorthand) 적용
+            });
+
+            // 1. HTTP 응답 상태가 정상(2xx)이 아닐 경우 예외 처리
+            if (!res.ok) {
+                throw new Error(`서버 응답 실패 (상태코드: ${res.status})`);
+            }
+
+            // 2. 비동기로 JSON 파싱 완료 후 데이터 확보
+            const data = await res.json(); // 데이터 구조: { analysis: string, core_concept: string, tip: string }
+
+            // alert(`AI가 오답 분석을 완료했습니다. \n\n[분석 결과]\n${data.analysis}`);
+            setIncorrectNote(`[AI 오답 분석]\n분석: ${data.analysis}\n핵심 개념: ${data.core_concept}\n팁: ${data.tip}`);
+            setShowIncorrectNote(true);
+            console.log("AI 오답 분석 결과:", `분석: ${data.analysis}, 핵심 개념: ${data.core_concept}, 팁: ${data.tip}`);
+
+        } catch (err) {
+            // 4. 네트워크 에러 및 throw된 에러들을 이곳에서 한 번에 캐치
+            console.error("로딩 실패 또는 채점 오류:", err);
+            alert("AI 채점 중 오류가 발생했습니다. 다시 시도해주세요.");
+        } finally {
+            // 5. 성공/실패 여부와 상관없이 무조건 로딩 상태 해제
+            setIsAiLoading(false);
+        }
     };
 
     if (userRole === "T" && !user?.approved) {
@@ -310,6 +350,15 @@ export default function Exam() {
 
                     {/* 하단 제어 버튼 컴포넌트 분기 */}
                     <div className="flex justify-end gap-4 mt-4">
+                        {!isTeacher && isExamSetCompleted && incorrectNote.length > 0 && (
+                            <button
+                            type="button"
+                            onClick={() => setShowIncorrectNote(!showIncorrectNote)}
+                            className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-8 py-2 rounded text-lg font-bold shadow-md transition-all active:scale-95"
+                        >
+                            오답노트
+                        </button>
+                        )}
                         {isTeacher ? (
                             !isEditing ? (
                             <>
@@ -342,16 +391,42 @@ export default function Exam() {
                             </>
                             )
                         ) : (
+                            !isExamSetCompleted ? (
                             <button
                                 type="button"
                                 onClick={handleSubmit}
                                 className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-10 py-2 rounded text-lg font-bold shadow-md transition-all active:scale-95"
                             >
                                 제출하기
-                            </button>
+                            </button>)
+                            : (
+                            <button
+                                type="button"
+                                onClick={() => aiIncorrectNote(Number.parseInt(eid!.toString()))}
+                                disabled={isAiLoading}
+                                className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-10 py-2 rounded text-lg font-bold shadow-md transition-all active:scale-95"
+                            >
+                                {isAiLoading ? "작성 중..." : "AI 오답노트"}
+                            </button>)
                         )}
                     </div>
                 </div>
+                {showIncorrectNote && (
+                    <div className="mt-6 rounded-2xl bg-white p-6 border border-[#e6d1a7] shadow-inner animate-in slide-in-from-top duration-300">
+                        <div className="space-y-6">
+                            <div className="bg-[#fcf7f0] p-6 rounded-2xl border-2 border-[#8d6a44] shadow-md">
+                                <label className="block text-xs font-bold text-[#8d6a44] mb-2">오답 노트</label>
+                                <textarea
+                                    placeholder="오답노트가 작성되기 전까지는 보이면 안됩니다."
+                                    rows={8}
+                                    className="w-full bg-transparent border-none text-[#3d2b1f] placeholder-[#a68d71] text-lg focus:ring-0 resize-none"
+                                    value={incorrectNote}
+                                    onChange={(e) => setIncorrectNote(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

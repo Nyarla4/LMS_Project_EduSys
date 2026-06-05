@@ -37,6 +37,11 @@ class GradeRequest(BaseModel):
     correct_answer: str    # 모범 답안
     student_answer: str    # 학생 제출 답안
 
+class IncorrectNoteRequest(BaseModel):
+    question: str          # 문제 내용
+    correct_answer: str    # 모범 답안
+    student_answer: str    # 학생 제출 답안
+
 class GenerateExamResponse(BaseModel):
     question: str
     objectiveOption1: str = ""
@@ -236,3 +241,56 @@ def grade_subjective(request: GradeRequest):
         "score": score,
         "reason": reason
     }
+
+# ==========================================
+# [흐름 4] 오답노트 생성 (LLM 활용 오답 분석 및 피드백)
+# ==========================================
+@app.post("/api/exam/incorrect-note")
+def generate_incorrect_note(request: IncorrectNoteRequest):
+    # 1. JSON 출력을 유도하는 프롬프트 작성 (f-string 중괄호 {{ }} 두 번 사용)
+    prompt = f"""
+    당신은 학생의 성장을 돕는 친절하고 전문적인 학습 멘토입니다.
+    제시된 문제, 모범 답안, 그리고 학생의 제출 답안을 비교 분석하여 학생을 위한 맞춤형 '오답노트'를 작성하세요.
+    
+    응답은 반드시 아래의 JSON 형식과 동일해야 하며, 다른 부연 설명이나 텍스트는 포함하지 마세요.
+    {{
+        "analysis": "학생이 어느 부분에서 오해했거나 어떤 개념을 놓쳤는지 세부적으로 분석한 내용",
+        "core_concept": "이 문제를 해결하기 위해 반드시 기억해야 하는 핵심 개념이나 이론 정리",
+        "tip": "다음번에 유사한 문제를 틀리지 않기 위한 구체적인 공부 방법 및 학습 팁"
+    }}
+
+    문제: {request.question}
+    모범 답안: {request.correct_answer}
+    학생 답안: {request.student_answer}
+    """
+
+    # 2. format='json' 옵션을 추가하여 Ollama가 JSON으로만 응답하도록 강제
+    # (약간의 서술적 다양성을 위해 채점 때보다 temperature를 0.5로 조금 높였습니다)
+    try:
+        response = ollama.chat(
+            model='qwen2.5:3b', 
+            messages=[{'role': 'user', 'content': prompt}], 
+            options={'temperature': 0.5},
+            format='json' 
+        )
+        
+        response_text = response['message']['content'].strip()
+        result = json.loads(response_text)
+        
+        # 3. 데이터 추출 및 공백 제거
+        analysis = result.get("analysis", "").strip()
+        core_concept = result.get("core_concept", "").strip()
+        tip = result.get("tip", "").strip()
+        
+        return {
+            "analysis": analysis,
+            "core_concept": core_concept,
+            "tip": tip
+        }
+        
+    # 4. JSON 파싱 및 예외 처리
+    except (json.JSONDecodeError, Exception) as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"오답노트 생성 중 에러가 발생했거나 응답을 파싱하지 못했습니다. 에러: {str(e)}"
+        )
