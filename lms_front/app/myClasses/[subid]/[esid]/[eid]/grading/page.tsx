@@ -2,7 +2,7 @@
 "use client"
 
 import { useUser } from "@/app/userContext";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface Exam {
@@ -26,8 +26,11 @@ interface Grade {
 }
 
 export default function GradingExam() {
-    const param = useParams();
-    const eid = param.eid;
+    const router = useRouter();
+    const params = useParams();
+    const eid = params.eid;
+    const subid = params.subid;
+    const esid = params.esid;
     const { user, loading: userLoading } = useUser();
     const [exam, setExam] = useState<Exam>();
     const [grades, setGrades] = useState<Grade[]>([]);
@@ -169,6 +172,15 @@ export default function GradingExam() {
     return (
         <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10">
             <div className="w-full max-w-7xl flex flex-col gap-6 px-10 mt-10">
+
+                {/* 뒤로 가기 버튼 추가 */}
+                <button 
+                    onClick={() => router.push(`/myClasses/${subid}/${esid}`)}
+                    className="flex items-center gap-2 text-[#8d6a44] font-bold hover:text-[#3d2b1f] transition-all group w-fit"
+                >
+                    <span className="inline-block transition-transform group-hover:-translate-x-1">←</span> 
+                    시험 목록으로 돌아가기
+                </button>
 
                 <p className="text-4xl font-bold text-center mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">
                     시험 채점 관리

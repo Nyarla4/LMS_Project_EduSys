@@ -294,9 +294,16 @@ export default function Exam() {
                                 </>
                             ) : (
                                 // 학생은 현재 문제의 유형만 뱃지 형태로 표시
-                                <span className="px-4 py-2 rounded text-sm border-[#b89b7a] border font-bold bg-[#8b5e3c] text-white">
-                                    {isObjective ? "객관식" : "주관식"}
-                                </span>
+                                <div className="flex items-center justify-between w-full">
+                                    <span className="px-4 py-2 rounded text-sm border-[#b89b7a] border font-bold bg-[#8b5e3c] text-white">
+                                        {isObjective ? "객관식" : "주관식"}
+                                    </span>
+                                    {isExamSetCompleted && (
+                                        <span className="text-xl font-bold text-[#8b5e3c]">
+                                            {submittedGrade?.score ? `${submittedGrade.score}점` : "미채점"}
+                                        </span>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </div>

@@ -25,12 +25,16 @@ export default function CurrentExams() {
     const [exams, setExams] = useState<Exam[]>([]);
     const [examSetName, setExamSetName] = useState<string>("시험 목록");
     const [examSetStatus, setExamSetStatus] = useState<string>("");
-    const [grades, setGrades] = useState<Record<number, number | null>>({});
+    const [grades, setGrades] = useState<Record<number, string | null>>({});
 
     useEffect(() => {
         if (userLoading || !user) {
             return;
         }
+
+        const profile = user?.user || user;
+        const userRole = profile?.usertype;
+        const studentId = userRole === "S" ? (user?.sid || profile?.userid || profile?.id) : null;
 
         // 1. esid에 해당하는 시험 목록 가져오기
         const url = `http://localhost:8080/api/exams/examset/${esid}`;
@@ -43,6 +47,21 @@ export default function CurrentExams() {
             .then((res) => res.json())
             .then((data) => {
                 setExams(data);
+                
+                // 학생인 경우 각 문제에 대한 본인의 점수 정보를 가져옵니다.
+                if (userRole === "S" && studentId) {
+                    data.forEach((exam: Exam) => {
+                        fetch(`http://localhost:8080/api/exams/grade/${exam.eid}/student/${studentId}`, {
+                            headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+                        })
+                        .then(res => res.ok ? res.json() : null)
+                        .then(gradeData => {
+                            if (gradeData) {
+                                setGrades(prev => ({ ...prev, [exam.eid]: gradeData.score }));
+                            }
+                        });
+                    });
+                }
             })
             .catch((err) => {
                 console.error("로드 실패:", err);
@@ -138,7 +157,7 @@ export default function CurrentExams() {
                                     ) : (
                                         examSetStatus === "종료" ? (
                                             <span className="text-sm text-[#8d6a44] font-bold">
-                                                {grades[exam.eid] !== undefined && grades[exam.eid] !== null ? grades[exam.eid] : 0}점
+                                                {grades[exam.eid] ? `${grades[exam.eid]}점` : "미채점"}
                                             </span>
                                         ) : (
                                             <span className="text-sm text-[#8d6a44] font-medium italic">응시하기</span>
