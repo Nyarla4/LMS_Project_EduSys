@@ -4,11 +4,14 @@ import koreanit.lms.edusys.Dto.ExamDTO;
 import koreanit.lms.edusys.Service.AIService;
 import koreanit.lms.edusys.Service.AIService.ExamGradeResponse;
 import koreanit.lms.edusys.Service.AIService.IncorrectNoteResponse;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
+import java.time.LocalDate;
+
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PathVariable;
 
 
 @RestController
@@ -32,9 +35,17 @@ public class AIController {
         return result;
     }
 
+    @Getter
+    @Setter
+    @ToString
+    public static class IncorrectNoteRequest {
+        private String answer;
+        private String score;
+    }
+
     @PutMapping("/incorrect-note/{eid}")
-    public IncorrectNoteResponse incorrectNote(@PathVariable Integer eid, @RequestBody String answer) {
-        IncorrectNoteResponse result = aiService.noteExam(eid, answer);
+    public IncorrectNoteResponse incorrectNote(@PathVariable Integer eid, @RequestBody IncorrectNoteRequest request) {
+        IncorrectNoteResponse result = aiService.noteExam(eid, request.answer, request.score);
         if(result.analysis().isEmpty()) {
             throw new IllegalArgumentException("시험이 존재하지 않습니다. ID: " + eid);
         }

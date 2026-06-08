@@ -177,7 +177,12 @@ export default function Exam() {
                     "Authorization": `Bearer ${localStorage.getItem("token")}`,
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ answer: formData?.answer }), // 단축 속성명(Shorthand) 적용
+                body: JSON.stringify(
+                    {
+                        answer: formData?.answer,
+                        score: submittedGrade?.score
+                    }
+                )
             });
 
             // 1. HTTP 응답 상태가 정상(2xx)이 아닐 경우 예외 처리

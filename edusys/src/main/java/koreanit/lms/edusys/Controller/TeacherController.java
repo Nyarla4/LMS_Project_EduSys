@@ -37,12 +37,16 @@ public class TeacherController {
     @GetMapping("/unApproved")
     public ResponseEntity<List<Teacher>> getUnapprovedTeachers() {
         List<Teacher> unapprovedTeachers = teacherService.findUnapprovedTeachers();
+        unapprovedTeachers = unapprovedTeachers.stream()
+                .filter(t -> t.getUser() != null && t.getUser().getLoginid() != null).toList();
         return ResponseEntity.ok(unapprovedTeachers);
     }
 
     @GetMapping("/approved")
     public ResponseEntity<List<Teacher>> getApprovedTeachers() {
         List<Teacher> approvedTeachers = teacherService.findApprovedTeachers();
+        approvedTeachers = approvedTeachers.stream()
+                .filter(t -> t.getUser() != null && t.getUser().getLoginid() != null).toList();
         return ResponseEntity.ok(approvedTeachers);
     }
     

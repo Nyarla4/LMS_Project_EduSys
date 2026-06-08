@@ -51,7 +51,7 @@ public class AIService {
     public record ExamGradeResponse(Integer score, String reason) {
     }
 
-    private record IncorrectNoteRequest(String question, String correct_answer, String student_answer) {
+    private record IncorrectNoteRequest(String question, String correct_answer, String student_answer, String score) {
     }
 
     public record IncorrectNoteResponse(String analysis, String core_concept, String tip) {
@@ -59,7 +59,9 @@ public class AIService {
 
     @Transactional
     public ExamDTO createExamFromAI(Integer esid, Boolean isObjective) {
-
+        if(esid == null) {
+            throw new IllegalArgumentException("시험지 ID(esid)는 필수입니다.");
+        }
         // 1. 대상 시험지(ExamSet) 및 과목 검증
         ExamSet examSet = examSetRepository.findById(esid)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 시험지입니다. ID: " + esid));
@@ -174,7 +176,7 @@ public class AIService {
         }
     }
 
-    public IncorrectNoteResponse noteExam(Integer eid, String answer) {
+    public IncorrectNoteResponse noteExam(Integer eid, String answer, String score) {
         Optional<Exam> examOptional = examService.findExamById(eid);
         if (examOptional.isEmpty()) {
             // 기존의 -1 반환 대신, 구조에 맞게 에러 응답 객체 반환 (혹은 예외 throw 추천)
@@ -222,7 +224,7 @@ public class AIService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        IncorrectNoteRequest requestBody = new IncorrectNoteRequest(question, correctAnswer, submitAnswer);
+        IncorrectNoteRequest requestBody = new IncorrectNoteRequest(question, correctAnswer, submitAnswer, score);
         HttpEntity<IncorrectNoteRequest> requestEntity = new HttpEntity<>(requestBody, headers);
 
         try {
