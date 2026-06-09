@@ -7,8 +7,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,8 +23,26 @@ public class LessonService {
     @Transactional(readOnly = true)
     public List<Lesson> findAllLessons() {
         List<Lesson> lessons = lessonRepository.findAll();
-        lessons.forEach(this::calculateAndSetWeek);
+        calculateWeeksInBulk(lessons);
         return lessons;
+    }
+
+    /**
+     * 리스트로 조회 시 N+1 쿼리 문제를 방지하기 위해 메모리 상에서 주차를 계산합니다.
+     */
+    private void calculateWeeksInBulk(List<Lesson> lessons) {
+        if (lessons == null || lessons.isEmpty()) return;
+
+        Map<Integer, List<Lesson>> groupedBySubject = lessons.stream()
+                .filter(l -> l.getSubject() != null)
+                .collect(Collectors.groupingBy(l -> l.getSubject().getSubid()));
+
+        groupedBySubject.values().forEach(subjectLessons -> {
+            subjectLessons.sort(Comparator.comparing(Lesson::getLid));
+            for (int i = 0; i < subjectLessons.size(); i++) {
+                subjectLessons.get(i).setWeek(i + 1);
+            }
+        });
     }
 
     @Transactional(readOnly = true)
@@ -35,14 +56,14 @@ public class LessonService {
     @Transactional(readOnly = true)
     public List<Lesson> findLessonsBySubjectId(Integer subid) {
         List<Lesson> lessons = lessonRepository.findBySubjectSubid(subid);
-        lessons.forEach(this::calculateAndSetWeek);
+        calculateWeeksInBulk(lessons);
         return lessons;
     }
 
     @Transactional(readOnly = true)
     public List<Lesson> findLessonsByTeacherId(Integer tid) {
         List<Lesson> lessons = lessonRepository.findBySubjectTeacherTid(tid);
-        lessons.forEach(this::calculateAndSetWeek);
+        calculateWeeksInBulk(lessons);
         return lessons;
     }
 

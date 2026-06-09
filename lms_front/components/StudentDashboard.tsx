@@ -117,7 +117,14 @@ function TabPanel({
   onAddExamSetClick,
   onEditVideo,
   onEditExamSet,
-  onDeleteExamSet
+  onDeleteExamSet,
+  isBatchEditMode,
+  selectedAttendanceLesson,
+  studentAttendanceList,
+  onToggleBatchEdit,
+  onSelectLessonForAttendance,
+  onUpdateAttendance,
+  onSaveAttendance
 }: { 
   activeTab: Tab; 
   lessons: Lesson[];
@@ -128,6 +135,13 @@ function TabPanel({
   progressMap: Record<number, number>;
   activeVideoId?: number;
   apiBase: string;
+  isBatchEditMode: boolean;
+  selectedAttendanceLesson: Lesson | null;
+  studentAttendanceList: any[];
+  onToggleBatchEdit: () => void;
+  onSelectLessonForAttendance: (lesson: Lesson | null) => void;
+  onUpdateAttendance: (sid: number, whether: boolean) => void;
+  onSaveAttendance: () => void;
   sessionBaseProgress: number;
   subjectInfo?: Subject | null;
   subjectId?: number | string; // subjectId 타입 확장
@@ -143,6 +157,36 @@ function TabPanel({
   onEditExamSet?: (examSet: ExamSet) => void;
   onDeleteExamSet?: (esid: number) => void;
 }) {
+  // 페이지네이션 상태 추가
+  const [attPage, setAttPage] = useState(1);
+  const [vidPage, setVidPage] = useState(1);
+  const [examPage, setExamPage] = useState(1);
+  const [assignPage, setAssignPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // 공통 페이지네이션 UI 컴포넌트
+  const PaginationUI = ({ current, total, onPageChange }: { current: number; total: number; onPageChange: (p: number) => void }) => {
+    const totalPages = Math.ceil(total / itemsPerPage);
+    if (totalPages <= 1) return null;
+    return (
+      <div className="mt-6 flex justify-center gap-2">
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <button
+            key={page}
+            onClick={() => onPageChange(page)}
+            className={`h-8 w-8 rounded-full text-xs font-bold transition ${
+              current === page
+                ? "bg-[#8d6a44] text-white shadow-md"
+                : "bg-[#f3e1bf] text-[#5c4326] hover:bg-[#e7cd9f]"
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
   const { user } = useUser();
   // 데이터 구조를 변수로 뽑아 가독성 높임 (학생/교사 객체 내의 user 또는 관리자 객체 자체)
   const profile = user?.user || user;
@@ -214,66 +258,142 @@ function TabPanel({
   if (activeTab === "출석 현황") {
     return (
       <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-[#3d2b1f]">출석 현황</h2>
-          {isTeacher && (
-            <button className="rounded-full bg-[#8d6a44] px-4 py-2 text-xs font-bold text-white hover:bg-[#7c5935]">
-              출석부 일괄 수정
-            </button>
-          )}
-        </div>
-        <div className="overflow-x-auto rounded-[28px] border border-[#f0debe] bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
-            <thead className="bg-[#f7ecd9] text-[#6d5b46]">
-              <tr>
-                 <th className="px-4 py-4">기간</th>
-                <th className="px-4 py-4">강의명</th>
-                <th className="px-4 py-4">상태</th>
-                <th className="px-4 py-4">비고</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#e9d7b0] bg-white">
-              {lessons.map((lesson) => {
-                // 강의 시작 날짜로부터 일주일(7일) 기간 계산
-                const startDate = new Date(lesson.date);
-                const endDate = new Date(startDate);
-                endDate.setDate(startDate.getDate() + 6);
-                
-                const formattedEndDate = endDate.toISOString().split('T')[0];
-                const dateRange = `${lesson.date} ~ ${formattedEndDate}`;
+        {!selectedAttendanceLesson ? (
+          <>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-2xl font-semibold text-[#3d2b1f]">출석 현황</h2>
+              {isTeacher && (
+                <button 
+                  onClick={onToggleBatchEdit}
+                  className={`rounded-full px-4 py-2 text-xs font-bold text-white transition ${isBatchEditMode ? "bg-rose-500 hover:bg-rose-600" : "bg-[#8d6a44] hover:bg-[#7c5935]"}`}
+                >
+                  {isBatchEditMode ? "수정 취소" : "출석부 일괄 수정"}
+                </button>
+              )}
+            </div>
+            {/* 페이지네이션 슬라이싱 적용 */}
+            <div className="overflow-x-auto rounded-[28px] border border-[#f0debe] bg-white shadow-sm">
+              <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
+                <thead className="bg-[#f7ecd9] text-[#6d5b46]">
+                  <tr>
+                    <th className="px-4 py-4">기간</th>
+                    <th className="px-4 py-4">강의명</th>
+                    <th className="px-4 py-4">상태</th>
+                    <th className="px-4 py-4">비고</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#e9d7b0] bg-white">
+                  {lessons.slice((attPage - 1) * itemsPerPage, attPage * itemsPerPage).map((lesson) => {
+                    const startDate = new Date(lesson.date);
+                    const endDate = new Date(startDate);
+                    endDate.setDate(startDate.getDate() + 6);
+                    const dateRange = `${lesson.date} ~ ${endDate.toISOString().split('T')[0]}`;
+                    const att = attendanceData.find(a => a.date === lesson.date);
+                    const video = videoList.find(v => v.lid === lesson.lid);
+                    const savedTime = progressMap[lesson.lid] || 0;
+                    const totalProgress = (activeVideoId === lesson.lid && sessionBaseProgress !== undefined)
+                      ? (sessionBaseProgress + currentSessionSeconds)
+                      : savedTime;
+                    const isPresentByVideo = video && video.duration > 0 && (totalProgress / video.duration) >= 0.9;
 
-                // 강의 날짜와 일치하는 출석 데이터를 찾습니다.
-                const att = attendanceData.find(a => a.date === lesson.date);
-
-                // 동영상 시청 진도율 확인 (90% 이상이면 출석 인정)
-                const video = videoList.find(v => v.lid === lesson.lid);
-                const savedTime = progressMap[lesson.lid] || 0;
-                // 현재 시청 중인 영상이라면 실시간 세션 시간 합산
-                const totalProgress = (activeVideoId === lesson.lid && sessionBaseProgress !== undefined)
-                  ? (sessionBaseProgress + currentSessionSeconds)
-                  : savedTime;
-                const isPresentByVideo = video && video.duration > 0 && (totalProgress / video.duration) >= 0.9;
-
-                return (
-                <tr key={lesson.lid} className="hover:bg-[#fff6eb]">
-                  <td className="px-4 py-4">{dateRange}</td>
-                  <td className="px-4 py-4">{lesson.name}</td>
-                  <td className="px-4 py-4">
-                    {isTeacher ? (
-                      <span className="text-gray-400 italic text-xs">수강생 전용 정보</span>
-                    ) : (
-                      <span className={(isPresentByVideo || (att && att.whether)) ? "text-blue-600 font-bold" : "text-red-600 font-bold"}>
-                      {isPresentByVideo || (att && att.whether) ? "출석" : "결석"}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-4">-</td>
-                </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    return (
+                      <tr key={lesson.lid} className="hover:bg-[#fff6eb]">
+                        <td className="px-4 py-4">{dateRange}</td>
+                        <td className="px-4 py-4">{lesson.name}</td>
+                        <td className="px-4 py-4">
+                          {isTeacher ? (
+                            <span className="text-gray-400 italic text-xs">수강생 전용 정보</span>
+                          ) : (
+                            <span className={(isPresentByVideo || (att && att.whether)) ? "text-red-600 font-bold" : "text-blue-600 font-bold"}>
+                              {isPresentByVideo || (att && att.whether) ? "출석" : "결석"}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          {isTeacher ? (
+                            isBatchEditMode ? (
+                              <button 
+                                onClick={() => onSelectLessonForAttendance(lesson)}
+                                className="rounded bg-[#3d2b1f] px-2 py-0.5 text-[10px] font-bold text-white hover:bg-black transition-colors"
+                              >
+                                학생별 관리
+                              </button>
+                            ) : (
+                              (() => {
+                                const lessonAttendances = attendanceData.filter(a => a.date === lesson.date);
+                                const presentCount = lessonAttendances.filter(a => a.whether).length;
+                                const absentCount = lessonAttendances.length - presentCount;
+                                return (
+                                  <span className="text-[11px] font-medium whitespace-nowrap">
+                                    <span className="text-red-600">출석: {presentCount}</span> / <span className="text-blue-600">결석: {absentCount}</span>
+                                  </span>
+                                );
+                              })()
+                            )
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <PaginationUI current={attPage} total={lessons.length} onPageChange={setAttPage} />
+          </>
+        ) : (
+          /* 학생별 출석 수정 모드 */
+          <>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-[#3d2b1f]">
+                <span className="text-[#8d6a44] mr-2">[{selectedAttendanceLesson.name}]</span> 
+                학생별 출석 수정
+              </h2>
+              <div className="flex gap-2">
+                <button onClick={() => onSelectLessonForAttendance(null)} className="rounded-full border border-[#8d6a44] px-4 py-2 text-xs font-bold text-[#8d6a44] hover:bg-[#f7ecd9]">취소</button>
+                <button onClick={onSaveAttendance} className="rounded-full bg-[#8d6a44] px-4 py-2 text-xs font-bold text-white hover:bg-[#7c5935] shadow-md">저장하기</button>
+              </div>
+            </div>
+            <div className="overflow-x-auto rounded-[28px] border border-[#f0debe] bg-white shadow-sm">
+              <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
+                <thead className="bg-[#f7ecd9] text-[#6d5b46]">
+                  <tr>
+                    <th className="px-4 py-4">학생명</th>
+                    <th className="px-4 py-4 text-center">비디오 시청 현황</th>
+                    <th className="px-4 py-4 text-center">출석 체크</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#e9d7b0] bg-white">
+                  {studentAttendanceList.length > 0 ? studentAttendanceList.map((record) => (
+                    <tr key={record.sid} className="hover:bg-[#fff6eb]">
+                      <td className="px-4 py-4 font-bold">{record.studentName}</td>
+                      <td className="px-4 py-4 text-center">
+                        {record.isPresentByVideo ? (
+                          <span className="text-blue-500 text-xs font-bold bg-blue-50 px-2 py-1 rounded-full border border-blue-100">시청완료</span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">미달성</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-center">
+                        <input 
+                          type="checkbox" 
+                          checked={record.whether}
+                          onChange={(e) => onUpdateAttendance(record.sid, e.target.checked)}
+                          className="w-5 h-5 accent-[#8d6a44] cursor-pointer"
+                        />
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-10 text-center text-gray-400">수강 중인 학생 정보가 없습니다.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </section>
     );
   }
@@ -294,7 +414,7 @@ function TabPanel({
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {videoList.length > 0 ? (
-            videoList.map((video) => {
+            videoList.slice((vidPage - 1) * itemsPerPage, vidPage * itemsPerPage).map((video) => {
               // 현재 재생 중인 영상은 (세션 시작 시점의 진도 + 현재 세션 시청 시간)으로 실시간 계산
               // 그 외 영상은 저장된 누적 시청 시간(progressMap)을 그대로 사용
               const savedTime = progressMap[video.lid] || 0;
@@ -359,6 +479,7 @@ function TabPanel({
             </p>
           )}
         </div>
+        <PaginationUI current={vidPage} total={videoList.length} onPageChange={setVidPage} />
       </section>
     );
   }
@@ -386,7 +507,7 @@ function TabPanel({
             </thead>
             <tbody className="divide-y divide-[#e9d7b0] bg-white">
               {exams.length > 0 ? (
-                exams.map((examSet) => {
+                exams.slice((examPage - 1) * itemsPerPage, examPage * itemsPerPage).map((examSet) => {
                   const canAccess = isTeacher || examSet.status === "진행중" || examSet.status === "종료";
                   return (
                   <tr
@@ -453,6 +574,7 @@ function TabPanel({
             </tbody>
           </table>
         </div>
+        <PaginationUI current={examPage} total={exams.length} onPageChange={setExamPage} />
       </section>
     );
   }
@@ -480,7 +602,7 @@ function TabPanel({
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e9d7b0] bg-white">
-            {assignments.length > 0 ? assignments.map((assignment) => {
+            {assignments.length > 0 ? assignments.slice((assignPage - 1) * itemsPerPage, assignPage * itemsPerPage).map((assignment) => {
               const isDeadlinePassed = !isTeacher && assignment.dueDate < todayStr;
               return (
               <tr 
@@ -513,6 +635,7 @@ function TabPanel({
           </tbody>
         </table>
       </div>
+      <PaginationUI current={assignPage} total={assignments.length} onPageChange={setAssignPage} />
     </section>
   );
 }
@@ -544,10 +667,16 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   const [progressMap, setProgressMap] = useState<Record<number, number>>({});
   const [sessionBaseProgress, setSessionBaseProgress] = useState(0); // 현재 시청 세션 시작 시점의 DB 진도
   const [currentSessionSeconds, setCurrentSessionSeconds] = useState(0); // 현재 세션 순수 시청 시간
+  const [qnaPage, setQnaPage] = useState(1); // QnA 전용 페이징 상태
   const [isPlaying, setIsPlaying] = useState(false);
   const [isAddAssignmentModalOpen, setIsAddAssignmentModalOpen] = useState(false);
   const [newAssignment, setNewAssignment] = useState({ title: '', dueDate: '' });
   
+  // 출석부 일괄 수정 관련 상태
+  const [isBatchEditMode, setIsBatchEditMode] = useState(false);
+  const [selectedAttendanceLesson, setSelectedAttendanceLesson] = useState<Lesson | null>(null);
+  const [studentAttendanceList, setStudentAttendanceList] = useState<any[]>([]);
+
   // 실시간 진도 추적을 위한 Refs (언마운트/종료 시점의 최신값 보장용)
   const sessionBaseProgressRef = useRef(0);
   const currentSessionSecondsRef = useRef(0);
@@ -565,7 +694,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   const [isAddVideoModalOpen, setIsAddVideoModalOpen] = useState(false);
   const [newVideo, setNewVideo] = useState({ name: '', date: '', url: '' });
 
-  const ytPlayerRef = useRef<any>(null); // 유튜브 플레이어 인스턴스 저장용 // Changed to ExamSet[]
+  const ytPlayerRef = useRef<any>(null); // 유튜브 플레이어 인스턴스 저장용
   const trackingInterval = useRef<NodeJS.Timeout | null>(null);
 
   const { user, loading: userLoading } = useUser();
@@ -667,10 +796,12 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
           fetch(assignUrl, { headers })    // index 2
         ];
 
-        // 학생일 경우에만 출석 및 진도 데이터 페칭을 추가
+        // 출석 데이터는 교사(통계용)와 학생(본인확인용) 모두 필요합니다.
+        const attUrl = subjectId ? `${API_BASE}/attendances/subject/${subjectId}` : `${API_BASE}/attendances`;
+        fetches.push(fetch(attUrl, { headers })); // index 3
+
+        // 학생일 경우에만 진도 데이터 페칭을 추가 (index 4)
         if (!isTeacher && studentId) {
-          const attUrl = subjectId ? `${API_BASE}/attendances/subject/${subjectId}` : `${API_BASE}/attendances`;
-          fetches.push(fetch(attUrl, { headers })); // index 3
           fetches.push(fetch(`${API_BASE}/progresses/student/${studentId}`, { headers })); // index 4
         }
 
@@ -678,7 +809,8 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         if (subjectId) {
           const qnaRes = await fetch(`${API_BASE}/question/subject/${subjectId}`, { headers });
           const qData = qnaRes.ok ? await qnaRes.json() : [];
-          setQuestionList(qData);
+          // QnA 목록 내림차순 정렬 (최신 질문이 위로)
+          setQuestionList([...qData].sort((a: any, b: any) => b.queid - a.queid));
         }
 
         // 과목 상세 정보(강의 계획서 파일명 포함)를 subid로 직접 조회합니다.
@@ -698,21 +830,27 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         }
 
         const lessonData = await lessonRes.json();
-        setLessons(lessonData);
-        setVideoList(lessonData); // 통합된 Lesson 데이터를 비디오 리스트로도 사용
+        // 최신 강의(lid 내림차순)가 먼저 보이도록 정렬
+        const sortedLessons = [...lessonData].sort((a: any, b: any) => b.lid - a.lid);
+        setLessons(sortedLessons);
+        setVideoList(sortedLessons);
 
-        if (examRes?.ok) setExams(await examRes.json());
+        if (examRes?.ok) {
+          const examData = await examRes.json();
+          setExams([...examData].sort((a: any, b: any) => b.esid - a.esid));
+        }
         if (assignRes?.ok) {
           const works = await assignRes.json();
-          setAssignments(await enrichAssignmentsWithStatus(works));
+          const sortedWorks = [...works].sort((a: any, b: any) => b.wid - a.wid);
+          setAssignments(await enrichAssignmentsWithStatus(sortedWorks));
         }
 
-        // 학생일 경우에만 나머지 데이터 파싱 (index 3, 4)
-        if (!isTeacher && studentId) {
-          const attRes = responses[3];
-          const progRes = responses[4];
+        // 출석 데이터 처리 (교사/학생 공통)
+        if (responses[3]?.ok) setAttendanceData(await responses[3].json());
 
-          if (attRes?.ok) setAttendanceData(await attRes.json());
+        // 학생일 경우에만 진도 데이터 파싱 (index 4)
+        if (!isTeacher && studentId) {
+          const progRes = responses[4];
           if (progRes?.ok) {
             const progs = await progRes.json();
             const map: Record<number, number> = {};
@@ -739,6 +877,71 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     fetchData();
   }, [subjectId, studentId, teacherId, isTeacher, userLoading, user]); // teacherId 의존성 추가
 
+  // 학생별 출석 데이터 불러오기 (교사용)
+  const handleSelectLessonForAttendance = async (lesson: Lesson | null) => {
+    setSelectedAttendanceLesson(lesson);
+    if (!lesson) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      // 해당 강의의 학생별 출석 및 진도 정보를 가져오는 엔드포인트 호출 (가정)
+      const res = await fetch(`${API_BASE}/attendances/lesson/${lesson.lid}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setStudentAttendanceList(await res.json());
+      }
+    } catch (err) {
+      console.error("출석 데이터 로드 실패:", err);
+    }
+  };
+
+  // 출석 상태 로컬 업데이트 (체크박스 조작)
+  const handleUpdateAttendance = (sid: number, whether: boolean) => {
+    setStudentAttendanceList(prev => 
+      prev.map(item => item.sid === sid ? { ...item, whether } : item)
+    );
+  };
+
+  // 출석 변경사항 서버 저장
+  const handleSaveAttendance = async () => {
+    if (!selectedAttendanceLesson) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/attendances/batch-update`, {
+        method: "POST",
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json" 
+        },
+        body: JSON.stringify({
+          lid: selectedAttendanceLesson.lid,
+          records: studentAttendanceList.map(r => ({ sid: r.sid, whether: r.whether }))
+        })
+      });
+      if (res.ok) {
+        // UX 개선: 서버 응답 후 전체 데이터를 다시 불러오지 않고, 수정한 내용을 로컬 상태에 즉시 반영 (Optimistic Update)
+        setAttendanceData(prev => {
+          // 현재 수정 중인 강의의 날짜와 다른 데이터들만 필터링하여 유지
+          const otherRecords = prev.filter(a => a.date !== selectedAttendanceLesson.date);
+          // 현재 화면에서 수정한 학생별 출석 리스트를 새로운 Attendance 객체 형식으로 변환하여 병합
+          const updatedRecords = studentAttendanceList.map(record => ({
+            ...record,
+            date: selectedAttendanceLesson.date
+          }));
+          return [...otherRecords, ...updatedRecords];
+        });
+        
+        setSelectedAttendanceLesson(null);
+        setIsBatchEditMode(false);
+      } else {
+        alert("저장 실패");
+      }
+    } catch (err) {
+      console.error("출석 저장 오류:", err);
+    }
+  };
+
   // 과제 목록만 새로고침하는 함수
   const refreshAssignments = async () => {
     try {
@@ -748,7 +951,8 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
       const res = await fetch(assignUrl, { headers });
       if (res.ok) {
         const works = await res.json();
-        setAssignments(await enrichAssignmentsWithStatus(works));
+        const sortedWorks = [...works].sort((a: any, b: any) => b.wid - a.wid);
+        setAssignments(await enrichAssignmentsWithStatus(sortedWorks));
       }
     } catch (err) {
       console.error("Error refreshing assignments:", err);
@@ -928,6 +1132,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
     setShowVideoQna(false);
     setIsCreatingQuestion(false);
     setIsEditingQuestion(false);
+    setQnaPage(1); // 영상 변경 시 QnA 페이지 초기화
     setNewQnaContent('');
     setSelectedQuestion(null); // 이전 영상에서 선택했던 질문 상태 초기화
 
@@ -968,7 +1173,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
       }
     }
 
-    // 강사 계정으로 로그인했을 때도 영상은 재생되어야 하므로 플레이어 초기화 로직을 if문 밖으로 이동했습니다.
+    // 교사 계정으로 로그인했을 때도 영상은 재생되어야 하므로 플레이어 초기화 로직을 if문 밖으로 이동했습니다.
     if (isYoutube) {
       // API 준비 상태 확인 후 초기화
       const checkYT = setInterval(() => {
@@ -1155,7 +1360,11 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         const qnaRes = await fetch(`${API_BASE}/question/subject/${subjectId}`, { 
           headers: { "Authorization": `Bearer ${token}` } 
         });
-        if (qnaRes.ok) setQuestionList(await qnaRes.json());
+        if (qnaRes.ok) {
+          const qData = await qnaRes.json();
+          // 저장 후 목록 내림차순 정렬 유지
+          setQuestionList([...qData].sort((a: any, b: any) => b.queid - a.queid));
+        }
         setIsCreatingQuestion(false);
         setNewQnaContent('');
       } else {
@@ -1180,7 +1389,11 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         const qnaRes = await fetch(`${API_BASE}/question/subject/${subjectId}`, { 
           headers: { "Authorization": `Bearer ${token}` } 
         });
-        if (qnaRes.ok) setQuestionList(await qnaRes.json());
+        if (qnaRes.ok) {
+          const qData = await qnaRes.json();
+          // 수정 후 목록 내림차순 정렬 유지
+          setQuestionList([...qData].sort((a: any, b: any) => b.queid - a.queid));
+        }
         setIsEditingQuestion(false);
         setSelectedQuestion(null);
       }
@@ -1202,7 +1415,11 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         const qnaRes = await fetch(`${API_BASE}/question/subject/${subjectId}`, { 
           headers: { "Authorization": `Bearer ${token}` } 
         });
-        if (qnaRes.ok) setQuestionList(await qnaRes.json());
+        if (qnaRes.ok) {
+          const qData = await qnaRes.json();
+          // 삭제 후 목록 내림차순 정렬 유지
+          setQuestionList([...qData].sort((a: any, b: any) => b.queid - a.queid));
+        }
         setIsCreatingQuestion(false); // 저장 후 목록으로 돌아감
       } else {
         alert("저장 실패");
@@ -1241,7 +1458,11 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         const qnaRes = await fetch(`${API_BASE}/question/subject/${subjectId}`, { 
           headers: { "Authorization": `Bearer ${token}` } 
         });
-        if (qnaRes.ok) setQuestionList(await qnaRes.json());
+        if (qnaRes.ok) {
+          const qData = await qnaRes.json();
+          // 답변 등록 후 목록 내림차순 정렬 유지
+          setQuestionList([...qData].sort((a: any, b: any) => b.queid - a.queid));
+        }
         
         setTeacherAnswer('');
         setSelectedQuestion(null);
@@ -1436,7 +1657,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.28em] text-[#8d6a44]">
-                {isTeacher ? "강사 LMS" : "학생 LMS"}
+                {isTeacher ? "교사 LMS" : "학생 LMS"}
               </p>
               <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[#3d2b1f]">강의 학습 대시보드</h1>
               <p className="mt-3 max-w-2xl text-base leading-8 text-[#6d5b46]">
@@ -1490,6 +1711,13 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
             videoList={videoList}
             progressMap={progressMap}
             activeVideoId={selectedVideo?.lid}
+            isBatchEditMode={isBatchEditMode}
+            selectedAttendanceLesson={selectedAttendanceLesson}
+            studentAttendanceList={studentAttendanceList}
+            onToggleBatchEdit={() => setIsBatchEditMode(!isBatchEditMode)}
+            onSelectLessonForAttendance={handleSelectLessonForAttendance}
+            onUpdateAttendance={handleUpdateAttendance}
+            onSaveAttendance={handleSaveAttendance}
             apiBase={API_BASE}
             sessionBaseProgress={sessionBaseProgress}
             subjectId={subjectId}
@@ -1874,8 +2102,8 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                 onClick={async () => { 
                   setIsPlaying(false); // 인터벌 중단
                   await saveVideoProgress(); // 진행도 계산 및 맵 업데이트 대기
-                  setSelectedVideo(null); // 비디오 닫기
                   setShowVideoQna(false); // QnA 섹션도 함께 종료
+                  setSelectedVideo(null); // 비디오 닫기
                   setSelectedQuestion(null); // 교사용 질문 선택 상태 초기화
                   setTeacherAnswer(''); // 답변 입력 필드 초기화
                 }}
@@ -1998,7 +2226,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                       {/* 답변 영역 */}
                       {(selectedQuestion.answer || isTeacher) && (
                         <div className="bg-white p-4 rounded-xl border border-[#e6d1a7] shadow-sm">
-                          <label className="block text-[10px] font-bold text-[#8d6a44] mb-1">선생님 답변</label>
+                          <label className="block text-[10px] font-bold text-[#8d6a44] mb-1">교사 답변</label>
                           {isTeacher ? (
                             <>
                               <textarea 
@@ -2027,9 +2255,10 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                     </div>
                 ) : (
                   /* 공통: 질문 목록 보기 */
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {questionList.filter(q => q.lid === selectedVideo.lid).length > 0 ? (
-                      questionList.filter(q => q.lid === selectedVideo.lid).map((qna) => (
+                  <div>
+                    <div className="grid grid-cols-1 gap-3">
+                      {questionList.filter(q => q.lid === selectedVideo.lid).length > 0 ? (
+                        questionList.filter(q => q.lid === selectedVideo.lid).slice((qnaPage - 1) * 10, qnaPage * 10).map((qna) => (
                         <div 
                           key={qna.queid} 
                           onClick={() => setSelectedQuestion(qna)}
@@ -2038,13 +2267,32 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                           {qna.answer && (
                             <span className="shrink-0 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full">답변완료</span>
                           )}
-                          <div className="text-sm text-[#7b6346] truncate flex-1">
+                          <div className="text-sm text-[#7b6346] truncate flex-1 min-w-0">
                             {qna.content}
                           </div>
                         </div>
                       ))
                     ) : (
                       <p className="col-span-full text-center py-8 text-[#7b6346] italic">등록된 질문이 없습니다.</p>
+                    )}
+                    </div>
+                    {/* QnA 전용 페이지네이션 */}
+                    {questionList.filter(q => q.lid === selectedVideo.lid).length > 10 && (
+                      <div className="mt-6 flex justify-center gap-2">
+                        {Array.from({ length: Math.ceil(questionList.filter(q => q.lid === selectedVideo.lid).length / 10) }, (_, i) => i + 1).map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => setQnaPage(page)}
+                            className={`h-7 w-7 rounded-full text-[10px] font-bold transition ${
+                              qnaPage === page
+                                ? "bg-[#8d6a44] text-white"
+                                : "bg-[#f3e1bf] text-[#5c4326] hover:bg-[#e7cd9f]"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                      </div>
                     )}
                   </div>
                 )}

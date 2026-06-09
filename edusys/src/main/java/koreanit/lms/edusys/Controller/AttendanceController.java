@@ -5,6 +5,7 @@ import koreanit.lms.edusys.Entity.Attendance;
 import koreanit.lms.edusys.Service.AttendanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,18 @@ public class AttendanceController {
     @PostMapping
     public Attendance saveAttendance(@RequestBody Attendance attendance) {
         return attendanceService.save(attendance);
+    }
+
+    @GetMapping("/lesson/{lid}")
+    public List<AttendanceDTO> getAttendanceByLesson(@PathVariable Integer lid) {
+        return attendanceService.getAttendanceByLesson(lid);
+    }
+
+    @PostMapping("/batch-update")
+    public void updateBatchAttendance(@RequestBody Map<String, Object> payload) {
+        Integer lid = (Integer) payload.get("lid");
+        List<Map<String, Object>> records = (List<Map<String, Object>>) payload.get("records");
+        attendanceService.updateBatchAttendance(lid, records);
     }
 
     @DeleteMapping("/{id}")
