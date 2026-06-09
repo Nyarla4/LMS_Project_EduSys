@@ -139,7 +139,7 @@ export default function CurrentExams() {
                                     <Link
                                         href={`/${basePath}/${subid}/${esid}/${exam.eid}`}
                                         className="text-lg font-bold text-[#5c4033] transition-colors hover:text-[#8b5e3c] flex-1 flex items-center gap-3"
-                                    >
+                                        style = {{ textDecoration: 'none', color: 'inherit' }} >
                                         <span className="w-1.5 h-1.5 bg-[#8b5e3c] rounded-full"></span>
                                         {exam.question}
                                     </Link>

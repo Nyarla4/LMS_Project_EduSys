@@ -123,7 +123,7 @@ export default function SubjectListPage() {
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2"> {/* 3열은 대시보드 구조상 너무 좁을 수 있어 2열로 조정 */}
           {subjects.map((subject) => (
-            <Link key={subject.subid} href={`${basePath}/${subject.subid}`} style = {{ textDecoration: 'none' }}>
+            <Link key={subject.subid} href={`${basePath}/${subject.subid}`} style = {{ textDecoration: 'none', color: 'inherit' }}>
               <div className="bg-[#fcf7f0] border-[#b89b7a] border-2 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer h-full flex flex-col justify-between hover:border-[#8b5e3c] hover:-translate-y-1">
                 <div>
                   <div className="flex justify-between items-start mb-4">

@@ -176,8 +176,8 @@ function TabPanel({
             onClick={() => onPageChange(page)}
             className={`h-8 w-8 rounded-full text-xs font-bold transition ${
               current === page
-                ? "bg-[#8d6a44] text-white shadow-md"
-                : "bg-[#f3e1bf] text-[#5c4326] hover:bg-[#e7cd9f]"
+                ? "bg-[#8b5e3c] text-white shadow-md"
+                : "bg-[#dbc7b1] text-[#5c4033] hover:bg-[#b89b7a]"
             }`}
           >
             {page}
@@ -213,16 +213,16 @@ function TabPanel({
     const syllabusDownloadUrl = baseSyllabusUrl + "?download=true";
 
     return (
-      <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
+      <section className="bg-[#fcf7f0] border-[#b89b7a] border-1 border rounded-lg p-6 shadow-sm font-bold">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-[#3d2b1f]">강의 계획서 미리보기</h2>
+            <h2 className="text-2xl font-bold text-[#3d2b1f]">강의 계획서 미리보기</h2>
             <p className="mt-2 text-sm text-[#7b6346]">과목별 수업 계획서를 내려받거나 바로 확인할 수 있습니다.</p>
           </div>
           <a 
             href={syllabusDownloadUrl}
             target="_blank" // 새 탭에서 열기
-            className="inline-flex items-center rounded-full bg-[#8d6a44] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#7c5935]"
+            className="inline-flex items-center rounded-full bg-[#8b5e3c] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#6f4a2f]"
             download
           >
             파일 다운로드
@@ -245,7 +245,7 @@ function TabPanel({
           <div className="mt-6 flex justify-end gap-3 border-t border-[#e6d1a7] pt-6">
             <button 
               onClick={onSyllabusUploadClick}
-              className="rounded-full bg-[#3d2b1f] px-6 py-2 text-sm font-semibold text-white hover:bg-black"
+              className="rounded-full bg-[#3d2b1f] px-6 py-2 text-sm font-bold text-white hover:bg-black transition-colors"
             >
               계획서 파일 교체
             </button>
@@ -257,26 +257,26 @@ function TabPanel({
 
   if (activeTab === "출석 현황") {
     return (
-      <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
+      <section className="bg-[#fcf7f0] border-[#b89b7a] border-1 border rounded-lg p-6 shadow-sm font-bold">
         {!selectedAttendanceLesson ? (
           <>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-2xl font-semibold text-[#3d2b1f]">출석 현황</h2>
+              <h2 className="text-2xl font-bold text-[#3d2b1f]">출석 현황</h2>
               {isTeacher && (
                 <button 
                   onClick={onToggleBatchEdit}
-                  className={`rounded-full px-4 py-2 text-xs font-bold text-white transition ${isBatchEditMode ? "bg-rose-500 hover:bg-rose-600" : "bg-[#8d6a44] hover:bg-[#7c5935]"}`}
+                  className={`rounded-full px-4 py-2 text-xs font-bold text-white transition ${isBatchEditMode ? "bg-rose-500 hover:bg-rose-600" : "bg-[#8b5e3c] hover:bg-[#6f4a2f]"}`}
                 >
                   {isBatchEditMode ? "수정 취소" : "출석부 일괄 수정"}
                 </button>
               )}
             </div>
             {/* 페이지네이션 슬라이싱 적용 */}
-            <div className="overflow-x-auto rounded-[28px] border border-[#f0debe] bg-white shadow-sm">
-              <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
-                <thead className="bg-[#f7ecd9] text-[#6d5b46]">
+            <div className="overflow-x-auto rounded-lg border border-[#b89b7a] bg-white shadow-sm">
+              <table className="min-w-full divide-y divide-[#b89b7a] text-left text-sm text-[#5c4033]">
+                <thead className="bg-[#e7d7c1] text-[#3d2b1f]">
                   <tr>
-                    <th className="px-4 py-4">기간</th>
+                    <th className="px-4 py-4">학습 기간</th>
                     <th className="px-4 py-4">강의명</th>
                     <th className="px-4 py-4">상태</th>
                     <th className="px-4 py-4">비고</th>
@@ -297,7 +297,7 @@ function TabPanel({
                     const isPresentByVideo = video && video.duration > 0 && (totalProgress / video.duration) >= 0.9;
 
                     return (
-                      <tr key={lesson.lid} className="hover:bg-[#fff6eb]">
+                      <tr key={lesson.lid} className="hover:bg-[#f5eee4] transition-colors">
                         <td className="px-4 py-4">{dateRange}</td>
                         <td className="px-4 py-4">{lesson.name}</td>
                         <td className="px-4 py-4">
@@ -346,27 +346,27 @@ function TabPanel({
           /* 학생별 출석 수정 모드 */
           <>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-[#3d2b1f]">
-                <span className="text-[#8d6a44] mr-2">[{selectedAttendanceLesson.name}]</span> 
+              <h2 className="text-xl font-bold text-[#3d2b1f]">
+                <span className="text-[#8b5e3c] mr-2">[{selectedAttendanceLesson.name}]</span> 
                 학생별 출석 수정
               </h2>
               <div className="flex gap-2">
-                <button onClick={() => onSelectLessonForAttendance(null)} className="rounded-full border border-[#8d6a44] px-4 py-2 text-xs font-bold text-[#8d6a44] hover:bg-[#f7ecd9]">취소</button>
-                <button onClick={onSaveAttendance} className="rounded-full bg-[#8d6a44] px-4 py-2 text-xs font-bold text-white hover:bg-[#7c5935] shadow-md">저장하기</button>
+                <button onClick={() => onSelectLessonForAttendance(null)} className="rounded-full border border-[#8b5e3c] px-4 py-2 text-xs font-bold text-[#8b5e3c] hover:bg-[#dbc7b1] transition-colors">취소</button>
+                <button onClick={onSaveAttendance} className="rounded-full bg-[#8b5e3c] px-4 py-2 text-xs font-bold text-white hover:bg-[#6f4a2f] shadow-md transition-colors">저장하기</button>
               </div>
             </div>
-            <div className="overflow-x-auto rounded-[28px] border border-[#f0debe] bg-white shadow-sm">
-              <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
-                <thead className="bg-[#f7ecd9] text-[#6d5b46]">
+            <div className="overflow-x-auto rounded-lg border border-[#b89b7a] bg-white shadow-sm">
+              <table className="min-w-full divide-y divide-[#b89b7a] text-left text-sm text-[#5c4033]">
+                <thead className="bg-[#e7d7c1] text-[#3d2b1f]">
                   <tr>
                     <th className="px-4 py-4">학생명</th>
                     <th className="px-4 py-4 text-center">비디오 시청 현황</th>
                     <th className="px-4 py-4 text-center">출석 체크</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#e9d7b0] bg-white">
+                <tbody className="divide-y divide-[#b89b7a] bg-white">
                   {studentAttendanceList.length > 0 ? studentAttendanceList.map((record) => (
-                    <tr key={record.sid} className="hover:bg-[#fff6eb]">
+                    <tr key={record.sid} className="hover:bg-[#f5eee4] transition-colors">
                       <td className="px-4 py-4 font-bold">{record.studentName}</td>
                       <td className="px-4 py-4 text-center">
                         {record.isPresentByVideo ? (
@@ -380,7 +380,7 @@ function TabPanel({
                           type="checkbox" 
                           checked={record.whether}
                           onChange={(e) => onUpdateAttendance(record.sid, e.target.checked)}
-                          className="w-5 h-5 accent-[#8d6a44] cursor-pointer"
+                          className="w-5 h-5 accent-[#8b5e3c] cursor-pointer"
                         />
                       </td>
                     </tr>
@@ -400,13 +400,13 @@ function TabPanel({
 
   if (activeTab === "동영상 강의") {
     return (
-      <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
+      <section className="bg-[#fcf7f0] border-[#b89b7a] border-1 border rounded-lg p-6 shadow-sm font-bold">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-[#3d2b1f]">동영상 강의</h2>
+          <h2 className="text-2xl font-bold text-[#3d2b1f]">동영상 강의</h2>
           {isTeacher && (
             <button 
               onClick={onAddVideoClick}
-              className="rounded-full bg-[#8d6a44] px-4 py-2 text-xs font-bold text-white hover:bg-[#7c5935]"
+              className="rounded-full bg-[#8b5e3c] px-4 py-2 text-xs font-bold text-white hover:bg-[#6f4a2f] transition-colors"
             >
               + 영상 추가 업로드
             </button>
@@ -427,23 +427,23 @@ function TabPanel({
                 : 0;
 
               return (
-                <article 
+                <article
                   key={video.lid} 
-                  className="rounded-[28px] border border-[#f0debe] bg-[#fff8ef] p-5 transition duration-200 hover:border-[#d6b77a] hover:bg-[#f6e8d6]"
+                  className="rounded-lg border border-[#b89b7a] bg-white p-5 transition duration-200 hover:border-[#8b5e3c] hover:bg-[#f5eee4]"
                 >
                   <div className="flex flex-col gap-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="cursor-pointer flex-1" onClick={() => onVideoSelect(video)}>
-                        <h3 className="text-base font-semibold text-[#3d2b1f]">{video.name}</h3>
+                        <h3 className="text-base font-bold text-[#3d2b1f]">{video.name}</h3>
                         <p className="mt-2 text-sm text-[#7b6346]">{video.week}주차 학습 영상</p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        {!isTeacher && <span className="rounded-full bg-[#e8d1a5] px-3 py-1 text-xs font-bold text-[#5c4326]">{percentage}%</span>}
+                        {!isTeacher && <span className="rounded-full bg-[#dbc7b1] px-3 py-1 text-xs font-bold text-[#5c4033]">{percentage}%</span>}
                         {isTeacher && (
                           <div className="flex gap-1">
                             <button 
                               onClick={(e) => { e.stopPropagation(); onEditVideo?.(video); }}
-                              className="rounded px-2 py-0.5 text-[10px] font-bold text-white bg-slate-400 hover:bg-[#8d6a44] transition-colors"
+                              className="rounded px-2 py-0.5 text-[10px] font-bold text-white bg-slate-400 hover:bg-[#8b5e3c] transition-colors"
                             >
                               수정
                             </button>
@@ -459,8 +459,8 @@ function TabPanel({
                     </div>
                     {!isTeacher && (
                       <div className="space-y-2">
-                        <div className="h-3 overflow-hidden rounded-full bg-[#eedfc2]">
-                          <div className="h-full rounded-full bg-[#8d6a44] transition-all" style={{ width: `${percentage}%` }} />
+                        <div className="h-3 overflow-hidden rounded-full bg-[#e7d7c1]">
+                          <div className="h-full rounded-full bg-[#8b5e3c] transition-all" style={{ width: `${percentage}%` }} />
                         </div>
                         <p className="text-xs text-[#7b6346]">
                           {Math.floor(video.duration / 60)}분 {video.duration % 60}초 중{" "}
@@ -486,18 +486,18 @@ function TabPanel({
 
   if (activeTab === "시험 정보") {
     return (
-      <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
+      <section className="bg-[#fcf7f0] border-[#b89b7a] border-1 border rounded-lg p-6 shadow-sm font-bold">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-[#3d2b1f]">시험 정보</h2>
+          <h2 className="text-2xl font-bold text-[#3d2b1f]">시험 정보</h2>
           {isTeacher && (
-            <button onClick={onAddExamSetClick} className="rounded-full bg-[#8d6a44] px-4 py-2 text-xs font-bold text-white hover:bg-[#7c5935]">
+            <button onClick={onAddExamSetClick} className="rounded-full bg-[#8b5e3c] px-4 py-2 text-xs font-bold text-white hover:bg-[#6f4a2f] transition-colors">
               + 시험 세트 생성
             </button>
           )}
         </div>
-        <div className="overflow-x-auto rounded-[28px] border border-[#f0debe] bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
-            <thead className="bg-[#f7ecd9] text-[#6d5b46]">
+        <div className="overflow-x-auto rounded-lg border border-[#b89b7a] bg-white shadow-sm">
+          <table className="min-w-full divide-y divide-[#b89b7a] text-left text-sm text-[#5c4033]">
+            <thead className="bg-[#e7d7c1] text-[#3d2b1f]">
               <tr>
                 <th className="px-4 py-4">시험명</th>
                 <th className="px-4 py-4">일정</th>
@@ -505,14 +505,14 @@ function TabPanel({
                 <th className="px-4 py-4">점수</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#e9d7b0] bg-white">
+            <tbody className="divide-y divide-[#b89b7a] bg-white">
               {exams.length > 0 ? (
                 exams.slice((examPage - 1) * itemsPerPage, examPage * itemsPerPage).map((examSet) => {
                   const canAccess = isTeacher || examSet.status === "진행중" || examSet.status === "종료";
                   return (
                   <tr
                     key={examSet.esid} 
-                    className={`${canAccess ? "hover:bg-[#fff6eb] cursor-pointer" : "opacity-50 cursor-not-allowed"} ${!isTeacher && examSet.status === "종료" ? "opacity-50" : ""}`}
+                    className={`${canAccess ? "hover:bg-[#f5eee4] cursor-pointer" : "opacity-50 cursor-not-allowed"} ${!isTeacher && examSet.status === "종료" ? "opacity-50" : ""} transition-colors`}
                     onClick={() => {
                       if (canAccess) {
                         window.location.href = `/myClasses/${subjectId || lessons[0]?.subject?.subid || 'all'}/${examSet.esid}`;
@@ -521,7 +521,7 @@ function TabPanel({
                       }
                     }}
                   >
-                    <td className="px-4 py-4 font-bold text-[#8d6a44]">{examSet.name || `시험 #${examSet.esid}`}</td>
+                    <td className="px-4 py-4 font-bold text-[#8b5e3c]">{examSet.name || `시험 #${examSet.esid}`}</td>
                     <td className="px-4 py-4">
                       {examSet.examDate 
                         ? new Date(examSet.examDate).toLocaleString('ko-KR', {
@@ -542,7 +542,7 @@ function TabPanel({
                         <div className="flex gap-1">
                           <button 
                             onClick={(e) => { e.stopPropagation(); onEditExamSet?.(examSet); }}
-                            className="rounded px-2 py-0.5 text-[10px] font-bold text-white bg-slate-400 hover:bg-[#8d6a44] transition-colors"
+                            className="rounded px-2 py-0.5 text-[10px] font-bold text-white bg-slate-400 hover:bg-[#8b5e3c] transition-colors"
                           >
                             수정
                           </button>
@@ -554,7 +554,7 @@ function TabPanel({
                           </button>
                         </div>
                       ) : (
-                          <span className="font-bold text-[#8d6a44]">
+                          <span className="font-bold text-[#8b5e3c]">
                             {examSet.status === "종료"
                               ? `${examSet.totalScore ?? 0}점`
                               : examSet.totalScore !== undefined && examSet.totalScore !== null
@@ -580,41 +580,41 @@ function TabPanel({
   }
 
   return (
-    <section className="rounded-[32px] border border-[#e6d1a7] bg-[#fff4e6] p-6 shadow-[0_20px_45px_rgba(95,69,34,0.08)]">
+    <section className="bg-[#fcf7f0] border-[#b89b7a] border-1 border rounded-lg p-6 shadow-sm font-bold">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-[#3d2b1f]">과제 목록</h2>
+        <h2 className="text-2xl font-bold text-[#3d2b1f]">과제 목록</h2>
         {isTeacher && (
           <button 
             onClick={onAddAssignmentClick}
-            className="rounded-full bg-[#8d6a44] px-4 py-2 text-xs font-bold text-white hover:bg-[#7c5935]"
+            className="rounded-full bg-[#8b5e3c] px-4 py-2 text-xs font-bold text-white hover:bg-[#6f4a2f] transition-colors"
           >
             + 새 과제 생성
           </button>
         )}
       </div>
-      <div className="overflow-x-auto rounded-[28px] border border-[#f0debe] bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-[#e9d7b0] text-left text-sm text-[#5c4b38]">
-          <thead className="bg-[#f7ecd9] text-[#6d5b46]">
+      <div className="overflow-x-auto rounded-lg border border-[#b89b7a] bg-white shadow-sm">
+        <table className="min-w-full divide-y divide-[#b89b7a] text-left text-sm text-[#5c4033]">
+          <thead className="bg-[#e7d7c1] text-[#3d2b1f]">
             <tr>
               <th className="px-4 py-4">과제명</th>
               <th className="px-4 py-4">마감일</th>
               <th className="px-4 py-4">상태</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#e9d7b0] bg-white">
+          <tbody className="divide-y divide-[#b89b7a] bg-white">
             {assignments.length > 0 ? assignments.slice((assignPage - 1) * itemsPerPage, assignPage * itemsPerPage).map((assignment) => {
               const isDeadlinePassed = !isTeacher && assignment.dueDate < todayStr;
               return (
               <tr 
                 key={assignment.wid} 
-                className={`hover:bg-[#fff6eb] cursor-pointer ${isDeadlinePassed ? "opacity-50" : ""}`} 
+                className={`hover:bg-[#f5eee4] cursor-pointer ${isDeadlinePassed ? "opacity-50" : ""} transition-colors`} 
                 onClick={() => onAssignmentSelect(assignment)}
               >
                 <td className="px-4 py-4">{assignment.title}</td>
                 <td className="px-4 py-4">{assignment.dueDate}</td>
                 <td className="px-4 py-4">
                   {isTeacher ? (
-                    <span className="text-[#8d6a44] font-bold">현황 보기</span>
+                    <span className="text-[#8b5e3c] font-bold">현황 보기</span>
                   ) : (
                     assignment.status
                       ? assignment.status
@@ -1642,13 +1642,13 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
   };
 
   return (
-    <main className="min-h-screen bg-[#f3e9d6] px-4 py-8 text-slate-900 sm:px-6 lg:px-10">
+    <main className="min-h-screen bg-[#f5f1e8] px-4 py-8 text-slate-900 sm:px-6 lg:px-10 border-[#d6c2a8] border-2 rounded-lg">
       <div className="mx-auto max-w-7xl">
-        <section className="rounded-[40px] border border-[#dfc9a2] bg-[#fef7ec] p-8 shadow-[0_30px_70px_rgba(95,69,34,0.08)]">
+        <section className="bg-[#fcf7f0] border-[#d6c2a8] border-2 rounded-lg p-8 shadow-sm">
           {/* 상단 이동 버튼 추가 */}
           <button 
             onClick={() => router.push(isTeacher ? "/myClasses" : "/student")}
-            className="mb-6 flex items-center gap-2 text-[#8d6a44] font-bold hover:text-[#3d2b1f] transition-all group"
+            className="mb-6 flex items-center gap-2 text-[#8b5e3c] font-bold hover:text-[#3d2b1f] transition-all group"
           >
             <span className="inline-block transition-transform group-hover:-translate-x-1">←</span> 
             {isTeacher ? "담당 과목 관리로 돌아가기" : "수강 과목 목록으로 돌아가기"}
@@ -1656,11 +1656,11 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
 
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-[0.28em] text-[#8d6a44]">
+              <p className="text-sm uppercase tracking-[0.28em] text-[#8b5e3c] font-bold">
                 {isTeacher ? "교사 LMS" : "학생 LMS"}
               </p>
-              <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[#3d2b1f]">강의 학습 대시보드</h1>
-              <p className="mt-3 max-w-2xl text-base leading-8 text-[#6d5b46]">
+              <h1 className="mt-3 text-4xl font-bold text-center bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2 text-[#3d2b1f]">강의 학습 대시보드</h1>
+              <p className="mt-6 max-w-2xl text-base leading-8 text-[#5c4033] font-bold">
                 수강 현황, 출석, 동영상 강의, 시험, 과제를 한 곳에서 확인하고 학습 흐름을 관리하세요.
               </p>
               {error && (
@@ -1681,8 +1681,8 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                 type="button"
                 className={`rounded-full px-5 py-3 text-sm font-semibold transition duration-200 ${
                   activeTab === tab
-                    ? "bg-[#8d6a44] text-white shadow-[0_10px_25px_rgba(141,106,68,0.24)]"
-                    : "bg-[#f3e1bf] text-[#5c4326] hover:bg-[#e7cd9f]"
+                    ? "bg-[#8b5e3c] text-white shadow-md"
+                    : "bg-[#dbc7b1] text-[#5c4033] hover:bg-[#b89b7a]"
                 }`}
                 onClick={() => setActiveTab(tab)}
               >
@@ -1692,13 +1692,13 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
           </div>
         </section>
 
-        <section className="mt-6 rounded-[40px] border border-[#dfc9a2] bg-[#fff7ec] p-7 shadow-[0_30px_60px_rgba(95,69,34,0.08)]">
+        <section className="mt-6 bg-[#fcf7f0] border-[#d6c2a8] border-2 rounded-lg p-7 shadow-sm">
           <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-[0.25em] text-[#8d6a44]">대시보드</p>
-              <h2 className="mt-2 text-3xl font-semibold text-[#3d2b1f]">학습 정보</h2>
+              <p className="text-sm uppercase tracking-[0.25em] text-[#8b5e3c] font-bold">대시보드</p>
+              <h2 className="mt-2 text-3xl font-bold text-[#3d2b1f]">학습 정보</h2>
             </div>
-            <div className="rounded-full bg-[#f3e1bf] px-4 py-2 text-sm font-medium text-[#5c4326]">
+            <div className="rounded-full bg-[#dbc7b1] px-4 py-2 text-sm font-bold text-[#5c4033] border border-[#b89b7a]">
               현재 선택된 탭: {activeTab}
             </div>
           </div>
@@ -1747,26 +1747,26 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
 
         {/* 과제 상세 보기 (선택 시 하단에 표시) */}
         {selectedAssignment && (
-          <section className="mt-6 rounded-[36px] border border-[#d7c2a1] bg-[#fff8ed] p-8 shadow-[0_30px_60px_rgba(95,69,34,0.12)]">
+          <section className="mt-6 bg-[#fcf7f0] border-[#d6c2a8] border-2 rounded-lg p-8 shadow-md">
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <p className="text-sm uppercase tracking-widest text-[#8d6a44]">과제 상세 정보</p>
+                <p className="text-sm uppercase tracking-widest text-[#8b5e3c] font-bold">과제 상세 정보</p>
                 <h2 className="mt-2 text-3xl font-bold text-[#3d2b1f]">{selectedAssignment.title}</h2>
                 <p className="mt-1 text-red-600 font-semibold">마감기한: {selectedAssignment.dueDate}</p>
               </div>
               <button 
                 onClick={() => setSelectedAssignment(null)}
-                className="rounded-full bg-[#8d6a44] px-6 py-2 text-sm font-bold text-white hover:bg-[#7c5935]"
+                className="rounded-full bg-[#8b5e3c] px-6 py-2 text-sm font-bold text-white hover:bg-[#6f4a2f] transition-colors"
               >
                 목록으로
               </button>
             </div>
 
-            <div className="rounded-2xl bg-white p-6 border border-[#e6d1a7]">
+            <div className="rounded-lg bg-white p-6 border border-[#b89b7a]">
               {isTeacher ? (
                 <div className="space-y-6">
                   <h3 className="text-xl font-bold text-[#3d2b1f] border-b pb-2">학생 제출 현황</h3>
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto rounded-lg border border-[#b89b7a]">
                     <table className="min-w-full text-sm text-left">
                       <thead className="bg-[#fcf7f0]">
                         <tr>
@@ -1806,14 +1806,14 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                 <div className="space-y-4">
                   <h3 className="text-xl font-bold text-[#3d2b1f]">내 과제 제출</h3>
                   {mySubmission && (
-                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
+                    <div className="p-4 bg-[#fcf7f0] border border-[#b89b7a] rounded-lg flex items-center justify-between font-bold">
                       <div>
-                        <p className="text-xs font-bold text-blue-800">제출 완료된 파일:</p>
-                        <a href={`${API_BASE}/files/work/${mySubmission.fileName}`} className="text-sm text-blue-600 underline font-medium" download>
+                        <p className="text-xs font-bold text-[#8b5e3c]">제출 완료된 파일:</p>
+                        <a href={`${API_BASE}/files/work/${mySubmission.fileName}`} className="text-sm text-[#5c4033] underline font-bold" download>
                           {mySubmission.fileName}
                         </a>
                       </div>
-                      <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full">제출됨</span>
+                      <span className="text-xs bg-[#8b5e3c] text-white px-2 py-1 rounded-full">제출됨</span>
                     </div>
                   )}
 
@@ -1824,11 +1824,11 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                     const isDeadlinePassed = selectedAssignment.dueDate < todayStr;
 
                     return !isDeadlinePassed ? (
-                      <div className="flex flex-col gap-4 p-6 bg-[#fcf7f0] rounded-xl border-2 border-dashed border-[#d6c2a8] items-center">
+                      <div className="flex flex-col gap-4 p-6 bg-[#fcf7f0] rounded-lg border-2 border-dashed border-[#b89b7a] items-center">
                         <p className="text-[#7b6346]">{mySubmission ? "파일을 다시 선택하면 기존 제출물이 교체됩니다." : "Word, PDF 등 문서 파일을 선택해주세요."}</p>
                         <input 
                           type="file" 
-                          className="text-sm text-[#8d6a44] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#8d6a44] file:text-white hover:file:bg-[#7c5935]"
+                          className="text-sm text-[#8b5e3c] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-[#8b5e3c] file:text-white hover:file:bg-[#6f4a2f] cursor-pointer"
                           onChange={handleAssignmentFileUpload}
                           accept=".doc,.docx,.pdf"
                         />
@@ -1841,7 +1841,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                   })()}
 
                   <div className="mt-4 p-4 bg-white border rounded-lg">
-                    <p className="text-sm">현재 점수: <span className="font-bold text-[#8d6a44]">{mySubmission?.grade || "평가 전"}</span></p>
+                    <p className="text-sm font-bold">현재 점수: <span className="text-[#8b5e3c]">{mySubmission?.grade || "평가 전"}</span></p>
                   </div>
                 </div>
               )}
@@ -1852,7 +1852,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         {/* 과제 추가 모달 */}
         {isAddAssignmentModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-[32px] bg-[#fff4e6] p-8 shadow-2xl border-2 border-[#e6d1a7] animate-in fade-in zoom-in duration-200">
+            <div className="w-full max-w-md rounded-lg bg-[#fcf7f0] p-8 shadow-2xl border-2 border-[#b89b7a] animate-in fade-in zoom-in duration-200">
               <h3 className="mb-6 text-2xl font-bold text-[#3d2b1f]">새 과제 생성</h3>
               <div className="space-y-4">
                 <div>
@@ -1860,7 +1860,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                   <input 
                     type="text" 
                     placeholder="과제 제목을 입력하세요"
-                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    className="w-full rounded-lg border border-[#b89b7a] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
                     value={newAssignment.title}
                     onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
                   />
@@ -1869,7 +1869,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                   <label className="block text-sm font-bold text-[#7b6346] mb-1">마감 일자</label>
                   <input 
                     type="date" 
-                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    className="w-full rounded-lg border border-[#b89b7a] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
                     value={newAssignment.dueDate}
                     onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })}
                   />
@@ -1878,13 +1878,13 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
               <div className="mt-8 flex justify-end gap-3">
                 <button 
                   onClick={() => setIsAddAssignmentModalOpen(false)}
-                  className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346] hover:bg-[#f1e1c4]"
+                  className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346] hover:bg-[#dbc7b1] transition-colors"
                 >
                   취소
                 </button>
                 <button 
                   onClick={handleAddAssignmentSubmit}
-                  className="rounded-full bg-[#8d6a44] px-6 py-2 text-sm font-bold text-white hover:bg-[#7c5935] shadow-md"
+                  className="rounded-full bg-[#8b5e3c] px-6 py-2 text-sm font-bold text-white hover:bg-[#6f4a2f] shadow-md transition-colors"
                 >
                   생성하기
                 </button>
@@ -1896,7 +1896,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         {/* 시험 세트 추가 모달 */}
         {isAddExamSetModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-[32px] bg-[#fff4e6] p-8 shadow-2xl border-2 border-[#e6d1a7]">
+            <div className="w-full max-w-md rounded-lg bg-[#fcf7f0] p-8 shadow-2xl border-2 border-[#b89b7a]">
               <h3 className="mb-6 text-2xl font-bold text-[#3d2b1f]">새 시험 세트 생성</h3>
               <div className="space-y-4">
                 <div>
@@ -1904,7 +1904,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                   <input 
                     type="text" 
                     placeholder="예: 중간고사, 기말고사"
-                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2"
+                    className="w-full rounded-lg border border-[#b89b7a] bg-white px-4 py-2"
                     value={newExamSet.name}
                     onChange={(e) => setNewExamSet({ ...newExamSet, name: e.target.value })}
                   />
@@ -1913,7 +1913,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                   <label className="block text-sm font-bold text-[#7b6346] mb-1">시험 시작 일시</label>
                   <input 
                     type="datetime-local" 
-                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2"
+                    className="w-full rounded-lg border border-[#b89b7a] bg-white px-4 py-2"
                     value={newExamSet.examDate}
                     onChange={(e) => setNewExamSet({ ...newExamSet, examDate: e.target.value })}
                   />
@@ -1921,7 +1921,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
               </div>
               <div className="mt-8 flex justify-end gap-3">
                 <button onClick={() => setIsAddExamSetModalOpen(false)} className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346]">취소</button>
-                <button onClick={handleAddExamSetSubmit} className="rounded-full bg-[#8d6a44] px-6 py-2 text-sm font-bold text-white shadow-md">생성하기</button>
+                <button onClick={handleAddExamSetSubmit} className="rounded-full bg-[#8b5e3c] px-6 py-2 text-sm font-bold text-white shadow-md">생성하기</button>
               </div>
             </div>
           </div>
@@ -1930,14 +1930,14 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         {/* 시험 세트 수정 모달 */}
         {editingExamSet && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-[32px] bg-[#fff4e6] p-8 shadow-2xl border-2 border-[#e6d1a7] animate-in fade-in zoom-in duration-200">
+            <div className="w-full max-w-md rounded-lg bg-[#fcf7f0] p-8 shadow-2xl border-2 border-[#b89b7a] animate-in fade-in zoom-in duration-200">
               <h3 className="mb-6 text-2xl font-bold text-[#3d2b1f]">시험 세트 수정</h3>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-bold text-[#7b6346] mb-1">시험 명칭</label>
                   <input 
                     type="text" 
-                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    className="w-full rounded-lg border border-[#b89b7a] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
                     value={editingExamSet.name}
                     onChange={(e) => setEditingExamSet({ ...editingExamSet, name: e.target.value })}
                   />
@@ -1946,7 +1946,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                   <label className="block text-sm font-bold text-[#7b6346] mb-1">시험 시작 일시</label>
                   <input 
                     type="datetime-local" 
-                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    className="w-full rounded-lg border border-[#b89b7a] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
                     // 타임존 오프셋을 계산하여 로컬 시간을 datetime-local 포맷(YYYY-MM-DDTHH:mm)으로 변환
                     value={(() => {
                       if (!editingExamSet.examDate) return "";
@@ -1962,13 +1962,13 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
               <div className="mt-8 flex justify-end gap-3">
                 <button 
                   onClick={() => setEditingExamSet(null)}
-                  className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346] hover:bg-[#f1e1c4]"
+                  className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346] hover:bg-[#dbc7b1]"
                 >
                   취소
                 </button>
                 <button 
                   onClick={handleEditExamSetSubmit}
-                  className="rounded-full bg-[#8d6a44] px-6 py-2 text-sm font-bold text-white hover:bg-[#7c5935] shadow-md"
+                  className="rounded-full bg-[#8b5e3c] px-6 py-2 text-sm font-bold text-white hover:bg-[#6f4a2f] shadow-md"
                 >
                   수정하기
                 </button>
@@ -1980,14 +1980,14 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         {/* 동영상 수정 모달 */}
         {editingVideo && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-[32px] bg-[#fff4e6] p-8 shadow-2xl border-2 border-[#e6d1a7] animate-in fade-in zoom-in duration-200">
+            <div className="w-full max-w-md rounded-lg bg-[#fcf7f0] p-8 shadow-2xl border-2 border-[#b89b7a] animate-in fade-in zoom-in duration-200">
               <h3 className="mb-6 text-2xl font-bold text-[#3d2b1f]">동영상 강의 수정</h3>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-bold text-[#7b6346] mb-1">강의명</label>
                   <input 
                     type="text" 
-                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    className="w-full rounded-lg border border-[#b89b7a] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
                     value={editingVideo.name}
                     onChange={(e) => setEditingVideo({ ...editingVideo, name: e.target.value })}
                   />
@@ -1996,7 +1996,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                   <label className="block text-sm font-bold text-[#7b6346] mb-1">강의 일자</label>
                   <input 
                     type="date" 
-                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    className="w-full rounded-lg border border-[#b89b7a] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
                     value={editingVideo.date || ''}
                     onChange={(e) => setEditingVideo({ ...editingVideo, date: e.target.value })}
                   />
@@ -2005,7 +2005,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                   <label className="block text-sm font-bold text-[#7b6346] mb-1">유튜브 URL</label>
                   <input 
                     type="text" 
-                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    className="w-full rounded-lg border border-[#b89b7a] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
                     value={editingVideo.fileUrl}
                     onChange={(e) => setEditingVideo({ ...editingVideo, fileUrl: e.target.value })}
                   />
@@ -2014,13 +2014,13 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
               <div className="mt-8 flex justify-end gap-3">
                 <button 
                   onClick={() => setEditingVideo(null)}
-                  className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346] hover:bg-[#f1e1c4]"
+                  className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346] hover:bg-[#dbc7b1]"
                 >
                   취소
                 </button>
                 <button 
                   onClick={handleEditVideoSubmit}
-                  className="rounded-full bg-[#8d6a44] px-6 py-2 text-sm font-bold text-white hover:bg-[#7c5935] shadow-md"
+                  className="rounded-full bg-[#8b5e3c] px-6 py-2 text-sm font-bold text-white hover:bg-[#6f4a2f] shadow-md"
                 >
                   수정하기
                 </button>
@@ -2032,7 +2032,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         {/* 동영상 추가 모달 */}
         {isAddVideoModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-md rounded-[32px] bg-[#fff4e6] p-8 shadow-2xl border-2 border-[#e6d1a7] animate-in fade-in zoom-in duration-200">
+            <div className="w-full max-w-md rounded-lg bg-[#fcf7f0] p-8 shadow-2xl border-2 border-[#b89b7a] animate-in fade-in zoom-in duration-200">
               <h3 className="mb-6 text-2xl font-bold text-[#3d2b1f]">동영상 강의 추가</h3>
               <div className="space-y-4">
                 <div>
@@ -2040,7 +2040,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                   <input 
                     type="text" 
                     placeholder="강의 제목을 입력하세요"
-                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    className="w-full rounded-lg border border-[#b89b7a] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
                     value={newVideo.name}
                     onChange={(e) => setNewVideo({ ...newVideo, name: e.target.value })}
                   />
@@ -2049,7 +2049,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                   <label className="block text-sm font-bold text-[#7b6346] mb-1">강의 일자</label>
                   <input 
                     type="date" 
-                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    className="w-full rounded-lg border border-[#b89b7a] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
                     value={newVideo.date}
                     onChange={(e) => setNewVideo({ ...newVideo, date: e.target.value })}
                   />
@@ -2059,7 +2059,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                   <input 
                     type="text" 
                     placeholder="https://www.youtube.com/watch?v=..."
-                    className="w-full rounded-xl border border-[#e6d1a7] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8d6a44]"
+                    className="w-full rounded-lg border border-[#b89b7a] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#8b5e3c]"
                     value={newVideo.url}
                     onChange={(e) => setNewVideo({ ...newVideo, url: e.target.value })}
                   />
@@ -2068,13 +2068,13 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
               <div className="mt-8 flex justify-end gap-3">
                 <button 
                   onClick={() => setIsAddVideoModalOpen(false)}
-                  className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346] hover:bg-[#f1e1c4]"
+                  className="rounded-full px-6 py-2 text-sm font-bold text-[#7b6346] hover:bg-[#dbc7b1]"
                 >
                   취소
                 </button>
                 <button 
                   onClick={handleAddVideoSubmit}
-                  className="rounded-full bg-[#8d6a44] px-6 py-2 text-sm font-bold text-white hover:bg-[#7c5935] shadow-md"
+                  className="rounded-full bg-[#8b5e3c] px-6 py-2 text-sm font-bold text-white hover:bg-[#6f4a2f] shadow-md"
                 >
                   등록하기
                 </button>
@@ -2084,16 +2084,16 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         )}
 
         {selectedVideo && (
-          <section className="mt-6 rounded-[36px] border border-[#d7c2a1] bg-[#fff8ed] p-6 shadow-[0_30px_60px_rgba(95,69,34,0.12)]">
+          <section className="mt-6 bg-[#fcf7f0] border-[#d6c2a8] border-2 rounded-lg p-6 shadow-md">
             <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm uppercase tracking-[0.25em] text-[#8c6f4d]">재생 중</p>
-                <h2 className="mt-2 text-2xl font-semibold text-[#3d2b1f]">{selectedVideo.name}</h2>
+                <p className="text-sm uppercase tracking-[0.25em] text-[#8b5e3c] font-bold">재생 중</p>
+                <h2 className="mt-2 text-2xl font-bold text-[#3d2b1f]">{selectedVideo.name}</h2>
               </div>
               <span>
               <button 
                 onClick={() => setShowVideoQna(!showVideoQna)}
-                className="rounded-0 bg-[#8d6a44] px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-[#7c5935]"
+                className="rounded-full bg-[#8b5e3c] px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-[#6f4a2f] transition-colors"
                 style={{marginRight:"30px"}}
               >
                 QnA
@@ -2107,21 +2107,21 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                   setSelectedQuestion(null); // 교사용 질문 선택 상태 초기화
                   setTeacherAnswer(''); // 답변 입력 필드 초기화
                 }}
-                className="rounded-full bg-[#8d6a44] px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-[#7c5935]"
+                className="rounded-full bg-[#8b5e3c] px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-[#6f4a2f] transition-colors"
               >
                 닫기
               </button>
               </span>
             </div>
             {selectedVideo.fileUrl.includes('youtube.com') || selectedVideo.fileUrl.includes('youtu.be') ? (
-              <div className="aspect-video w-full overflow-hidden rounded-[24px] bg-black">
+              <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
                 <div id="youtube-player" className="h-full w-full"></div>
               </div>
             ) : (
               <video
                 ref={videoRef}
                 controls
-                className="w-full rounded-[24px] bg-black"
+                className="w-full rounded-lg bg-black"
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => {
                   setIsPlaying(false);
@@ -2139,17 +2139,17 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
 
             {/* 동영상 하단 QnA 섹션 */}
             {showVideoQna && (
-              <div className="mt-6 rounded-2xl bg-white p-6 border border-[#e6d1a7] shadow-inner animate-in slide-in-from-top duration-300">
+              <div className="mt-6 rounded-lg bg-white p-6 border border-[#b89b7a] shadow-inner animate-in slide-in-from-top duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-bold text-[#3d2b1f]">강의 QnA</h3>
                   <div className="flex gap-2 items-center">
                     {!isTeacher && !selectedQuestion && !isCreatingQuestion && !isEditingQuestion && (
-                      <button onClick={() => { setIsCreatingQuestion(true); setNewQnaContent(''); }} className="text-sm bg-[#8d6a44] text-white px-3 py-1 rounded-full font-bold hover:bg-[#7c5935]">
+                      <button onClick={() => { setIsCreatingQuestion(true); setNewQnaContent(''); }} className="text-sm bg-[#8b5e3c] text-white px-3 py-1 rounded-full font-bold hover:bg-[#6f4a2f] transition-colors">
                         질문하기
                       </button>
                     )}
                     {(selectedQuestion || isCreatingQuestion || isEditingQuestion) && (
-                      <button onClick={() => { setSelectedQuestion(null); setIsCreatingQuestion(false); setIsEditingQuestion(false); }} className="text-sm text-[#8d6a44] font-bold hover:underline">
+                      <button onClick={() => { setSelectedQuestion(null); setIsCreatingQuestion(false); setIsEditingQuestion(false); }} className="text-sm text-[#8b5e3c] font-bold hover:underline">
                       ← 학생 목록으로
                       </button>
                     )}
@@ -2160,19 +2160,19 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                 {isCreatingQuestion && !isTeacher ? (
                   /* 학생: 새 질문 작성/수정 모드 */
                   <div className="space-y-6">
-                    <div className="bg-[#fcf7f0] p-6 rounded-2xl border-2 border-[#8d6a44] shadow-md">
-                      <label className="block text-xs font-bold text-[#8d6a44] mb-2">질문 및 메모 작성</label>
+                    <div className="bg-[#fcf7f0] p-6 rounded-lg border-2 border-[#b89b7a] shadow-md">
+                      <label className="block text-xs font-bold text-[#8b5e3c] mb-2">질문 및 메모 작성</label>
                       <textarea 
                         placeholder="강의에 대해 궁금한 점이나 메모를 남겨주세요."
                         rows={6}
-                        className="w-full bg-transparent border-none text-[#3d2b1f] placeholder-[#a68d71] text-lg focus:ring-0 resize-none"
+                        className="w-full bg-transparent border-none text-[#3d2b1f] placeholder-[#a68d71] text-lg focus:ring-0 resize-none font-bold"
                         value={newQnaContent}
                         onChange={(e) => setNewQnaContent(e.target.value)}
                       />
                       <div className="flex justify-end mt-4">
                         <button 
                           onClick={handleSaveStudentQuestion}
-                          className="rounded-full bg-[#8d6a44] px-8 py-2 text-sm font-bold text-white hover:bg-[#7c5935] shadow-lg transition-transform active:scale-95"
+                          className="rounded-full bg-[#8b5e3c] px-8 py-2 text-sm font-bold text-white hover:bg-[#6f4a2f] shadow-lg transition-transform active:scale-95"
                         >
                           저장하기
                         </button>
@@ -2182,9 +2182,9 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                 ) : selectedQuestion ? (
                   /* 공통: 질문 상세 보기 (교사는 답변 가능) */
                     <div className="space-y-4">
-                      <div className="bg-[#fcf7f0] p-6 rounded-2xl border border-[#ecd6b7] shadow-sm">
+                      <div className="bg-[#fcf7f0] p-6 rounded-lg border border-[#b89b7a] shadow-sm">
                         <div className="flex justify-between items-start mb-2">
-                          <p className="text-xs font-bold text-[#8d6a44]">질문 내용 (익명)</p>
+                          <p className="text-xs font-bold text-[#8b5e3c]">질문 내용 (익명)</p>
                           {/* 작성자 본인인 경우 수정/삭제 버튼 노출 */}
                           {!isTeacher && selectedQuestion.sid === studentId && !isEditingQuestion && (
                             <div className="flex gap-2">
@@ -2207,13 +2207,13 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                         {isEditingQuestion ? (
                           <div className="space-y-2">
                             <textarea 
-                              className="w-full bg-white border border-[#e6d1a7] rounded-lg p-2 text-sm focus:ring-0 resize-none"
+                              className="w-full bg-white border border-[#b89b7a] rounded-lg p-2 text-sm focus:ring-0 resize-none font-bold"
                               rows={4}
                               value={newQnaContent}
                               onChange={(e) => setNewQnaContent(e.target.value)}
                             />
                             <div className="flex justify-end">
-                              <button onClick={() => handleUpdateStudentQuestion(selectedQuestion.queid)} className="bg-[#8d6a44] text-white px-3 py-1 rounded text-xs font-bold">
+                              <button onClick={() => handleUpdateStudentQuestion(selectedQuestion.queid)} className="bg-[#8b5e3c] text-white px-3 py-1 rounded text-xs font-bold hover:bg-[#6f4a2f]">
                                 수정 완료
                               </button>
                             </div>
@@ -2225,8 +2225,8 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                       
                       {/* 답변 영역 */}
                       {(selectedQuestion.answer || isTeacher) && (
-                        <div className="bg-white p-4 rounded-xl border border-[#e6d1a7] shadow-sm">
-                          <label className="block text-[10px] font-bold text-[#8d6a44] mb-1">교사 답변</label>
+                        <div className="bg-white p-4 rounded-lg border border-[#b89b7a] shadow-sm">
+                          <label className="block text-[10px] font-bold text-[#8b5e3c] mb-1">교사 답변</label>
                           {isTeacher ? (
                             <>
                               <textarea 
@@ -2262,7 +2262,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                         <div 
                           key={qna.queid} 
                           onClick={() => setSelectedQuestion(qna)}
-                          className="relative cursor-pointer rounded-xl border border-[#f0debe] bg-[#fdfaf5] p-4 transition hover:border-[#8d6a44] hover:shadow-md flex items-center gap-3"
+                          className="relative cursor-pointer rounded-lg border border-[#b89b7a] bg-[#fdfaf5] p-4 transition hover:border-[#8b5e3c] hover:shadow-md flex items-center gap-3 font-bold"
                         >
                           {qna.answer && (
                             <span className="shrink-0 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full">답변완료</span>
@@ -2285,8 +2285,8 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
                             onClick={() => setQnaPage(page)}
                             className={`h-7 w-7 rounded-full text-[10px] font-bold transition ${
                               qnaPage === page
-                                ? "bg-[#8d6a44] text-white"
-                                : "bg-[#f3e1bf] text-[#5c4326] hover:bg-[#e7cd9f]"
+                                ? "bg-[#8b5e3c] text-white"
+                                : "bg-[#dbc7b1] text-[#5c4033] hover:bg-[#b89b7a]"
                             }`}
                           >
                             {page}
