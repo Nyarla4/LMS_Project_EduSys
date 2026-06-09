@@ -20,6 +20,8 @@ public class SubjectDTO {
     private LocalDate startDate;
     private LocalDate endDate;
 
+    private Integer tid; // 담당 교사 ID
+
     public SubjectDTO(Subject subject) {
         this.subid = subject.getSubid();
         this.major = subject.getMajor();
@@ -28,6 +30,7 @@ public class SubjectDTO {
         this.planFile = subject.getPlanFile();
         this.startDate = subject.getStartDate();
         this.endDate = subject.getEndDate();
+        this.tid = subject.getTeacher().getTid();
     }
 
 }

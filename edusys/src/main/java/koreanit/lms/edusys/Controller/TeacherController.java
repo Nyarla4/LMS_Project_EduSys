@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -57,5 +58,11 @@ public class TeacherController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(teacher);
+    }
+    
+    @PutMapping("/subject/{subid}/{tid}")
+    public ResponseEntity<Teacher> changeSubject(@PathVariable Integer tid, @PathVariable Integer subid) {
+        teacherService.changeSubject(tid, subid);
+        return ResponseEntity.ok().build();
     }
 }

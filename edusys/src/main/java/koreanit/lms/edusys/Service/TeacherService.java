@@ -4,8 +4,10 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import koreanit.lms.edusys.Entity.Subject;
 import koreanit.lms.edusys.Entity.Teacher;
 import koreanit.lms.edusys.Entity.UserEntity;
+import koreanit.lms.edusys.Repository.SubjectRepository;
 import koreanit.lms.edusys.Repository.TeacherRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -13,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TeacherService {
     private final TeacherRepository teacherRepository;
+    private final SubjectRepository subjectRepository;
     private final UserService userService;
 
     public List<Teacher> findAllTeachers() {
@@ -59,5 +62,21 @@ public class TeacherService {
             return teacherRepository.save(teacher);
         }
         return null;
+    }
+
+    public void changeSubject(Integer tid, Integer subid) {
+        if(tid == null || subid == null) {
+            return;
+        }
+        Subject subject = subjectRepository.findById(subid).orElse(null);
+        if(subject == null) {
+            return; // 과목이 없으면 null 반환
+        }
+        Teacher teacher = findTeacherById(tid);
+        if(teacher == null) {
+            return; // 교사가 없으면 null 반환
+        }
+        subject.setTeacher(teacher);
+        subjectRepository.save(subject);
     }
 }

@@ -1,9 +1,144 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+
+interface Subject {
+  subid: number;
+  name: string;
+  tid: number;
+}
+
+interface StudentExtra {
+  major: string;
+  grade: number;
+}
+
+interface TeacherExtra {
+  tid: number;
+  approved: boolean;
+  subjects?: Subject[];
+  user?: { username: string };
+}
+
+interface User {
+  loginid: string;
+  username: string;
+  usertype: "S" | "T" | "A";
+}
+
+const UserRow = memo(function UserRow({
+  user,
+  onTypeChange,
+  onOpenSubjectModal,
+}: {
+  user: User;
+  onTypeChange: (loginid: string, newType: User["usertype"]) => Promise<void>;
+  onOpenSubjectModal: (subject: Subject | null) => void;
+}) {
+  const [extraData, setExtraData] = useState<StudentExtra | TeacherExtra | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchExtra = async () => {
+      if (user.usertype === "S") {
+        const res = await fetch(`http://localhost:8080/api/students/${user.loginid}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setExtraData(data);
+        return;
+      }
+
+      if (user.usertype === "T") {
+        const res = await fetch(`http://localhost:8080/api/teachers/${user.loginid}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setExtraData(data);
+
+        if (data?.tid) {
+          const subjectRes = await fetch(`http://localhost:8080/api/subjects/teacher/${data.tid}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          });
+
+          if (subjectRes.ok) {
+            const subjectData = (await subjectRes.json()) as Subject[];
+            if (!cancelled) {
+              setExtraData((prev) => ({ ...(prev ?? {}), subjects: subjectData } as TeacherExtra));
+            }
+          }
+        }
+      }
+    };
+
+    fetchExtra();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user.loginid, user.usertype]);
+
+  const handleTypeChange = async (newType: User["usertype"]) => {
+    if (!confirm(`사용자의 권한을 ${newType}으로 변경하시겠습니까?`)) return;
+    await onTypeChange(user.loginid, newType);
+  };
+
+  const studentExtra = user.usertype === "S" ? (extraData as StudentExtra | null) : null;
+  const teacherExtra = user.usertype === "T" ? (extraData as TeacherExtra | null) : null;
+
+  return (
+    <tr className="border-b border-[#d6c2a8] hover:bg-[#f5eee4] transition-colors">
+      <td className="px-6 py-4 font-bold text-[#5c4033]">{user.username}</td>
+
+      <td className="px-6 py-4 text-sm text-[#8b5e3c]">
+        {studentExtra ? (
+          <div className="flex gap-2">
+            <span className="bg-[#e7d7c1] px-2 py-0.5 rounded text-xs font-bold">전공: {studentExtra.major}</span>
+            <span className="bg-[#e7d7c1] px-2 py-0.5 rounded text-xs font-bold">{studentExtra.grade}학년</span>
+          </div>
+        ) : teacherExtra ? (
+          <span className="flex gap-2">
+            <span className={`px-2 py-0.5 rounded text-xs font-bold ${teacherExtra.approved ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+              {teacherExtra.approved ? "● 인증됨" : "○ 미인증"}
+            </span>
+            <span
+              className={`px-2 py-0.5 rounded text-xs font-bold ${teacherExtra.subjects && teacherExtra.subjects.length > 0 ? "bg-green-100 text-green-700 cursor-pointer" : "bg-red-100 text-red-700"}`}
+              onClick={() => onOpenSubjectModal(teacherExtra.subjects && teacherExtra.subjects.length > 0 ? teacherExtra.subjects[0] : null)}
+            >
+              {teacherExtra.subjects && teacherExtra.subjects.length > 0 ? `● ${teacherExtra.subjects[0].name} 담당` : "○ 과목 없음"}
+            </span>
+          </span>
+        ) : (
+          <span className="text-[#b89b7a] italic">별도 상세 정보 없음</span>
+        )}
+      </td>
+
+      <td className="px-6 py-4 text-center">
+        <select
+          value={user.usertype}
+          onChange={(e) => handleTypeChange(e.target.value as User["usertype"])}
+          className={`border-[#b89b7a] border rounded px-3 py-1 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#8b5e3c] transition-all cursor-pointer ${user.usertype === "A" ? "bg-[#8b5e3c] text-white" : "bg-white text-[#5c4033]"}`}
+        >
+          <option value="S">학생 (S)</option>
+          <option value="T">교사 (T)</option>
+          <option value="A">관리자 (A)</option>
+        </select>
+      </td>
+    </tr>
+  );
+});
 
 export default function Users() {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [approvedFreeTeachers, setApprovedTeachers] = useState<TeacherExtra[]>([]);
+  const [selectedTid, setSelectedTid] = useState<number>(-1);
 
   useEffect(() => {
     fetch("http://localhost:8080/user/entity", {
@@ -14,95 +149,93 @@ export default function Users() {
       .then((res) => res.json())
       .then((data) => {
         setUsers(data);
+        fetch("http://localhost:8080/api/teachers/approved", {
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          }
+        })
+          .then((res) => res.json())
+          .then(async (approvedData: Array<{ tid: number; user?: { username: string } }>) => {
+            const teachersWithSubjects = await Promise.all(
+              approvedData.map(async (teacher) => {
+                const subjectRes = await fetch(`http://localhost:8080/api/subjects/teacher/${teacher.tid}`, {
+                  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                });
+
+                if (!subjectRes.ok) return null;
+
+                const subjects = (await subjectRes.json()) as Subject[];
+                return subjects.length === 0
+                  ? ({ tid: teacher.tid, approved: true, subjects, user: teacher.user } as TeacherExtra)
+                  : null;
+              })
+            );
+
+            setApprovedTeachers(teachersWithSubjects.filter(Boolean) as TeacherExtra[]);
+          })
+          .catch((err) => console.error("인증된 교사 데이터 로딩 실패:", err));
       })
       .catch((err) => console.error("데이터 로딩 실패:", err));
   }, []);
 
-  const UserRow = ({ user }: { user: any }) => {
-    const [extraData, setExtraData] = useState<any>(null);
-    const [currentType, setCurrentType] = useState(user.usertype);
+  const handleSubjectChange = useCallback(async (suid: number, tid: number) => {
+    if (!confirm("담당 과목을 변경하시겠습니까?")) return;
 
-    useEffect(() => {
-      const fetchExtra = async () => {
-        let endpoint = "";
-        if (currentType === "S") endpoint = `http://localhost:8080/api/students/${user.loginid}`;
-        else if (currentType === "T") endpoint = `http://localhost:8080/api/teachers/${user.loginid}`;
-        else return;
+    try {
+      const res = await fetch(`http://localhost:8080/api/teachers/subject/${suid}/${tid}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-        try {
-          const res = await fetch(endpoint, {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setExtraData(data);
-          }
-        } catch (err) { console.error(err); }
-      };
-      fetchExtra();
-    }, [user, currentType]);
+      if (!res.ok) throw new Error("subject update failed");
 
-    // 타입 변경 핸들러
-    const handleTypeChange = async (newType: string) => {
-      if (!confirm(`사용자의 권한을 ${newType}으로 변경하시겠습니까?`)) return;
+      setApprovedTeachers((prev) => prev.filter((teacher) => teacher.tid !== tid));
+      alert("담당 과목이 변경되었습니다.");
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      alert("변경에 실패했습니다.");
+    }
+  }, []);
 
-      try {
-        const res = await fetch(`http://localhost:8080/user/${user.loginid}/type`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({ usertype: newType }),
-        });
+  const handleTypeChange = useCallback(async (loginid: string, newType: User["usertype"]) => {
+    try {
+      const res = await fetch(`http://localhost:8080/user/${loginid}/type`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ usertype: newType }),
+      });
 
-        if (res.ok) {
-          setCurrentType(newType);
-          alert("권한이 변경되었습니다.");
-          // 타입이 변경되면 상세 정보가 달라지므로 페이지를 새로고침하거나 상태를 초기화합니다.
-          window.location.reload();
-        }
-      } catch (err) {
-        alert("변경에 실패했습니다.");
-      }
-    };
+      if (!res.ok) throw new Error("type update failed");
 
-    return (
-      <tr className="border-b border-[#d6c2a8] hover:bg-[#f5eee4] transition-colors">
-        <td className="px-6 py-4 font-bold text-[#5c4033]">{user.username}</td>
+      setUsers((prev) => prev.map((userItem) =>
+        userItem.loginid === loginid ? { ...userItem, usertype: newType } : userItem
+      ));
+      alert("권한이 변경되었습니다.");
+    } catch (err) {
+      console.error(err);
+      alert("변경에 실패했습니다.");
+    }
+  }, []);
 
-        <td className="px-6 py-4 text-sm text-[#8b5e3c]">
-          {currentType === "S" && extraData ? (
-            <div className="flex gap-2">
-              <span className="bg-[#e7d7c1] px-2 py-0.5 rounded text-xs font-bold">전공: {extraData.major}</span>
-              <span className="bg-[#e7d7c1] px-2 py-0.5 rounded text-xs font-bold">{extraData.grade}학년</span>
-            </div>
-          ) : currentType === "T" && extraData ? (
-            <span className={`px-2 py-0.5 rounded text-xs font-bold ${extraData.approved ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-              {extraData.approved ? "● 인증됨" : "○ 미인증"}
-            </span>
-          ) : (
-            <span className="text-[#b89b7a] italic">별도 상세 정보 없음</span>
-          )}
-        </td>
+  const handleSubjectModalOpen = useCallback((subject: Subject | null) => {
+    setSelectedSubject(subject);
+    if (subject) {
+      setSelectedTid(-1);
+      setIsModalOpen(true);
+    }
+  }, []);
 
-        {/* 타입 변경 Select Box 영역 */}
-        <td className="px-6 py-4 text-center">
-          <select
-            value={currentType}
-            onChange={(e) => handleTypeChange(e.target.value)}
-            /* 7. 라벨 폼 스타일의 input 스타일 응용 */
-            className={`border-[#b89b7a] border-1 border rounded px-3 py-1 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#8b5e3c] transition-all cursor-pointer ${currentType === "A" ? "bg-[#8b5e3c] text-white" : "bg-white text-[#5c4033]"
-              }`}
-          >
-            <option value="S">학생 (S)</option>
-            <option value="T">교사 (T)</option>
-            <option value="A">관리자 (A)</option>
-          </select>
-        </td>
-      </tr>
-    );
-  };
+  const availableTeachers = useMemo(
+    () => approvedFreeTeachers.filter((teacher: TeacherExtra) => teacher.tid !== selectedSubject?.tid),
+    [approvedFreeTeachers, selectedSubject?.tid]
+  );
   return (
     <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10 font-sans text-[#5c4033]">
 
@@ -123,8 +256,13 @@ export default function Users() {
             </thead>
             <tbody>
               {users.length > 0 ? (
-                users.map((user: any) => (
-                  <UserRow key={user.loginid} user={user} />
+                users.map((user: User) => (
+                  <UserRow
+                    key={user.loginid}
+                    user={user}
+                    onTypeChange={handleTypeChange}
+                    onOpenSubjectModal={handleSubjectModalOpen}
+                  />
                 ))
               ) : (
                 <tr>
@@ -145,6 +283,61 @@ export default function Users() {
             목록 새로고침
           </button>
         </div>
+
+        {isModalOpen && (
+          <div
+            onClick={() => setIsModalOpen(false)}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#fcf7f0] border-[#b89b7a] border rounded-lg p-6 shadow-md font-bold w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <h2 className="text-2xl font-bold text-center mb-6 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-1.5 text-[#5c4033]">
+                담당 변경
+              </h2>
+              <div className="flex flex-col gap-2 mb-6">
+                <label className="text-lg font-bold text-[#5c4033]">
+                  현재 과목: <span className="text-[#8b5e3c] font-extrabold">{selectedSubject?.name}</span>
+                </label>
+
+                <select
+                  value={selectedTid}
+                  onChange={(e) => setSelectedTid(Number(e.target.value))}
+                  className="border-[#b89b7a] border rounded px-3 py-2 bg-white text-[#5c4033] focus:outline-none focus:ring-2 focus:ring-[#8b5e3c] font-bold cursor-pointer"
+                >
+                  <option value={-1} disabled>
+                    담당 교사를 선택하세요
+                  </option>
+                  {availableTeachers.map((teacher: TeacherExtra) => (
+                    <option key={teacher.tid} value={teacher.tid}>
+                      {teacher.user?.username ?? `교사 ${teacher.tid}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-3 justify-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedSubject && selectedTid !== -1) {
+                      handleSubjectChange(selectedSubject.subid, selectedTid);
+                    }
+                  }}
+                  className="bg-[#8b5e3c] hover:bg-[#6f4a2f] text-white px-5 py-2 rounded text-base font-bold transition-colors flex-1"
+                >
+                  변경 적용
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-5 py-2 rounded text-base border-[#b89b7a] border font-bold bg-[#dbc7b1] text-[#5c4033] hover:bg-[#cbb59c] transition-colors flex-1"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
