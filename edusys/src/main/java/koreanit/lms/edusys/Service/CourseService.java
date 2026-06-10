@@ -34,6 +34,7 @@ public class CourseService {
     private final ProgressRepository progressRepository;
     private final ExamGradeRepository examGradeRepository;
     private final WorkSubmitService workSubmitService;
+    private final GradeService gradeService;
 
     public List<Course> findAllCourses() {
         return courseRepository.findAll();
@@ -54,6 +55,7 @@ public class CourseService {
         return courseRepository.findBySubjectSubid(subid);
     }
 
+    @Transactional
     public Course createCourse(Integer sid, Integer subid) {
         Course course = new Course();
         Student student = studentService.findById(sid);
@@ -63,13 +65,32 @@ public class CourseService {
         }
         course.setStudent(student);
         course.setSubject(subject);
-        return courseRepository.save(course);
+        Course savedCourse = courseRepository.save(course);
+        createGradeIfAbsent(sid, subid);
+        return savedCourse;
     }
+
+    @Transactional
     public Course createCourse(Course course) {
-        if(course == null) {
+        if(course == null || course.getStudent() == null || course.getSubject() == null) {
             return null;
         }
-        return courseRepository.save(course);
+
+        Integer sid = course.getStudent().getSid();
+        Integer subid = course.getSubject().getSubid();
+
+        Student student = studentService.findById(sid);
+        Subject subject = subjectService.findSubjectById(subid);
+        if (student == null || subject == null) {
+            return null;
+        }
+
+        course.setStudent(student);
+        course.setSubject(subject);
+
+        Course savedCourse = courseRepository.save(course);
+        createGradeIfAbsent(sid, subid);
+        return savedCourse;
     }
 
     @Transactional
@@ -118,5 +139,11 @@ public class CourseService {
             }
         }
         return dto;
+    }
+
+    private void createGradeIfAbsent(Integer sid, Integer subid) {
+        if (!gradeRepository.existsByStudentSidAndSubjectSubid(sid, subid)) {
+            gradeService.createGrade(sid, subid);
+        }
     }
 }
