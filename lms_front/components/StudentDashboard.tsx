@@ -724,8 +724,17 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         works.map(async (assignment) => {
           try {
             const res = await fetch(`${API_BASE}/work-submits/work/${assignment.wid}/student/${studentId}`, { headers });
-
-            if (res.ok) {
+            
+            // 204 No Content 응답은 res.ok가 true이지만 본문이 없으므로 res.json() 호출 시 오류 발생
+            // 따라서 204 상태 코드를 명시적으로 처리하여 JSON 파싱을 건너뜁니다.
+            if (res.status === 204) {
+              return {
+                ...assignment,
+                fileName: "",
+                grade: "",
+                status: "제출전",
+              };
+            } else if (res.ok) {
               const submission = await res.json();
               const status = submission.grade && submission.grade !== ""
                 ? "채점완료"
