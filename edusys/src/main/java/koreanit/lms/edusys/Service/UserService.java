@@ -31,16 +31,16 @@ public class UserService {
         user.setUsername(form.getUsername());
         user.setEmail(form.getEmail());
         user.setPhonenum(form.getPhonenum());
-        
+
         if (form.getUsertype() != null) {
             user.setUsertype(UserType.valueOf(form.getUsertype()));
         }
 
         String savedFileName = saveFile(form.getProofFile());
         user.setProofFilePath(savedFileName);
-        
+
         user.setPassword(passwordEncoder.encode(form.getPassword()));
-        
+
         return this.userRepository.save(user);
     }
 
@@ -77,7 +77,7 @@ public class UserService {
 
     public UserDTO getUserDto(String loginid) {
         UserEntity user = this.getUserOrThrow(loginid);
-        
+
         UserDTO dto = new UserDTO();
         dto.setUserid(user.getUserid());
         dto.setLoginid(user.getLoginid());
@@ -85,7 +85,7 @@ public class UserService {
         dto.setUsername(user.getUsername());
         dto.setPhonenum(user.getPhonenum());
         dto.setUsertype(user.getUsertype().name());
-        
+
         return dto;
     }
 
@@ -93,14 +93,17 @@ public class UserService {
         List<UserEntity> users = this.userRepository.findAll();
         List<UserDTO> userDTOs = new ArrayList<>();
         for (UserEntity user : users) {
-            UserDTO dto = getUserDto(user.getLoginid());
-            userDTOs.add(dto);
+            if(user.getLoginid()!=null){
+                UserDTO dto = getUserDto(user.getLoginid());
+                userDTOs.add(dto);
+            }
         }
         return userDTOs;
     }
 
     public UserDTO changeUser(UserEntity user) {
-        if(user == null) return null;
+        if (user == null)
+            return null;
         userRepository.save(user);
         UserDTO dto = new UserDTO();
         dto.setUserid(user.getUserid());
@@ -126,14 +129,14 @@ public class UserService {
 
     public void updateUserInfo(String loginId, String newEmail, String newPhone) {
         UserEntity user = this.getUserOrThrow(loginId);
-        
+
         if (newEmail != null && !newEmail.isEmpty()) {
             user.setEmail(newEmail);
         }
         if (newPhone != null && !newPhone.isEmpty()) {
             user.setPhonenum(newPhone);
         }
-        
+
         this.userRepository.save(user);
     }
 

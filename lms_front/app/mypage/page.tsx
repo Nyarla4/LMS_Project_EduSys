@@ -10,11 +10,11 @@ export default function MyPage() {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const [studentStats, setStudentStats] = useState({ 
-    courseCount: 0, 
+  const [studentStats, setStudentStats] = useState({
+    courseCount: 0,
     gradeCount: 0,
-    courses: [] as any[], 
-    progressMap: {} as Record<number, number> 
+    courses: [] as any[],
+    progressMap: {} as Record<number, number>
   });
   const [teacherStats, setTeacherStats] = useState({ subjectCount: 0 });
   const [adminStats, setAdminStats] = useState({ waitTeachers: 0, waitSubjects: 0 });
@@ -37,7 +37,7 @@ export default function MyPage() {
 
     const profile = user.user || user;
     const rawUsertype = profile?.usertype;
-    
+
     setStatsLoading(true);
     try {
       if (rawUsertype === "S") {
@@ -57,14 +57,14 @@ export default function MyPage() {
         const dbProgressMap: Record<number, number> = {};
         if (progressRes.ok) {
           const progs = await progressRes.json();
-          
+
           progs.forEach((p: any) => {
             const lid = p.lid || p.lesson?.lid || p.id || p.lesson?.id;
             const dbVal = p.progressed ?? p.progress ?? 0;
-            
+
             if (lid) {
               const localVal = parseInt(localStorage.getItem(`video_progress_${lid}`) || "0", 10);
-              dbProgressMap[lid] = Math.max(dbVal, localVal); 
+              dbProgressMap[lid] = Math.max(dbVal, localVal);
             }
           });
         }
@@ -73,7 +73,7 @@ export default function MyPage() {
 
         for (const c of courses) {
           const subId = c.subject?.subid || c.subid || c.id;
-          
+
           if (!subId) {
             continue;
           }
@@ -82,7 +82,7 @@ export default function MyPage() {
             const lessonsRes = await fetch(`http://localhost:8080/api/lessons/subject/${subId}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            
+
             if (!lessonsRes.ok) {
               subjectProgressMap[subId] = 0;
               continue;
@@ -91,7 +91,7 @@ export default function MyPage() {
             const lessons: any[] = await lessonsRes.json();
 
             if (lessons.length === 0) {
-              subjectProgressMap[subId] = 0; 
+              subjectProgressMap[subId] = 0;
               continue;
             }
 
@@ -101,17 +101,17 @@ export default function MyPage() {
             for (const lesson of lessons) {
               const lid = lesson.lid || lesson.id;
               const duration = lesson.duration || lesson.totalTime || 0;
-              
-              const savedTime = dbProgressMap[lid] || 0; 
+
+              const savedTime = dbProgressMap[lid] || 0;
 
               totalDuration += duration;
               totalProgressed += savedTime;
             }
 
-            const subjectProgressPercent = totalDuration > 0 
-              ? Math.min(100, Math.floor((totalProgressed / totalDuration) * 100)) 
+            const subjectProgressPercent = totalDuration > 0
+              ? Math.min(100, Math.floor((totalProgressed / totalDuration) * 100))
               : 0;
-            
+
             subjectProgressMap[subId] = subjectProgressPercent;
 
           } catch (err) {
@@ -123,16 +123,16 @@ export default function MyPage() {
           courseCount: courses.length,
           gradeCount: validGrades.length,
           courses: courses,
-          progressMap: subjectProgressMap 
+          progressMap: subjectProgressMap
         });
-      } 
+      }
       else if (rawUsertype === "T") {
         const tid = user.tid || user.user?.tid;
         if (!tid) return;
         const res = await fetch(`http://localhost:8080/api/subjects/teacher/${tid}`, { headers: { Authorization: `Bearer ${token}` } });
         const subjects = res.ok ? await res.json() : [];
         setTeacherStats({ subjectCount: subjects.length });
-      } 
+      }
       else if (rawUsertype === "A") {
         const [teacherRes, subjectRes] = await Promise.all([
           fetch(`http://localhost:8080/api/teachers/unApproved`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -150,6 +150,11 @@ export default function MyPage() {
   };
 
   async function handleDeleteAccount() {
+    if (rawUsertype === "T" && teacherStats.subjectCount > 0) {
+      alert(`현재 담당 중인 과목이 ${teacherStats.subjectCount}개 있습니다.\n과목 담당을 해제하거나 삭제한 후 탈퇴를 진행해 주세요.`);
+      return;
+    }
+
     if (!confirm("정말 탈퇴하시겠습니까?\n탈퇴 시 수강 이력 및 성적 정보를 포함한 모든 데이터가 완전히 소멸됩니다.")) {
       return;
     }
@@ -166,7 +171,8 @@ export default function MyPage() {
         localStorage.removeItem("loginId");
         window.location.href = "/login";
       } else {
-        alert("탈퇴 처리 도중 에러가 발생했습니다. 다시 시도해 주세요.");
+        const errorData = await res.json();
+        alert(errorData.message || "탈퇴 처리 도중 에러가 발생했습니다. 다시 시도해 주세요.");
       }
     } catch (err) {
       alert("백엔드 서버와 통신에 실패했습니다.");
@@ -192,7 +198,7 @@ export default function MyPage() {
   const email = profile?.email || "등록된 이메일이 없습니다.";
   const phonenum = profile?.phonenum || "등록된 번호가 없습니다.";
   const rawUsertype = profile?.usertype;
-  
+
   let usertypeKorean = "일반 회원";
   let dynamicSummaryCard = null;
 
@@ -203,7 +209,7 @@ export default function MyPage() {
         <p className="text-xs font-bold text-[#8b5e3c] uppercase tracking-wider text-center border-b border-[#d6c2a8]/60 pb-1">
           나의 학업 및 진도율 현황
         </p>
-        
+
         {statsLoading ? (
           <p className="text-center text-xs text-gray-400 animate-pulse py-4">학업 정보 및 진도율 로딩 중...</p>
         ) : (
@@ -225,18 +231,18 @@ export default function MyPage() {
 
             <div className="bg-white/90 border border-[#d6c2a8]/50 rounded-xl p-4 space-y-3">
               <p className="text-xs font-bold text-[#5c4033] mb-1">과목별 온라인 진도율</p>
-              
+
               {studentStats.courses.length > 0 ? (
                 <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
                   {studentStats.courses.map((course: any, index: number) => {
                     const subId = course.subject?.subid || course.subid || course.id;
                     const percentage = studentStats.progressMap[subId] || 0;
 
-                    const displaySubjectName = 
-                      course.subject?.name || 
-                      course.subject?.subjectName || 
-                      course.subjectName || 
-                      course.name || 
+                    const displaySubjectName =
+                      course.subject?.name ||
+                      course.subject?.subjectName ||
+                      course.subjectName ||
+                      course.name ||
                       `미지정 과목(ID: ${subId || index})`;
 
                     return (
@@ -248,7 +254,7 @@ export default function MyPage() {
                           <span className="text-xs font-bold text-[#8b5e3c]">{percentage}%</span>
                         </div>
                         <div className="h-2 w-full bg-[#eedfc2]/50 rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className="h-full bg-[#8b5e3c] rounded-full transition-all duration-500"
                             style={{ width: `${percentage}%` }}
                           />
@@ -265,7 +271,7 @@ export default function MyPage() {
         )}
       </div>
     );
-  } 
+  }
   else if (rawUsertype === "T") {
     usertypeKorean = "교사";
     dynamicSummaryCard = (
@@ -283,7 +289,7 @@ export default function MyPage() {
         )}
       </div>
     );
-  } 
+  }
   else if (rawUsertype === "A") {
     usertypeKorean = "관리자";
     dynamicSummaryCard = (
@@ -310,7 +316,7 @@ export default function MyPage() {
   return (
     <div className="min-h-screen bg-[#f5f1e8] border-[#d6c2a8] border-2 rounded-lg flex justify-center py-10 font-sans text-[#5c4033]">
       <div className="w-full max-w-2xl flex flex-col gap-6 mt-10 px-6 sm:px-10">
-        
+
         <p className="text-4xl font-bold text-center mb-4 bg-[#e7d7c1] border-[#d6c2a8] border-2 rounded-full py-2">
           마이페이지
         </p>
@@ -328,7 +334,7 @@ export default function MyPage() {
             <span className="text-sm font-bold text-[#8b5e3c]">이름</span>
             <span className="text-base font-semibold text-[#3d2b1f]">{username}</span>
           </div>
-          
+
           <div className="flex justify-between items-center pb-3 border-b border-[#d6c2a8]/40">
             <span className="text-sm font-bold text-[#8b5e3c]">사용자 ID</span>
             <span className="text-base font-medium text-gray-700">{loginid}</span>
@@ -351,11 +357,10 @@ export default function MyPage() {
                 {usertypeKorean}
               </span>
               {rawUsertype === "T" && (
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-                  user?.approved 
-                    ? "bg-green-100 text-green-700 border-green-300" 
-                    : "bg-amber-100 text-amber-700 border-amber-300"
-                }`}>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${user?.approved
+                  ? "bg-green-100 text-green-700 border-green-300"
+                  : "bg-amber-100 text-amber-700 border-amber-300"
+                  }`}>
                   {user?.approved ? "승인 완료" : "승인 대기"}
                 </span>
               )}
@@ -365,7 +370,7 @@ export default function MyPage() {
 
         <div className="pt-2">
           <Link
-            href="/change-password" 
+            href="/change-password"
             className="w-full flex justify-center items-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-[#8b5e3c] hover:bg-[#6f4a2f] transition-all text-center shadow-md active:scale-[0.98]"
           >
             회원정보 수정하기
@@ -373,7 +378,7 @@ export default function MyPage() {
         </div>
 
         <div className="text-center pt-4 border-t border-[#d6c2a8]/30">
-          <button 
+          <button
             onClick={handleDeleteAccount}
             disabled={isDeleting}
             className="text-xs text-gray-400 hover:text-red-500 hover:underline transition-colors font-medium disabled:opacity-50"

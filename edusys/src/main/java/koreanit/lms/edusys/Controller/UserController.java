@@ -14,6 +14,7 @@ import koreanit.lms.edusys.Entity.UserEntity;
 import koreanit.lms.edusys.Entity.UserType;
 import koreanit.lms.edusys.Service.UserService;
 import koreanit.lms.edusys.Service.StudentService;
+import koreanit.lms.edusys.Service.SubjectService;
 import koreanit.lms.edusys.Service.TeacherService;
 import koreanit.lms.edusys.Service.UserCreateForm;
 import koreanit.lms.edusys.Service.UserDTO;
@@ -23,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 @RequiredArgsConstructor
 @RestController
@@ -36,6 +36,7 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final StudentService studentService;
     private final TeacherService teacherService;
+    private final SubjectService subjectService;
 
     @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> signup(@Valid @ModelAttribute UserCreateForm userCreateForm, BindingResult bindingResult) {
@@ -118,15 +119,16 @@ public class UserController {
         UserEntity user = userService.getUser(loginId);
         if (user == null)
             return ResponseEntity.notFound().build();
-        UserType newType = dto.getUsertype().contains("S") ? UserType.S : dto.getUsertype().contains("T") ? UserType.T : UserType.A;
+        UserType newType = dto.getUsertype().contains("S") ? UserType.S
+                : dto.getUsertype().contains("T") ? UserType.T : UserType.A;
         user.setUsertype(newType);
         if (newType == UserType.S) {
-            if(studentService.findbyUserId(loginId) == null){
+            if (studentService.findbyUserId(loginId) == null) {
                 studentService.create(user);
             }
         }
         if (newType == UserType.T) {
-            if(teacherService.findbyUserId(loginId) == null){
+            if (teacherService.findbyUserId(loginId) == null) {
                 teacherService.create(user);
             }
         }
@@ -135,22 +137,22 @@ public class UserController {
     }
 
     @PostMapping("/change-password")
-        public ResponseEntity<?> changePassword(
+    public ResponseEntity<?> changePassword(
             @RequestHeader("Authorization") String token,
             @RequestBody UserDTO dto) {
-        
+
         Map<String, String> response = new HashMap<>();
-        
+
         try {
             String jwtToken = token.replace("Bearer ", "").trim();
-            
-            String loginId = jwtTokenProvider.getUserPk(jwtToken); 
+
+            String loginId = jwtTokenProvider.getUserPk(jwtToken);
 
             userService.changePassword(loginId, dto.getCurrentPassword(), dto.getNewPassword());
-            
+
             response.put("message", "비밀번호가 성공적으로 변경되었습니다.");
             return ResponseEntity.ok(response);
-            
+
         } catch (IllegalArgumentException e) {
             response.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -164,18 +166,18 @@ public class UserController {
     public ResponseEntity<?> updateUserInfo(
             @RequestHeader("Authorization") String token,
             @RequestBody UserDTO dto) {
-        
+
         Map<String, String> response = new HashMap<>();
-        
+
         try {
             String jwtToken = token.replace("Bearer ", "").trim();
-            String loginId = jwtTokenProvider.getUserPk(jwtToken); 
+            String loginId = jwtTokenProvider.getUserPk(jwtToken);
 
             userService.updateUserInfo(loginId, dto.getEmail(), dto.getPhonenum());
-            
+
             response.put("message", "회원 정보가 성공적으로 수정되었습니다.");
             return ResponseEntity.ok(response);
-            
+
         } catch (IllegalArgumentException e) {
             response.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -188,16 +190,31 @@ public class UserController {
     @DeleteMapping("/withdraw")
     public ResponseEntity<?> withdrawUser(@RequestHeader("Authorization") String token) {
         Map<String, String> response = new HashMap<>();
-        
+
         try {
             String jwtToken = token.replace("Bearer ", "").trim();
-            String loginId = jwtTokenProvider.getUserPk(jwtToken); 
+            String loginId = jwtTokenProvider.getUserPk(jwtToken);
+
+            UserEntity user = userService.getUserOrThrow(loginId);
+
+            if (user.getUsertype() == UserType.T) {
+                koreanit.lms.edusys.Entity.Teacher teacher = teacherService.findbyUserId(loginId);
+                if (teacher != null) {
+                    List<koreanit.lms.edusys.Entity.Subject> subjects = subjectService
+                            .findSubjectsByTeacherId(teacher.getTid());
+
+                    if (subjects != null && !subjects.isEmpty()) {
+                        response.put("message", "현재 담당 중인 과목이 " + subjects.size() + "개 있습니다. 과목을 먼저 정리해 주세요.");
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                    }
+                }
+            }
 
             userService.withdraw(loginId);
-            
+
             response.put("message", "회원 탈퇴가 안전하게 처리되었습니다.");
             return ResponseEntity.ok(response);
-            
+
         } catch (DataNotFoundException e) {
             response.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
