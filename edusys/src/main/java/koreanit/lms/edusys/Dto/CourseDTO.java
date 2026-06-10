@@ -11,6 +11,9 @@ import lombok.Setter;
 public class CourseDTO {
     private Integer cid;
     private SubjectDTO subject;
+    // 수강신청 현황에 필요한 필드
+    private String lessonName;
+    private String teacherName;
 
     public CourseDTO(Course course) {
         this.cid = course.getCid();

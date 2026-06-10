@@ -16,6 +16,8 @@ type SubjectResponse = {
 
 type CourseResponse = {
     cid: number;
+    lessonName?: string;
+    teacherName?: string; 
     subject?: {
         subid: number;
         name: string;
@@ -100,8 +102,8 @@ export default function Page() {
                         ? "이과" : course.subject?.major === "arts"
                         ? "문과" : "전체",
                     subjectName: course.subject?.name || "미정",
-                    lessonName: "미정",
-                    teacherName: "",
+                    lessonName: course.lessonName || "미정",
+                    teacherName: course.teacherName || "미정",
                     schedule: course.subject?.startDate && course.subject?.endDate
                         ? `${course.subject.startDate} ~ ${course.subject.endDate}`
                         : "미정",

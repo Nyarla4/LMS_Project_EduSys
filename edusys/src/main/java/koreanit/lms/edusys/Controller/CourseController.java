@@ -16,12 +16,10 @@ public class CourseController {
 
     private final CourseService courseService;
 
-    // 상세 조회보다 구체적인 경로를 위로 올립니다.
+    // 수강신청 현황 조회
     @GetMapping("/student/{sid}")
     public List<CourseDTO> getCoursesByStudentId(@PathVariable("sid") Integer sid) {
-        return courseService.findAllCoursesByStudent(sid).stream()
-                .map(CourseDTO::new)
-                .collect(Collectors.toList());
+        return courseService.findCourseDTOsByStudent(sid);
     }
 
     @GetMapping

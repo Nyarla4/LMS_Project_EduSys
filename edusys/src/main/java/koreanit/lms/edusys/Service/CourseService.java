@@ -2,13 +2,17 @@ package koreanit.lms.edusys.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import koreanit.lms.edusys.Dto.CourseDTO;
 import koreanit.lms.edusys.Entity.Course;
+import koreanit.lms.edusys.Entity.Lesson;
 import koreanit.lms.edusys.Entity.Student;
 import koreanit.lms.edusys.Entity.Subject;
 import koreanit.lms.edusys.Repository.CourseRepository;
+import koreanit.lms.edusys.Repository.LessonRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -17,6 +21,7 @@ public class CourseService {
     private final CourseRepository courseRepository;
     private final StudentService studentService;
     private final SubjectService subjectService;
+    private final LessonRepository lessonRepository;
 
     public List<Course> findAllCourses() {
         return courseRepository.findAll();
@@ -63,5 +68,28 @@ public class CourseService {
         if (existingCourse != null) {
             courseRepository.delete(existingCourse);
         }
+    }
+    // 수강신청 현황 조회
+    public List<CourseDTO> findCourseDTOsByStudent(Integer sid) {
+    return courseRepository.findByStudentSid(sid).stream()
+            .map(this::toCourseDTO)
+            .collect(Collectors.toList());
+    }
+    // Course 엔티티에서 필요한 정보를 추출하여 CourseDTO로 변환하는 메서드
+    private CourseDTO toCourseDTO(Course course) {
+        CourseDTO dto = new CourseDTO(course);
+
+        if (course.getSubject() != null) {
+            if (course.getSubject().getTeacher() != null
+                    && course.getSubject().getTeacher().getUser() != null) {
+                dto.setTeacherName(course.getSubject().getTeacher().getUser().getUsername());
+            }
+
+            List<Lesson> lessons = lessonRepository.findBySubjectSubid(course.getSubject().getSubid());
+            if (lessons != null && !lessons.isEmpty()) {
+                dto.setLessonName(lessons.get(0).getName());
+            }
+        }
+        return dto;
     }
 }
