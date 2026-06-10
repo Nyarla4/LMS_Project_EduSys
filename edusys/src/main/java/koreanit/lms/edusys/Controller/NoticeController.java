@@ -33,7 +33,7 @@ public class NoticeController {
         List<Notice> notices = noticeService.findAllNotices(); // 서비스에서 리스트를 가져옴
 
         if (notices.isEmpty()) {
-            return ResponseEntity.noContent().build(); // 데이터가 없으면 204 No Content
+            return ResponseEntity.notFound().build(); // 데이터가 없으면 204 No Content
         }
 
         return ResponseEntity.ok(notices); // 데이터와 함께 200 OK 전송
@@ -44,7 +44,7 @@ public class NoticeController {
         List<Notice> notices = noticeService.findAllActiveNotices(); // 서비스에서 리스트를 가져옴
 
         if (notices.isEmpty()) {
-            return ResponseEntity.noContent().build(); // 데이터가 없으면 204 No Content
+            return ResponseEntity.notFound().build(); // 데이터가 없으면 204 No Content
         }
 
         return ResponseEntity.ok(notices); // 데이터와 함께 200 OK 전송
@@ -81,7 +81,7 @@ public class NoticeController {
     @DeleteMapping("/detail/{nid}")
     public ResponseEntity<Void> deleteNotice(@PathVariable Integer nid) {
         noticeService.deleteNotice(nid);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.notFound().build();
     }
     
     @PutMapping("{nid}/active")

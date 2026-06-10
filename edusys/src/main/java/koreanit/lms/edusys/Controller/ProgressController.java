@@ -44,7 +44,7 @@ public class ProgressController {
     public ResponseEntity<ProgressDTO> getProgress(@PathVariable Integer studentId, @PathVariable Integer videoId) {
         return progressService.getProgressByStudentAndLesson(studentId, videoId)
                 .map(p -> ResponseEntity.ok(new ProgressDTO(p)))
-                .orElse(ResponseEntity.noContent().build());
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("/update")
