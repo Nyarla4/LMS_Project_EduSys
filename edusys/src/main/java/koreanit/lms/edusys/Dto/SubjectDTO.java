@@ -19,7 +19,7 @@ public class SubjectDTO {
     // 개설 기간
     private LocalDate startDate;
     private LocalDate endDate;
-
+    private Subject.SubStatus subStatus;
     private Integer tid; // 담당 교사 ID
 
     public SubjectDTO(Subject subject) {
@@ -31,6 +31,7 @@ public class SubjectDTO {
         this.startDate = subject.getStartDate();
         this.endDate = subject.getEndDate();
         this.tid = subject.getTeacher().getTid();
+        this.subStatus = subject.getSubStatus();
     }
 
 }
