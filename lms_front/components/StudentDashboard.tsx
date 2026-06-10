@@ -1240,7 +1240,17 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
       if (res.ok) {
         alert("시험 세트가 생성되었습니다.");
         setIsAddExamSetModalOpen(false);
-        window.location.reload();
+        // 새로고침 대신 목록 재요청
+        const token = localStorage.getItem("token");
+        const headers = { "Authorization": `Bearer ${token}` };
+        const examUrl = subjectId 
+          ? `${API_BASE}/examsets/subject/${subjectId}${studentId ? `?sid=${studentId}` : ''}` 
+          : `${API_BASE}/examsets`;
+        const examRes = await fetch(examUrl, { headers });
+        if (examRes.ok) {
+          const examData = await examRes.json();
+          setExams([...examData].sort((a: any, b: any) => b.esid - a.esid));
+        }
       } else {
         alert("생성 실패");
       }
@@ -1497,7 +1507,8 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
       if (res.ok) {
         alert("시험 설정이 수정되었습니다.");
         setEditingExamSet(null);
-        window.location.reload();
+        // UI 업데이트를 위해 라우터 새로고침 활용 (SPA 유지)
+        router.refresh();
       } else {
         alert("수정 실패");
       }
@@ -1513,7 +1524,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
       });
-      if (res.ok) window.location.reload();
+      if (res.ok) router.refresh();
       else alert("삭제 실패");
     } catch (err) { console.error(err); }
   };
@@ -1536,7 +1547,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
       if (res.ok) {
         alert("수정되었습니다.");
         setEditingVideo(null);
-        window.location.reload();
+        router.refresh();
       } else {
         alert("수정 실패: " + await res.text());
       }
@@ -1552,7 +1563,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
       });
-      if (res.ok) window.location.reload();
+      if (res.ok) router.refresh();
       else alert("삭제 실패");
     } catch (err) { console.error(err); }
   };
@@ -1630,7 +1641,7 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
       if (res.ok) {
         alert("새로운 강의가 등록되었습니다.");
         setIsAddVideoModalOpen(false);
-        window.location.reload();
+        router.refresh();
       } else {
         const errorText = await res.text();
         alert(`강의 등록 실패: ${errorText}`);
