@@ -13,6 +13,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Integer>
     List<Attendance> findByStudentSid(Integer sid);
     List<Attendance> findBySubjectSubid(Integer subid);
     List<Attendance> findByDate(LocalDate date);
+    void deleteByStudentSidAndSubjectSubid(Integer sid, Integer subid);
 
     @EntityGraph(attributePaths = {"student", "student.user"})
     List<Attendance> findBySubjectSubidAndDate(Integer subid, LocalDate date);

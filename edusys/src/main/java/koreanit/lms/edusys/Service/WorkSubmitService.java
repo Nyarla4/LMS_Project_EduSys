@@ -80,4 +80,28 @@ public class WorkSubmitService {
         submit.setGrade(grade);
         return workSubmitRepository.save(submit);
     }
+    @Transactional
+    public void deleteSubmissionsByStudentAndSubject(Integer sid, Integer subid) {
+        List<WorkSubmit> submissions = workSubmitRepository.findByStudentSidAndWorkSubjectSubid(sid, subid);
+
+        for (WorkSubmit submission : submissions) {
+            deleteUploadFile(submission.getFileName());
+        }
+
+        workSubmitRepository.deleteAll(submissions);
+    }
+
+    private void deleteUploadFile(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return;
+        }
+
+        try {
+            Path uploadPath = Paths.get(WORK_UPLOAD_DIR);
+            Path targetPath = uploadPath.resolve(fileName).normalize();
+            Files.deleteIfExists(targetPath);
+        } catch (Exception e) {
+            System.err.println("Work submit file deletion failed: " + e.getMessage());
+        }
+    }
 }

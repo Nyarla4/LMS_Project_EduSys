@@ -5,14 +5,21 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import koreanit.lms.edusys.Dto.CourseDTO;
 import koreanit.lms.edusys.Entity.Course;
+import koreanit.lms.edusys.Entity.ExamGrade;
 import koreanit.lms.edusys.Entity.Lesson;
+import koreanit.lms.edusys.Entity.Progress;
 import koreanit.lms.edusys.Entity.Student;
 import koreanit.lms.edusys.Entity.Subject;
+import koreanit.lms.edusys.Repository.AttendanceRepository;
 import koreanit.lms.edusys.Repository.CourseRepository;
+import koreanit.lms.edusys.Repository.ExamGradeRepository;
+import koreanit.lms.edusys.Repository.GradeRepository;
 import koreanit.lms.edusys.Repository.LessonRepository;
+import koreanit.lms.edusys.Repository.ProgressRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -22,6 +29,11 @@ public class CourseService {
     private final StudentService studentService;
     private final SubjectService subjectService;
     private final LessonRepository lessonRepository;
+    private final AttendanceRepository attendanceRepository;
+    private final GradeRepository gradeRepository;
+    private final ProgressRepository progressRepository;
+    private final ExamGradeRepository examGradeRepository;
+    private final WorkSubmitService workSubmitService;
 
     public List<Course> findAllCourses() {
         return courseRepository.findAll();
@@ -60,12 +72,27 @@ public class CourseService {
         return courseRepository.save(course);
     }
 
+    @Transactional
     public void deleteCourse(Integer cid) {
         if(cid == null) {
             return;
         }
         Course existingCourse = courseRepository.findById(cid).orElse(null);
         if (existingCourse != null) {
+            Integer sid = existingCourse.getStudent().getSid();
+            Integer subid = existingCourse.getSubject().getSubid();
+
+            attendanceRepository.deleteByStudentSidAndSubjectSubid(sid, subid);
+            gradeRepository.deleteByStudentSidAndSubjectSubid(sid, subid);
+
+            List<Progress> progresses = progressRepository.findByStudentSidAndLessonSubjectSubid(sid, subid);
+            progressRepository.deleteAll(progresses);
+
+            List<ExamGrade> examGrades = examGradeRepository.findByStudentSidAndExamExamSetSubjectSubid(sid, subid);
+            examGradeRepository.deleteAll(examGrades);
+
+            workSubmitService.deleteSubmissionsByStudentAndSubject(sid, subid);
+
             courseRepository.delete(existingCourse);
         }
     }

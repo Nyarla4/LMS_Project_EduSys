@@ -11,6 +11,7 @@ import koreanit.lms.edusys.Entity.Progress;
 public interface ProgressRepository extends JpaRepository<Progress, Integer> {
     List<Progress> findByStudentSid(Integer sid);
     List<Progress> findByLessonSubjectSubid(Integer subid);
+    List<Progress> findByStudentSidAndLessonSubjectSubid(Integer sid, Integer subid);
 
     @EntityGraph(attributePaths = {"student"})
     List<Progress> findByLessonLid(Integer lid);

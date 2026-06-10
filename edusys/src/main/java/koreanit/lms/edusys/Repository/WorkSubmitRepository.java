@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface WorkSubmitRepository extends JpaRepository<WorkSubmit, Integer> {
     List<WorkSubmit> findByWorkWid(Integer wid);
     Optional<WorkSubmit> findByWorkWidAndStudentSid(Integer wid, Integer sid);
+    List<WorkSubmit> findByStudentSidAndWorkSubjectSubid(Integer sid, Integer subid);
 }
