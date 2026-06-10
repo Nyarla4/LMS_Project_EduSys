@@ -16,6 +16,8 @@ export default function Page() {
     const [planFile, setPlanFile] = useState("");
     const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
     const [showPdfPreview, setShowPdfPreview] = useState(false);
+    // 선택파일 초기화
+    const [fileInputKey, setFileInputKey] = useState(0);
 
     const subjectOptions = {
         국어: ["화법과 작문", "독서", "언어와매체", "문학"],
@@ -112,6 +114,22 @@ export default function Page() {
             return;
         }
         alert("등록 완료되었습니다.");
+
+        // 폼 초기화
+        setMajor("");
+        setSubject("");
+        setDetailSubject("");
+        setStartDate("");
+        setEndDate("");
+        setCapacity("");
+        setPlanFile("");
+        setShowPdfPreview(false);
+        if (pdfPreviewUrl) {
+            URL.revokeObjectURL(pdfPreviewUrl);
+        }
+        setPdfPreviewUrl("");
+        // 파일 입력 필드 리셋
+        setFileInputKey((prev) => prev + 1); 
     };
 
     return (
@@ -204,7 +222,7 @@ export default function Page() {
                         </div>
 
                         <label className="text-xl font-bold">강의 계획서</label>
-                        <input type="file" accept="application/pdf,.pdf"
+                        <input key={fileInputKey} type="file" accept="application/pdf,.pdf"
                             onChange={handlePdfChange}
                             className="border-[#b89b7a] border-[1px] rounded px-3 py-2" />
                         {planFile && (
