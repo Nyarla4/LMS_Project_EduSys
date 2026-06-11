@@ -13,7 +13,7 @@ export default function Page() {
     const [capacity, setCapacity] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
-    const [planFile, setPlanFile] = useState("");
+    const [planFile, setPlanFile] = useState<File | null>(null);
     const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
     const [showPdfPreview, setShowPdfPreview] = useState(false);
     // 선택파일 초기화
@@ -46,7 +46,7 @@ export default function Page() {
     const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) {
-            setPlanFile("");
+            setPlanFile(null);
             setShowPdfPreview(false);
 
             if (pdfPreviewUrl) {
@@ -60,7 +60,7 @@ export default function Page() {
         if (file.type !== "application/pdf") {
             alert("PDF 파일만 등록 가능");
             e.target.value = "";
-            setPlanFile("");
+            setPlanFile(null);
             setShowPdfPreview(false);
 
             if (pdfPreviewUrl) {
@@ -75,7 +75,7 @@ export default function Page() {
             URL.revokeObjectURL(pdfPreviewUrl);
         }
 
-        setPlanFile(file.name);
+        setPlanFile(file);
         setPdfPreviewUrl(URL.createObjectURL(file));
         setShowPdfPreview(false);
     };
@@ -87,6 +87,35 @@ export default function Page() {
             return;
         }
 
+        const token = localStorage.getItem("token");
+        let uploadedPlanFile = "";
+
+        if (planFile) {
+            if (!user?.tid) {
+                alert("로그인 정보가 유효하지 않습니다. 다시 로그인해주세요.");
+                return;
+            }
+
+            const uploadForm = new FormData();
+            uploadForm.append("file", planFile);
+            uploadForm.append("tid", String(user.tid));
+
+            const uploadRes = await fetch("http://localhost:8080/api/subjects/upload-syllabus", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: uploadForm,
+            });
+
+            if (!uploadRes.ok) {
+                alert("PDF 업로드에 실패하였습니다.");
+                return;
+            }
+
+            uploadedPlanFile = await uploadRes.text();
+        }
+
         const data = {
             tid: user?.tid,
             major,
@@ -95,11 +124,10 @@ export default function Page() {
             startDate,
             endDate,
             capacity: Number(capacity),
-            planFile,
+            planFile: uploadedPlanFile,
             fileUrl
         };
-        // 토큰을 로컬 스토리지에서 가져오기
-        const token = localStorage.getItem("token");
+
         const res = await fetch("http://localhost:8080/api/subjects", {
             method: "POST",
             headers: {
@@ -122,7 +150,7 @@ export default function Page() {
         setStartDate("");
         setEndDate("");
         setCapacity("");
-        setPlanFile("");
+        setPlanFile(null);
         setShowPdfPreview(false);
         if (pdfPreviewUrl) {
             URL.revokeObjectURL(pdfPreviewUrl);

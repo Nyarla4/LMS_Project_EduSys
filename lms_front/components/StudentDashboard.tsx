@@ -1609,10 +1609,12 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("subid", String(subjectId));
+    formData.append("tid", String(user?.tid || profile?.userid));
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE}/subjects/${subjectId}/upload-syllabus`, {
+      const res = await fetch(`${API_BASE}/subjects/upload-syllabus`, {
         method: "POST", // 파일 저장 및 DB 수정을 함께 처리하는 엔드포인트
         headers: { "Authorization": `Bearer ${token}` },
         body: formData,
