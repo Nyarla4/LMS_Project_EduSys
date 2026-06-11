@@ -48,7 +48,7 @@ public class FileController {
                         .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
                         .body(resource);
             } else {
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.noContent().build();
             }
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();

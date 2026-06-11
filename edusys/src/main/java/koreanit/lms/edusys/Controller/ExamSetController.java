@@ -66,6 +66,6 @@ public class ExamSetController {
     @DeleteMapping("/{esid}")
     public ResponseEntity<Void> deleteExamSet(@PathVariable Integer esid) {
         examSetService.deleteExamSet(esid);
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.noContent().build();
     }
 }

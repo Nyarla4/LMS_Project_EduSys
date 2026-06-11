@@ -1157,17 +1157,25 @@ export default function StudentDashboard({ subjectId }: { subjectId?: number }) 
           headers: { "Authorization": `Bearer ${token}` }
         });
         
+        let dbProgress = 0; // 기본값은 0으로 설정
+
         if (res.ok) {
           const data = await res.json();
-          // 엔티티 직접 반환 시에는 progressed 필드를 사용합니다.
-          const dbProgress = data.progressed ?? data.progress ?? 0;
-          const localVal = parseInt(localStorage.getItem(`video_progress_${video.lid}`) || "0");
-          const latestProgress = Math.max(dbProgress, localVal);
-          
-          setSessionBaseProgress(latestProgress);
-          // 개별 진도 조회 시에도 전체 맵을 최신화하여 리스트의 진행률 표시와 동기화합니다.
-          setProgressMap(prev => ({ ...prev, [video.lid]: latestProgress }));
+          dbProgress = data.progressed ?? data.progress ?? 0;
+        } else if (res.status === 404) {
+          // 404인 경우 DB 진도가 없는 것이므로 dbProgress = 0 유지 (에러 아님)
+          console.log("기존 진도 데이터가 없습니다. 0%부터 시작합니다.");
+        } else {
+          // 500 등 진짜 에러인 경우 예외 처리
+          throw new Error("서버 에러 발생");
         }
+
+        // 이제 404여도 로컬 스토리지 값(`localVal`)을 비교하여 정상적으로 세팅됩니다!
+        const localVal = parseInt(localStorage.getItem(`video_progress_${video.lid}`) || "0");
+        const latestProgress = Math.max(dbProgress, localVal);
+        
+        setSessionBaseProgress(latestProgress);
+        setProgressMap(prev => ({ ...prev, [video.lid]: latestProgress }));
       } catch (e) {
         console.log("기존 진행 정보가 없습니다.");
       }

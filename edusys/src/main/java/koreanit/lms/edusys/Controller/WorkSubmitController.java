@@ -42,7 +42,7 @@ public class WorkSubmitController {
     public ResponseEntity<WorkSubmitDTO> getMySubmission(@PathVariable Integer wid, @PathVariable Integer sid) {
         return workSubmitService.findSubmissionByWorkAndStudent(wid, sid)
                 .map(s -> ResponseEntity.ok(new WorkSubmitDTO(s)))
-                .orElse(ResponseEntity.noContent().build());
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{wsid}/grade")
