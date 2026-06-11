@@ -83,6 +83,8 @@ next-env.d.ts
 logs/
 /ai/__pycache__
 /ai/chroma_data
+/ai/venv
+ai/init_vector_db.py
 
 # document
 *.pdf
