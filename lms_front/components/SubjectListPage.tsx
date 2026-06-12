@@ -132,7 +132,7 @@ export default function SubjectListPage() {
                     </span>
                     <span className="text-xs text-[#7b6346]">정원: {subject.capacity}명</span>
                   </div>
-                  <h2 className="text-2xl font-bold mb-2 text-[#3d2b1f]">{subject.name}</h2>
+                  <h2 className="text-2xl font-bold mb-2" style={{ color: '#3d2b1f' }}> {subject.name} </h2>
                   <p className="text-sm text-[#7b6346]">
                     학습 기간: {subject.startDate} ~ {subject.endDate}
                   </p>

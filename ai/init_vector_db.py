@@ -9,8 +9,8 @@ import chromadb
 # ==========================================
 DB_CONFIG = {
     "host": "localhost",
-    "user": "edusys_user",
-    "password": "edusys_pw",
+    "user": "root",
+    "password": "sqId",
     "database": "edusys_db",
     "charset": "utf8mb4"
 }
